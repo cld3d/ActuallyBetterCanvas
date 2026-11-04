@@ -31,6 +31,8 @@ The browser must be running for new Canvas data to arrive. Polling is approximat
 - The lock screen interleaves events and tasks chronologically by event start / task deadline, rather than putting all events first. Date-only entries sort at the beginning of their local day; undated tasks sort last. Overdue unfinished tasks stay visible, and 11:59 PM tasks retain their actual time in this lock-screen ordering.
 - Datebook assignment colors: Philosophy = Pistachio; Chemistry and Chem Lab = Basil; Calculus and Calc Lab = Peacock; Engineering and Spatial Visualization = Blueberry; Physics = Avocado; Honors = Lavender. Other courses default to Gray. Matching recognizes class names and this laptop's course codes.
 - To change a class color, open any of its assignments in Datebook and use **Class color**, then **Save**. Choose a named preset or enter a custom `#RRGGBB`; clear the field to restore the class default. This updates all assignments in the class and linked labs, persists through syncs, and never changes Canvas or Google Calendar colors. Colors are stored in an additive local SQLite table; existing deadlines and completion overrides are unchanged.
+- Google Calendar events have a separate **Event color** picker in Datebook. Saving writes to Google Calendar (with version/permission checks), not a local-only override. Both standard Google event colors and calendar-specific labels are supported; use **Sync now** to refresh available labels. **Calendar default** removes the event's explicit color. **Every occurrence** applies a color to the series, while times remain untouched. Non-Google/read-only events do not expose this control. These writes never create/delete labels or recolor the entire calendar.
+- The sidebar **canvas** wordmark links to Tasks, using in-workspace navigation for ordinary clicks and normal link behavior for opening a new tab.
 
 ## Local architecture
 
@@ -39,6 +41,7 @@ The browser must be running for new Canvas data to arrive. Polling is approximat
 - `extension/`: Manifest V3, site-scoped optional permission, dynamically registered content script, isolated Shadow DOM workspace, background polling.
 - `native/canvas_feed.py`: Python standard library only. Native-message framing and CLI, transactional SQLite writes, persistent overrides, atomic feed publication, and Datebook republishing.
 - `integrations/canvas_local.py`: Datebook adapter; routes Canvas task edits to the local store and preserves Google's existing behavior.
+- `integrations/event_colors.py`, `integrations/desktop/EventColors.js`, and `scripts/event_color_support.py`: Google event-color palette, provider writes, and backed-up editor/sync integration. Event-color writes are separate from Canvas assignment class colors.
 - `scripts/integrate_desktop.py`: narrowly matched, idempotent edits to this machine's user-owned Datebook and lock plugins, with backups outside watched plugin folders. Stops before edits if expected source differs. Not a general installer for arbitrary Datebook versions.
 - `scripts/deadline_support.py` and `integrations/desktop/`: time-aware desktop task logic and backed-up editor/grid integration. Installation does not rewrite assignment data or completion flags.
 

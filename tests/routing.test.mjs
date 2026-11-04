@@ -77,6 +77,17 @@ test('sidebar URLs survive refresh, support history, and return to matching Orig
     assert.equal(await page.locator('.workspace').isVisible(), false, 'Original Canvas mode also survives subsequent navigation');
     await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
     await page.getByRole('main', {name: 'Inbox', exact: true}).waitFor();
+    await page.locator('#canvas-local-root').evaluate(node => {node.dataset.marker = 'wordmark-navigation';});
+    const wordmark = page.getByRole('link', {name:'Canvas',exact:true});
+    assert.equal(await wordmark.getAttribute('href'),'/dashboard');
+    await wordmark.click();
+    await page.getByRole('main', {name:'Tasks',exact:true}).waitFor();
+    assert.equal(new URL(page.url()).pathname,'/dashboard');
+    assert.equal(await page.locator('#canvas-local-root').getAttribute('data-marker'),'wordmark-navigation','wordmark uses workspace routing without a page reload');
+    await page.getByRole('button',{name:'Courses',exact:true}).click();
+    await wordmark.focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('main', {name:'Tasks',exact:true}).waitFor();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

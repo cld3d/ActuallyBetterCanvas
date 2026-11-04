@@ -19,7 +19,7 @@
     @media(prefers-reduced-motion:no-preference){.workspace:not([hidden]) main{animation:enter .3s ease-out}.select-options:not([hidden]),dialog[open]{animation:enter .18s ease-out}.tabs button[aria-selected=true]:after{animation:enter .18s ease-out}.skeleton>div{animation:breathe 1.4s ease-in-out infinite}}
     /* Hide scrollbars only inside this Shadow DOM; preserve normal scrolling. */
     *{scrollbar-width:none}*::-webkit-scrollbar{display:none}
-    .brand{display:grid;gap:0;padding:0 12px;line-height:1;letter-spacing:0;color:var(--ink)}.brand-name{font-size:35px;font-weight:750;line-height:1.05;letter-spacing:-.065em}
+    .brand{display:grid;gap:0;padding:0 12px;line-height:1;letter-spacing:0;color:var(--ink);text-decoration:none}.brand-name{font-size:35px;font-weight:750;line-height:1.05;letter-spacing:-.065em}
     .calendar-day[aria-pressed=true]{box-shadow:none}
     /* Task rows are content, not clickable cards: keep dividers straight and surfaces still. */
     .row,.row:hover{border-radius:0;background:transparent;transition:opacity .2s}
@@ -104,7 +104,10 @@
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
     toolbar, tabs, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
-    el('aside', {}, el('div', {class: 'brand', role: 'img', 'aria-label': 'Canvas'},
+    el('aside', {}, el('a', {class: 'brand', href: pagePaths.tasks, 'aria-label': 'Canvas', onclick: event => {
+      if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault(); navigate('tasks');
+    }},
       el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation),
     main);
   shadow.append(launcher, workspace);
