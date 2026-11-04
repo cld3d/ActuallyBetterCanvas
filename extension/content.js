@@ -54,7 +54,7 @@
   const launcher = el('button', {class: 'launcher', onclick: () => {page = currentRoutePage() || page; render(); open();}}, 'Actually Better Canvas');
   const notice = el('div', {class: 'notice', role: 'status', 'aria-live': 'polite'});
   const syncLabel = el('span', {}, 'Connecting to local feed…');
-  const stats = el('div', {class: 'stats'}), list = el('div', {});
+  const list = el('div', {});
   const search = el('input', {type: 'search', placeholder: 'Find an assignment…', 'aria-label': 'Search assignments', oninput: e => {query = e.target.value; render();}});
   const courseOptions = el('div', {class: 'select-options', id: 'course-options', role: 'listbox', 'aria-label': 'Courses', hidden: ''});
   const courseButton = el('button', {class: 'quiet select-trigger', 'aria-label': 'Filter by course', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-controls': 'course-options', onclick: () => toggleCourses()}, 'All courses');
@@ -84,7 +84,7 @@
   const pageContent = el('div', {class: 'page-content'});
   const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
-    stats, tabs, toolbar, notice, taskPanel, pageContent);
+    tabs, toolbar, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('div', {class: 'brand'}, 'ACTUALLY BETTER', el('div', {class: 'local'}, 'CANVAS')), navigation),
     main);
@@ -210,15 +210,13 @@
     pageContent.id = page === 'calendar' ? 'calendar-panel' : 'page-content';
     if (page === 'calendar') {pageContent.setAttribute('role', 'tabpanel'); pageContent.setAttribute('aria-labelledby', 'tab-' + view);}
     else {pageContent.removeAttribute('role'); pageContent.removeAttribute('aria-labelledby');}
-    stats.hidden = page !== 'tasks'; tabs.hidden = toolbar.hidden = taskPanel.hidden = !['tasks', 'calendar'].includes(page);
+    tabs.hidden = toolbar.hidden = taskPanel.hidden = !['tasks', 'calendar'].includes(page);
     taskPanel.hidden = page !== 'tasks'; pageContent.hidden = page === 'tasks';
     positionTabIndicator();
     renderCoursesFilter();
     if (page === 'courses') {renderCatalog(); return;}
     if (page === 'inbox') {renderInbox(); return;}
     if (page === 'calendar') {renderCalendar(); return;}
-    const openItems = state.assignments.filter(a => !a.completed);
-    stats.replaceChildren(...[[openItems.length, 'to do'], [openItems.filter(a => bucket(a) === 'Today').length, 'due today'], [openItems.filter(a => bucket(a) === 'Overdue').length, 'overdue']].map(([count, label]) => el('div', {}, el('strong', {}, String(count)), el('span', {}, label))));
     const items = filteredItems();
     list.replaceChildren();
     if (!items.length) {
