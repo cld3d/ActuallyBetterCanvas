@@ -375,6 +375,10 @@
   }
   function renderInbox() {
     pageContent.replaceChildren(); remoteStatus();
+    if (!conversations?.length) {
+      if (conversations && !remoteError) pageContent.append(el('div', {class: 'empty'}, 'Your inbox is empty.'));
+      return;
+    }
     const threads = el('div', {class: 'threads'});
     for (const thread of conversations || []) {
       threads.append(el('button', {class: 'thread' + (thread.workflow_state === 'unread' ? ' unread' : ''), 'aria-pressed': String(selectedConversation?.id === thread.id), onclick: () => readConversation(thread.id)},
@@ -393,8 +397,7 @@
         ...(message.attachments || []).map(file => el('p', {class: 'meta'}, 'Attachment: ' + (file.display_name || file.filename || 'File')))));
       reader.append(el('p', {class: 'meta'}, 'Replies and attachments are available in Original Canvas.'));
     } else reader.append(el('div', {class: 'empty'}, 'Choose a conversation to read.'));
-    if (!remoteLoading && !conversations?.length && !remoteError) pageContent.append(el('div', {class: 'empty'}, 'Your inbox is empty.'));
-    else pageContent.append(el('div', {class: 'inbox-layout'}, threads, reader));
+    pageContent.append(el('div', {class: 'inbox-layout'}, threads, reader));
   }
   function edit(item) {
     const dialog = el('dialog', {'aria-labelledby': 'edit-heading'});
