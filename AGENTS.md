@@ -54,6 +54,12 @@ Core API, deadline, clock, adapter, and storage tests run without Omarchy or a b
 
 Test overrides: `CANVAS_BROWSER_PATH` selects a Chromium executable; `CANVAS_DESKTOP_PLUGIN_DIR` selects a plugin tree; `CANVAS_OMARCHY_SHELL_DIR` selects Omarchy's shell directory. `CANVAS_SKIP_BROWSER_TESTS=1` and `CANVAS_SKIP_DESKTOP_TESTS=1` explicitly disable those integration checks. Explicit invalid paths should fail rather than silently skip. QML test files are templates rendered by `scripts/test_desktop.py`, not directly runnable configs.
 
+## Implementation delivery and versioning
+
+- The user's standing request is to commit and push after each completed implementation. Other agents may be working concurrently: stage and commit only your own changes, never unrelated work.
+- Every implementation push must include a higher `version` in `extension/manifest.json` (increment the patch component by default). Make the bump before committing and pushing, in the same delivery as the implementation, so the pushed code and displayed extension version match. Check the latest version before bumping to avoid reusing another agent's version. Keep the manifest's public `key` unchanged.
+- Report the pushed commit and new extension version. The laptop still needs to pull, reload the extension in `brave://extensions`, and reload Canvas pages; a push alone does not update the installed extension.
+
 ## Laptop deployment after pulling
 
 Only on the actual desktop, with user authorization:
