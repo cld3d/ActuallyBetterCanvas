@@ -224,6 +224,7 @@
     else {pageContent.removeAttribute('role'); pageContent.removeAttribute('aria-labelledby');}
     tabs.hidden = toolbar.hidden = taskPanel.hidden = !['tasks', 'calendar'].includes(page);
     taskPanel.hidden = page !== 'tasks'; pageContent.hidden = page === 'tasks';
+    pageContent.setAttribute('aria-busy', String(remoteLoading && ['courses', 'inbox'].includes(page)));
     positionTabIndicator();
     renderCoursesFilter();
     if (page === 'courses') {renderCatalog(); return;}
@@ -279,7 +280,6 @@
     return row;
   }
   function remoteStatus() {
-    if (remoteLoading) pageContent.append(el('div', {class: 'skeleton', role: 'status', 'aria-label': 'Loading Canvas data'}, ...Array.from({length: 3}, () => el('div', {}))));
     if (remoteError) pageContent.append(el('div', {class: 'notice', role: 'alert'}, remoteError, ' ', el('button', {class: 'quiet', onclick: () => loadRemote(true)}, 'Try again')));
   }
   function renderCatalog() {

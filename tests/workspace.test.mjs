@@ -7,6 +7,40 @@ import {browserPath} from './environment.mjs';
 const content = await readFile(new URL('../extension/content.js', import.meta.url), 'utf8');
 
 const executablePath = browserPath();
+test('pending course loads keep cached content visible without placeholder bars', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<button>Original Canvas</button>'}));
+    await page.goto('https://canvas.test/courses');
+    await page.evaluate(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async message => {
+        if (message.action === 'courses') return new Promise(resolve => {window.finishCourses = resolve;});
+        return {ok: true, state: {assignments: [{uid: 'essay', title: 'Cached essay', course: 'English', courseId: '34', effectiveDue: null,
+          completed: false, dueOverride: false, completionOverride: null, url: 'https://canvas.test/courses/34/assignments/1'}]}};
+      }}};
+    });
+    await page.addScriptTag({content});
+    await page.getByRole('heading', {name: 'English', exact: true}).waitFor();
+    assert.equal(await page.locator('.page-content').getAttribute('aria-busy'), 'true');
+    assert.equal(await page.locator('.skeleton').count(), 0, 'no loading bars above cached courses');
+    await page.getByRole('button', {name: 'Tasks', exact: true}).click();
+    await page.getByRole('link', {name: 'Cached essay', exact: true}).waitFor();
+    assert.equal(await page.locator('.skeleton').count(), 0, 'switching to Tasks during a course load introduces no bars');
+    await page.getByRole('button', {name: 'Courses', exact: true}).click();
+    await page.getByRole('heading', {name: 'English', exact: true}).waitFor();
+    await page.evaluate(() => window.finishCourses({ok: true, courses: [{id: 34, name: 'English'}, {id: 35, name: 'Math'}]}));
+    await page.getByRole('heading', {name: 'Math', exact: true}).waitFor();
+    assert.equal(await page.locator('.page-content').getAttribute('aria-busy'), 'false');
+    assert.equal(await page.locator('.skeleton').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 async function assertPlainTaskRow(page) {
   const row = page.locator('.row:visible').first();
   await page.locator('.topbar').hover();
