@@ -126,8 +126,13 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.equal(await page.locator('select').count(), 0, 'no OS-native dropdowns');
     assert.equal(await page.locator('aside').getByText('Original Canvas').count(), 0);
     assert.equal(await page.locator('footer,.sidebar-note').count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Tasks', exact: true}).count(), 1);
+    assert.deepEqual(await page.locator('.row .meta').allTextContents(), ['English', 'Math'], 'assignments only show their course, not redundant status tags');
     assert.equal(await page.getByRole('tab').count(), 2);
+    const initialIndicator = await page.locator('.tab-indicator').getAttribute('style');
     await page.getByRole('tab', {name: 'Completed', exact: true}).click();
+    assert.notEqual(await page.locator('.tab-indicator').getAttribute('style'), initialIndicator, 'one shared selection indicator moves to the completed tab');
+    assert.equal(await page.locator('.tab-indicator').evaluate(node => getComputedStyle(node).transitionProperty), 'transform');
     assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Latest completed', 'Older completed', 'Undated completed']);
     await page.getByRole('tab', {name: 'Completed', exact: true}).press('ArrowLeft');
     assert.equal(await page.getByRole('tab', {name: 'To do', exact: true}).getAttribute('aria-selected'), 'true');
@@ -149,6 +154,8 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     await page.getByRole('button', {name: 'Calendar', exact: true}).click();
     assert.equal(await page.locator('.calendar-day[aria-pressed=true] .day-count').textContent(), '1');
     assert.deepEqual(await page.locator('.agenda .title').allTextContents(), ['Personal deadline task'], 'calendar follows personal deadline, not Canvas date');
+    assert.equal(await page.getByRole('heading', {name: 'No deadline', exact: true}).count(), 0);
+    assert.equal(await page.getByRole('link', {name: 'Math task', exact: true}).count(), 0, 'undated work stays out of the calendar');
     await page.getByRole('button', {name: 'Next month'}).click();
     await page.getByRole('button', {name: 'Today', exact: true}).click();
     await page.evaluate(() => {window.failUpdate = true;});
@@ -159,6 +166,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     await page.getByRole('checkbox').click();
     await page.getByText('No matching tasks due this day.', {exact: true}).waitFor();
     await page.getByRole('tab', {name: 'Completed', exact: true}).click();
+    assert.equal(await page.getByRole('link', {name: 'Undated completed', exact: true}).count(), 0, 'completed undated work also stays out of the calendar');
     assert.equal(await page.getByRole('checkbox', {name: 'Reopen Personal deadline task', exact: true}).isChecked(), true, 'calendar task completion shares workspace state');
     await page.evaluate(() => {window.failInbox = true;});
     await page.getByRole('button', {name: 'Inbox', exact: true}).click();
@@ -173,10 +181,13 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     for (const colorScheme of ['light', 'dark']) {
       await page.emulateMedia({colorScheme, reducedMotion: 'reduce'});
       await page.setViewportSize({width: 390, height: 844});
-      for (const name of ['Courses', 'Calendar', 'Inbox', 'My workspace']) {
+      for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks']) {
         await page.getByRole('button', {name, exact: true}).click();
         assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
+        await page.keyboard.press('Tab');
+        assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node.shadowRoot.activeElement).outlineStyle), 'none', `${name} has no rectangular keyboard focus outline`);
       }
+      assert.equal(await page.locator('.tab-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables underline sliding');
     }
     for (const [path, title] of [['courses', 'Your courses.'], ['calendar', 'Make room for what’s next.'], ['conversations', 'Your inbox.']]) {
       await page.goto('https://canvas.test/' + path);
@@ -184,6 +195,27 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       await page.getByRole('heading', {name: title, exact: true}).waitFor();
       assert.equal(await page.locator('#original').evaluate(node => node.inert), true, path + ' opens the custom view automatically');
     }
+    await page.getByRole('button', {name: 'Original Canvas', exact: true}).click();
+    for (const [path, title] of [['calendar', 'Make room for what’s next.'], ['conversations', 'Your inbox.'], ['courses', 'Your courses.'], ['dashboard', 'A clearer view of what’s next.']]) {
+      await page.goto('https://canvas.test/' + path);
+      await page.addScriptTag({content});
+      assert.equal(await page.locator('.workspace').isVisible(), false, 'Original Canvas mode survives navigation to ' + path);
+      assert.equal(await page.locator('#original').evaluate(node => node.inert), false);
+      await page.reload();
+      await page.addScriptTag({content});
+      assert.equal(await page.locator('.workspace').isVisible(), false, 'Original Canvas mode survives reload');
+      await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
+      await page.getByRole('heading', {name: title, exact: true}).waitFor();
+      await page.getByRole('button', {name: 'Original Canvas', exact: true}).click();
+    }
+    // Some Canvas navigation updates the URL without a new document.
+    await page.evaluate(() => history.pushState({}, '', '/calendar'));
+    await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
+    await page.getByRole('heading', {name: 'Make room for what’s next.', exact: true}).waitFor();
+    await page.goto('https://canvas.test/conversations');
+    await page.addScriptTag({content});
+    await page.getByRole('heading', {name: 'Your inbox.', exact: true}).waitFor();
+    assert.equal(await page.locator('.workspace').isVisible(), true, 'returning to custom mode restores automatic opening');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

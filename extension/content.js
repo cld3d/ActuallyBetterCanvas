@@ -7,7 +7,7 @@
   const style = document.createElement('style');
   style.textContent = `
     :host{--bg:#f3f5f3;--surface:#fafcfb;--ink:#202b24;--muted:#526357;--line:#d4ded7;--accent:#305c42;--on-accent:#f5faf6;--tint:#e6eee8;font:15px/1.5 system-ui,sans-serif;color:var(--ink);color-scheme:light}
-    *{box-sizing:border-box}button,input,select,textarea{font:inherit}button,a,input,select,textarea{outline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #729b7f}button,a{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:inherit}button:active{transform:translateY(1px)}
+    *{box-sizing:border-box}button,input,select,textarea{font:inherit}button,a{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:inherit}button:active{transform:translateY(1px)}
     .launcher{position:fixed;bottom:24px;left:18px;z-index:10000;border:1px solid var(--line);border-radius:10px;background:var(--accent);color:var(--on-accent);padding:12px 18px;font-weight:650;box-shadow:0 4px 20px #17241a20}
     .workspace{position:fixed;inset:0;z-index:10001;background:var(--bg);display:grid;grid-template-columns:228px 1fr;overflow:auto}.workspace[hidden], [hidden]{display:none!important}
     aside{padding:30px 22px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:28px}.brand{font-size:13px;letter-spacing:.1em;font-weight:750}.local{font-size:11px;color:var(--muted);letter-spacing:0;font-weight:450;margin-top:5px}nav{display:grid;gap:6px}nav a,nav button{display:block;text-decoration:none;text-align:left;border:0;padding:10px 12px;border-radius:8px;background:none;color:var(--muted)}nav .selected{background:var(--tint);color:var(--accent);font-weight:650}.sidebar-note{margin-top:auto;font-size:12px;color:var(--muted)}main{padding:32px clamp(24px,5vw,80px);min-width:0;max-width:1500px;width:100%;margin:auto}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--muted);font-size:13px;margin-bottom:46px}.topbar div{display:flex;gap:8px}.quiet{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;border-radius:8px;white-space:nowrap}.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}h1{font-size:clamp(30px,4vw,46px);letter-spacing:-.045em;line-height:1.15;margin:0 0 12px;font-weight:650}.intro{color:var(--muted);margin:0 0 28px}.stats{display:flex;gap:32px;padding:0 0 30px;border-bottom:1px solid var(--line);margin-bottom:24px}.stats strong{font-size:26px;display:block;font-weight:550;font-variant-numeric:tabular-nums}.stats span{color:var(--muted);font-size:12px}.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}.toolbar input{flex:1;min-width:160px}.toolbar input,.toolbar select{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px}.group-title{font-size:13px;font-weight:650;margin:24px 0 8px;color:var(--muted)}.row{display:grid;grid-template-columns:28px minmax(0,1fr) 170px 65px;gap:14px;align-items:center;padding:19px 4px;border-bottom:1px solid var(--line)}.check{appearance:none;display:grid;place-content:center;width:21px;height:21px;margin:0;border:1.5px solid var(--muted);border-radius:6px;cursor:pointer;background:var(--surface)}.check:checked{background:var(--accent);border-color:var(--accent)}.check:checked:after{content:'✓';color:var(--on-accent);font-size:15px}.title{text-decoration:none;font-weight:600;overflow-wrap:anywhere}.title:hover{text-decoration:underline}.meta{font-size:12px;color:var(--muted);margin-top:5px}.deadline{font-size:13px;font-variant-numeric:tabular-nums}.deadline small{display:block;color:var(--muted);font-size:11px;margin-top:4px}.edit{color:var(--muted);border:0;background:none;padding:10px}.empty{padding:55px 10px;text-align:center;color:var(--muted)}.notice{padding:12px 16px;border:1px solid var(--line);border-radius:8px;background:var(--tint);margin:18px 0;overflow-wrap:anywhere}.notice:empty{display:none}footer{font-size:12px;color:var(--muted);padding-top:28px}dialog{border:1px solid var(--line);border-radius:14px;padding:30px;background:var(--surface);color:var(--ink);width:min(520px,calc(100vw - 32px));max-height:90dvh;overflow:auto}dialog::backdrop{background:#101c1680}dialog h2{font-size:22px;line-height:1.3;margin:0 0 8px}dialog p{color:var(--muted);font-size:13px}label.field{display:grid;gap:8px;margin:22px 0;font-weight:550;font-size:13px}.field input,.field textarea{padding:11px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--bg);width:100%}.field textarea{resize:vertical;min-height:90px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}dialog .reset{padding:0;border:0;background:none;color:var(--accent);text-decoration:underline;font-size:12px}.source-status{background:var(--tint);padding:12px;border-radius:8px}
@@ -17,6 +17,10 @@
     button,a,input,textarea{transition:background-color .18s,border-color .18s,color .18s,box-shadow .18s,transform .18s,opacity .18s}button:hover:not(:disabled),.course-link:hover{background:var(--tint)}button.primary:hover{background:var(--accent);opacity:.9}.launcher:hover{background:var(--accent);transform:translateY(-2px)}button:active:not(:disabled){transform:scale(.97)}.quiet{font-size:13px;font-weight:550;padding:9px 14px}.stats{gap:44px;margin-bottom:26px}.stats strong{font-size:30px;letter-spacing:-.04em}.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px}.tabs button{background:none;border:0;padding:12px 18px;color:var(--muted);position:relative;font-weight:550;font-size:14px}.tabs button[aria-selected=true]{color:var(--accent)}.tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:-1px;left:12px;right:12px;height:2px;background:var(--accent);border-radius:2px}.toolbar{align-items:start}.toolbar input{width:0;min-width:140px}.toolbar input:focus{border-color:var(--accent)}.custom-select{position:relative;min-width:180px;max-width:100%}.select-trigger{display:flex;justify-content:space-between;gap:18px;width:100%;padding:11px 14px;text-align:left;white-space:normal}.select-trigger:after{content:'⌄';margin-left:auto}.select-options{position:absolute;top:calc(100% + 6px);right:0;min-width:100%;width:max-content;max-width:min(340px,80vw);max-height:300px;overflow:auto;z-index:2;border:1px solid var(--line);border-radius:10px;padding:5px;background:var(--surface);box-shadow:0 12px 32px #17241a24}.select-options button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:10px 12px;border-radius:6px;white-space:normal}.select-options button[aria-selected=true]{background:var(--tint);color:var(--accent);font-weight:650}.row{padding:18px 12px;border-radius:9px;transition:background-color .2s,opacity .2s}.row:hover{background:var(--surface)}.row[data-completed=true] .title{color:var(--muted)}.completing .title{text-decoration:line-through;color:var(--muted)}.check{transition:transform .2s,background-color .2s}.check:hover{border-color:var(--accent);transform:scale(1.08)}.edit{border-radius:7px}.group-title{display:flex;align-items:center;gap:12px;margin:26px 0 6px}.group-title:after{content:'';height:1px;background:var(--line);flex:1;margin-left:8px}.empty{padding:64px 20px;border:1px dashed var(--line);border-radius:12px;margin-top:20px}.page-content{min-width:0}.page-content h2{font-size:20px;letter-spacing:-.025em;font-weight:600}.course-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.course-card{padding:26px;border:1px solid var(--line);border-radius:14px;background:var(--surface);min-width:0;display:flex;flex-direction:column}.course-card h2{margin:12px 0 6px;overflow-wrap:anywhere}.course-code{font-size:12px;color:var(--accent);font-weight:650;overflow-wrap:anywhere}.course-card progress{width:100%;height:5px;border:0;border-radius:4px;margin-top:18px;accent-color:var(--accent)}progress::-webkit-progress-bar{background:var(--tint);border-radius:4px}progress::-webkit-progress-value{background:var(--accent);border-radius:4px}.next-task{font-size:13px;color:var(--muted);margin:18px 0 4px}.course-card .actions{margin-top:auto;padding-top:20px}.course-link{text-decoration:none;display:inline-block;border:1px solid var(--line);border-radius:8px}.calendar-controls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 20px}.calendar-controls h2{margin:0}.calendar-controls .actions{margin:0;gap:6px}.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}.weekday{padding:10px 4px;text-align:center;background:var(--bg);font-size:12px;color:var(--muted)}.calendar-day{min-width:0;min-height:108px;padding:10px;border:0;background:var(--surface);color:var(--ink);text-align:left;display:flex;flex-direction:column;gap:5px;position:relative;isolation:isolate}.calendar-day>span:first-child{font-size:13px;font-weight:600}.calendar-day[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--accent);background:var(--tint)}.calendar-day.today>span:first-child{color:var(--on-accent);background:var(--accent);padding:0 5px;border-radius:4px;align-self:start}.calendar-day.outside{color:var(--muted);background:var(--bg)}.day-count{position:absolute;right:8px;top:10px;font-size:10px;color:var(--accent);font-weight:650}.day-task{display:block;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--muted)}.agenda{margin-top:30px}.agenda h2{margin-bottom:10px}.inbox-layout{display:grid;grid-template-columns:minmax(220px, .85fr) minmax(0,1.5fr);border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden;min-height:420px}.threads{border-right:1px solid var(--line);max-height:70dvh;overflow:auto}.thread{display:flex;flex-direction:column;gap:7px;background:none;color:var(--ink);border:0;border-bottom:1px solid var(--line);text-align:left;padding:20px;width:100%;overflow-wrap:anywhere}.thread[aria-pressed=true]{background:var(--tint)}.thread.unread strong:before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin-right:8px}.preview{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted)}.reader{padding:26px;min-width:0}.reader h2{overflow-wrap:anywhere;margin-top:0}.reader .empty{border:0}.message{padding:22px 0;border-bottom:1px solid var(--line);font-size:14px}.message-body{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7}.skeleton{display:grid;gap:14px;margin:24px 0}.skeleton>div{height:72px;border-radius:10px;background:var(--tint)}
     @keyframes enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes breathe{50%{opacity:.45}}
     @media(prefers-reduced-motion:no-preference){.workspace:not([hidden]) main{animation:enter .3s ease-out}.select-options:not([hidden]),dialog[open]{animation:enter .18s ease-out}.tabs button[aria-selected=true]:after{animation:enter .18s ease-out}.skeleton>div{animation:breathe 1.4s ease-in-out infinite}}
+    /* One shared underline moves between tabs instead of remounting on each selection. */
+    .tabs{position:relative}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    /* Keep keyboard location visible without the browser's large focus rectangles. */
+    *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
     @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:12px}nav .selected:before{display:none}main{padding:22px}.topbar{margin-bottom:28px;align-items:flex-start;gap:8px}.topbar>span{max-width:45%;font-size:11px}.topbar div{flex-wrap:wrap;justify-content:flex-end}.topbar .quiet{font-size:11px;padding:8px}.row{grid-template-columns:26px minmax(0,1fr) 46px;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:300px}.reader{padding:20px}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:auto;bottom:8px;right:auto;left:5px}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
   `;
@@ -32,12 +36,18 @@
     return node;
   }
   const routePages = {'/': 'tasks', '/dashboard': 'tasks', '/courses': 'courses', '/calendar': 'calendar', '/conversations': 'inbox'};
+  const currentRoutePage = () => routePages[location.pathname.replace(/\/$/, '') || '/'];
+  // Tab-scoped and origin-scoped: choosing Original Canvas survives its page navigations.
+  // Storage may be blocked by the browser; workspace controls must still work in that case.
+  const modeKey = 'actually-better-canvas-mode';
+  function rememberMode(mode) {try {sessionStorage.setItem(modeKey, mode);} catch {}}
+  function originalMode() {try {return sessionStorage.getItem(modeKey) === 'original';} catch {return false;}}
   let state = {assignments: []}, view = 'open', query = '', course = '', loading = false, opened = false, previousFocus;
-  let page = routePages[location.pathname.replace(/\/$/, '') || '/'] || 'tasks';
+  let page = currentRoutePage() || 'tasks';
   let catalog = null, conversations = null, remoteLoading = false, remoteError = '', selectedConversation = null, conversationLoading = false, conversationVersion = 0;
   let month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = new Date();
   const pending = new Set();
-  const launcher = el('button', {class: 'launcher', onclick: () => open()}, 'Actually Better Canvas');
+  const launcher = el('button', {class: 'launcher', onclick: () => {page = currentRoutePage() || page; render(); open();}}, 'Actually Better Canvas');
   const notice = el('div', {class: 'notice', role: 'status', 'aria-live': 'polite'});
   const syncLabel = el('span', {}, 'Connecting to local feed…');
   const stats = el('div', {class: 'stats'}), list = el('div', {});
@@ -50,6 +60,14 @@
     motion(page === 'calendar' ? pageContent : taskPanel, [{opacity: 0, transform: 'translateY(5px)'}, {opacity: 1, transform: 'translateY(0)'}], {duration: 180});
   }
   const tabs = el('div', {class: 'tabs', role: 'tablist', 'aria-label': 'Completion filter'}, ...[['open', 'To do'], ['completed', 'Completed']].map(([value, label]) => el('button', {role: 'tab', id: 'tab-' + value, 'aria-controls': 'task-panel', onclick: () => selectView(value)}, label)));
+  const tabIndicator = el('span', {class: 'tab-indicator', 'aria-hidden': 'true'});
+  tabs.append(tabIndicator);
+  function positionTabIndicator() {
+    const selected = tabs.querySelector('[aria-selected="true"]');
+    if (tabs.hidden || !selected || !selected.offsetWidth) return;
+    tabIndicator.style.transform = `translateX(${selected.offsetLeft + 12}px) scaleX(${Math.max(0, selected.offsetWidth - 24)})`;
+  }
+  new ResizeObserver(positionTabIndicator).observe(tabs);
   tabs.addEventListener('keydown', event => {
     if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
       event.preventDefault(); view = event.key === 'Home' ? 'open' : event.key === 'End' ? 'completed' : view === 'open' ? 'completed' : 'open';
@@ -61,7 +79,7 @@
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
-  const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'My workspace'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
+  const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('div', {class: 'brand'}, 'ACTUALLY BETTER', el('div', {class: 'local'}, 'CANVAS')), navigation),
     el('main', {}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
@@ -69,6 +87,7 @@
   shadow.append(launcher, workspace);
   let inertElements = [];
   function close() {
+    rememberMode('original');
     opened = false; workspace.hidden = true; launcher.hidden = false;
     document.body.style.overflow = priorOverflow;
     for (const [node, wasInert] of inertElements) node.inert = wasInert;
@@ -80,12 +99,14 @@
   let feedQueue = Promise.resolve(), feedVersion = 0, appliedFeedVersion = 0;
   function open() {
     if (opened) return;
+    rememberMode('workspace');
     previousFocus = document.activeElement;
     priorOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     inertElements = [...document.body.children].filter(node => node !== host).map(node => [node, node.inert]);
     for (const [node] of inertElements) node.inert = true;
     opened = true; workspace.hidden = false; launcher.hidden = true;
+    positionTabIndicator();
     workspace.querySelector('h1').focus();
     refresh();
     loadRemote();
@@ -180,14 +201,15 @@
       button.classList.toggle('selected', button.dataset.page === page);
       if (button.dataset.page === page) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
     }
-    for (const tab of tabs.children) {const selected = tab.id === 'tab-' + view; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;}
+    for (const tab of tabs.querySelectorAll('[role="tab"]')) {const selected = tab.id === 'tab-' + view; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;}
     taskPanel.setAttribute('aria-labelledby', 'tab-' + view);
-    for (const tab of tabs.children) tab.setAttribute('aria-controls', page === 'calendar' ? 'calendar-panel' : 'task-panel');
+    for (const tab of tabs.querySelectorAll('[role="tab"]')) tab.setAttribute('aria-controls', page === 'calendar' ? 'calendar-panel' : 'task-panel');
     pageContent.id = page === 'calendar' ? 'calendar-panel' : 'page-content';
     if (page === 'calendar') {pageContent.setAttribute('role', 'tabpanel'); pageContent.setAttribute('aria-labelledby', 'tab-' + view);}
     else {pageContent.removeAttribute('role'); pageContent.removeAttribute('aria-labelledby');}
     stats.hidden = page !== 'tasks'; tabs.hidden = toolbar.hidden = taskPanel.hidden = !['tasks', 'calendar'].includes(page);
     taskPanel.hidden = page !== 'tasks'; pageContent.hidden = page === 'tasks';
+    positionTabIndicator();
     renderCoursesFilter();
     if (page === 'courses') {renderCatalog(); return;}
     if (page === 'inbox') {renderInbox(); return;}
@@ -222,7 +244,7 @@
     const checkbox = el('input', {type: 'checkbox', class: 'check', 'aria-label': (item.completed ? 'Reopen ' : 'Complete ') + item.title});
     checkbox.checked = item.completed; checkbox.disabled = pending.has(item.uid);
     const row = el('article', {class: 'row', 'data-uid': item.uid, 'data-completed': String(item.completed)}, checkbox,
-          el('div', {}, el('a', {class: 'title', href: item.url}, item.title), el('div', {class: 'meta'}, item.course + ' · ' + (item.submitted ? 'Submitted in Canvas' : 'Not submitted') + (item.graded ? ' · Graded' : '') + (item.completionOverride !== null ? ' · Manual status' : ''))),
+          el('div', {}, el('a', {class: 'title', href: item.url}, item.title), el('div', {class: 'meta'}, item.course)),
           el('div', {class: 'deadline'}, formatDate(item.effectiveDue), el('small', {}, item.dueOverride ? 'Personal deadline' : 'Canvas deadline')),
           el('button', {class: 'edit', 'aria-label': 'Edit ' + item.title, onclick: () => edit(item)}, 'Edit'));
     checkbox.addEventListener('change', async () => {
@@ -303,8 +325,6 @@
     if (selected.length) agenda.append(...selected.map(taskRow));
     else agenda.append(el('p', {class: 'meta'}, 'No matching tasks due this day.'));
     pageContent.append(controls, grid, agenda);
-    const undated = items.filter(item => !item.effectiveDue);
-    if (undated.length) pageContent.append(el('section', {class: 'agenda'}, el('h2', {}, 'No deadline'), ...undated.map(taskRow)));
   }
   async function readConversation(id) {
     const version = ++conversationVersion;
@@ -352,7 +372,7 @@
     const error = el('p', {role: 'alert'});
     const save = el('button', {class: 'quiet primary', type: 'submit'}, 'Save changes');
     const form = el('form', {}, el('h2', {id: 'edit-heading'}, item.title), el('p', {}, item.course),
-      el('p', {class: 'source-status'}, 'Canvas deadline: ' + formatDate(item.canvasDue) + '. ' + (item.submitted ? 'Submitted.' : 'Not submitted.') + ' Grades do not affect completion.'),
+      el('p', {class: 'source-status'}, 'Canvas deadline: ' + formatDate(item.canvasDue)),
       el('label', {class: 'field'}, 'Personal deadline (this laptop’s time zone)', due),
       el('button', {class: 'reset', type: 'button', onclick: () => {follow = true; dirtyDue = false; due.value = ''; error.textContent = 'Will follow the Canvas deadline when saved.';}}, 'Follow Canvas deadline'),
       el('p', {}, 'Leave the deadline empty to remove it personally. Canvas itself is never changed.'),
@@ -388,5 +408,5 @@
     }
   });
   render();
-  if (Object.hasOwn(routePages, location.pathname.replace(/\/$/, '') || '/')) open();
+  if (currentRoutePage() && !originalMode()) open();
 })();
