@@ -142,7 +142,8 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     await page.getByRole('button', {name: /^Edit /}).click();
     await page.getByRole('button', {name: 'Follow Canvas deadline', exact: true}).click();
     await page.getByRole('button', {name: 'Save changes'}).click();
-    await page.getByText('Canvas deadline', {exact: true}).waitFor();
+    await page.getByRole('dialog', {name: /Essay/}).waitFor({state: 'detached'});
+    assert.equal(await page.locator('.deadline small').count(), 0, 'Canvas deadlines show their date without a redundant tag');
     await page.emulateMedia({colorScheme: 'dark', reducedMotion: 'reduce'});
     assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#171e1a');
     await page.setViewportSize({width: 390, height: 844});
@@ -201,6 +202,8 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.equal(await page.locator('aside').getByText('Original Canvas').count(), 0);
     assert.equal(await page.locator('footer,.sidebar-note').count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Tasks', exact: true}).count(), 1);
+    assert.equal(await page.getByRole('img', {name: 'Actually Better Canvas', exact: true}).count(), 1, 'wordmark has an accessible brand name');
+    assert.equal(await page.locator('.brand-name').textContent(), 'canvas');
     assert.equal(await page.locator('#canvas-local-root .stats').count(), 0, 'task summary counters are removed');
     assert.deepEqual(await page.locator('.row .meta').allTextContents(), ['English', 'Math'], 'assignments only show their course, not redundant status tags');
     assert.equal(await page.getByRole('tab').count(), 2);
@@ -239,6 +242,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Personal deadline task']);
     await page.getByRole('button', {name: 'Calendar', exact: true}).click();
     assert.equal(await page.locator('.calendar-day[aria-pressed=true] .day-count').textContent(), '1');
+    assert.equal(await page.locator('.calendar-day[aria-pressed=true]').evaluate(node => getComputedStyle(node).boxShadow), 'none', 'selected calendar day has no border-like shadow');
     assert.deepEqual(await page.locator('.agenda .title').allTextContents(), ['Personal deadline task'], 'calendar follows personal deadline, not Canvas date');
     await assertPlainTaskRow(page);
     assert.equal(await page.getByRole('heading', {name: 'No deadline', exact: true}).count(), 0);

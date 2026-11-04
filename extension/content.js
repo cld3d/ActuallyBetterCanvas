@@ -19,6 +19,8 @@
     @media(prefers-reduced-motion:no-preference){.workspace:not([hidden]) main{animation:enter .3s ease-out}.select-options:not([hidden]),dialog[open]{animation:enter .18s ease-out}.tabs button[aria-selected=true]:after{animation:enter .18s ease-out}.skeleton>div{animation:breathe 1.4s ease-in-out infinite}}
     /* Hide scrollbars only inside this Shadow DOM; preserve normal scrolling. */
     *{scrollbar-width:none}*::-webkit-scrollbar{display:none}
+    .brand{display:grid;gap:0;padding:0 12px;line-height:1;letter-spacing:0;color:var(--ink)}.brand-prefix{font-size:12px;font-weight:450;letter-spacing:-.015em;color:var(--muted);margin-bottom:5px}.brand-prefix strong{font-weight:650;color:var(--accent)}.brand-name{font-size:35px;font-weight:750;line-height:1.05;letter-spacing:-.065em}
+    .calendar-day[aria-pressed=true]{box-shadow:none}
     /* Task rows are content, not clickable cards: keep dividers straight and surfaces still. */
     .row,.row:hover{border-radius:0;background:transparent;transition:opacity .2s}
     /* Tab hover feedback belongs to the label, not a filled button surface. */
@@ -32,6 +34,7 @@
     *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
     @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:12px}nav .selected:before{display:none}main{padding:22px}.topbar{margin-bottom:28px;align-items:flex-start;gap:8px}.topbar>span{max-width:45%;font-size:11px}.topbar div{flex-wrap:wrap;justify-content:flex-end}.topbar .quiet{font-size:11px;padding:8px}.row{grid-template-columns:26px minmax(0,1fr) 46px;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:300px}.reader{padding:20px}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:auto;bottom:8px;right:auto;left:5px}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
+    @media(max-width:850px){.brand{display:flex;align-items:baseline;gap:8px;padding:0}.brand-prefix{margin:0}.brand-name{font-size:24px}}
   `;
   shadow.append(style);
   function el(tag, attrs = {}, ...children) {
@@ -101,7 +104,9 @@
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
     tabs, toolbar, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
-    el('aside', {}, el('div', {class: 'brand'}, 'ACTUALLY BETTER', el('div', {class: 'local'}, 'CANVAS')), navigation),
+    el('aside', {}, el('div', {class: 'brand', role: 'img', 'aria-label': 'Actually Better Canvas'},
+      el('span', {class: 'brand-prefix', 'aria-hidden': 'true'}, 'actually ', el('strong', {}, 'better')),
+      el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation),
     main);
   shadow.append(launcher, workspace);
   let inertElements = [];
@@ -279,7 +284,7 @@
     checkbox.checked = item.completed; checkbox.disabled = pending.has(item.uid);
     const row = el('article', {class: 'row', 'data-uid': item.uid, 'data-completed': String(item.completed)}, checkbox,
           el('div', {}, el('a', {class: 'title', href: item.url}, item.title), el('div', {class: 'meta'}, item.course)),
-          el('div', {class: 'deadline'}, formatDate(item.effectiveDue), el('small', {}, item.dueOverride ? 'Personal deadline' : 'Canvas deadline')),
+          el('div', {class: 'deadline'}, formatDate(item.effectiveDue), item.dueOverride ? el('small', {}, 'Personal deadline') : null),
           el('button', {class: 'edit', 'aria-label': 'Edit ' + item.title, onclick: () => edit(item)}, 'Edit'));
     checkbox.addEventListener('change', async () => {
       pending.add(item.uid); checkbox.disabled = true; row.classList.add('completing');
