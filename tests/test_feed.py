@@ -32,6 +32,53 @@ class FeedTests(unittest.TestCase):
     def test_grade_does_not_complete(self):
         self.assertFalse(self.sync(graded=True)['completed'])
 
+    def test_requested_course_colors_and_lab_aliases(self):
+        expected = [
+            ('Philosophy', '#7cb342'), ('HU2700 R01', '#7cb342'),
+            ('Chemistry', '#0b8043'), ('CH1150', '#0b8043'), ('CH1151 Lab', '#0b8043'),
+            ('Calculus II Lab', '#039be5'), ('MA2160 R07', '#039be5'),
+            ('ENG1101', '#3f51b5'), ('Spat Viz', '#3f51b5'), ('Spatial Mastery', '#3f51b5'),
+            ('PH1100', '#c0ca33'), ('Physics', '#c0ca33'),
+            ('HON1150', '#7986cb'), ('Honors', '#7986cb'), ('Unknown course', '#616161'),
+        ]
+        for course, color in expected:
+            with self.subTest(course=course):
+                self.assertEqual(self.sync(course=course)['color'], color)
+
+    def test_class_color_changes_include_labs_and_survive_sync(self):
+        items = [dict(self.item, course='Chemistry', courseId='34'), dict(self.item, id='13', course='Chem lab', courseId='35')]
+        request = dict(action='sync', origin='https://school.instructure.com', user='7', assignments=items)
+        initial = feed.handle(request, False)['state']['assignments']
+        uid = next(r['uid'] for r in initial if r['id'] == '12')
+        feed.handle(dict(action='update', uid=uid, patch={'courseColor': '#aAbBcC', 'completion': False, 'personalDue': '2026-11-10T12:00:00Z'}), False)
+        rows = feed.handle(request, False)['state']['assignments']
+        self.assertEqual([r['color'] for r in rows], ['#aabbcc', '#aabbcc'])
+        edited = next(r for r in rows if r['id'] == '12')
+        self.assertIs(edited['completionOverride'], False)
+        self.assertEqual(edited['effectiveDue'], '2026-11-10T12:00:00+00:00')
+        feed.handle(dict(action='update', uid=edited['uid'], patch={'courseColor': None}), False)
+        self.assertEqual({r['color'] for r in feed.handle({'action':'list'}, False)['state']['assignments']}, {'#0b8043'})
+
+    def test_bad_color_rolls_back_other_edits(self):
+        original = self.sync()
+        with self.assertRaises(ValueError):
+            self.update({'courseColor': 'red; anything', 'completion': True})
+        self.assertEqual(feed.handle({'action':'list'}, False)['state']['assignments'][0], original)
+
+    def test_additive_color_table_preserves_old_overrides(self):
+        import sqlite3
+        self.sync()
+        self.update({'completion': False, 'personalDue': None, 'notes': 'Keep me'})
+        import contextlib
+        with contextlib.closing(sqlite3.connect(feed.DATA / 'assignments.sqlite3')) as db, db:
+            db.execute('DROP TABLE course_colors')  # Synthetic pre-color database.
+        restored = feed.handle({'action':'list'}, False)['state']['assignments'][0]
+        self.assertIs(restored['completionOverride'], False)
+        self.assertTrue(restored['dueOverride'])
+        self.assertIsNone(restored['effectiveDue'])
+        self.assertEqual(restored['notes'], 'Keep me')
+        self.assertEqual(restored['color'], '#616161')
+
     def test_submission_and_sticky_reopen(self):
         self.assertTrue(self.sync(submitted=True)['completed'])
         self.assertFalse(self.update({'completion': False})['completed'])

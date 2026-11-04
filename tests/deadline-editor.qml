@@ -20,6 +20,16 @@ ShellRoot {
         return null
       }
       var date = find(editor,"taskDueDateField"), time = find(editor,"taskDueTimeField")
+      var classColor = find(editor,"taskClassColorField")
+      check(classColor && classColor.text === "#616161","Color picker must load the class color, with gray fallback")
+      classColor.text = "#7cb342"
+      check(editor.collect().classColor === "#7cb342","Saving a class color must include it in the local write")
+      var preset = find(editor,"taskClassColorPreset")
+      check(preset && preset.options.length === 7,"Named class palette must be available")
+      preset.changed("#0b8043")
+      check(editor.collect().classColor === "#0b8043","Choosing a palette color must update the write")
+      classColor.text = ""
+      check(editor.collect().classColor === "","Clearing a class color must restore its default")
       check(date && time,"Datebook must expose separate date and time fields")
       check(date.text === Qt.formatDate(new Date(editor.draft.dueAt),"yyyy-MM-dd"),"Date must load in local time")
       check(time.text === Qt.formatTime(new Date(editor.draft.dueAt),"h:mm AP"),"Time must load in local time with AM/PM")

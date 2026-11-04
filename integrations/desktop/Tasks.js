@@ -68,7 +68,7 @@ function indexByDay(data, color, use24h) {
     var endOfDay = !!date && date.getHours() === 23 && date.getMinutes() === 59
     var row = Object.assign({}, task, {
       kind: "task", allDay: !date || endOfDay, deadline: !!date, endOfDay: endOfDay,
-      color: color || "#9ca3af", calendarName: task.listName || "Tasks", declined: false,
+      color: /^#[0-9a-f]{6}$/i.test(task.color || "") ? task.color : color || "#9ca3af", calendarName: task.listName || "Tasks", declined: false,
       taskTime: timeLabel(task, use24h), label: date ? "Due " + timeLabel(task, use24h) : "Task"
     })
     // A deadline is a point, not an invented work session. The grid supplies its visual footprint.

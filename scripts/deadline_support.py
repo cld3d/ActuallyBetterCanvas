@@ -72,6 +72,7 @@ def plan(plugins, pending):
             accepted = {baseline}
             if relative == 'blacksheep.calendar/Tasks.js':
                 accepted.add('fba49bc64c3ce663ed80eef53ce6f9f9cdbdc70e70f62067eb6ab72a7b5f1592')
+                accepted.add('dc2cb3534af6e2514894b5aac8129b1c4d3abc1c9daeba31d8f86481a27cbcbd')
             if relative == 'gavin.lock/Agenda.js':
                 accepted.add('6e772906992ff98ac24ac2de60659a39a606879f3ffc9f8bb37544d999350c05')
                 accepted.add('a34794cb695b81ae811a74577582104632a3e11f3dadee8e72f114725380bb22')

@@ -77,6 +77,8 @@ def main():
         if 'Canvas Local deadlines v2' in text or 'Canvas Local deadline editor v2' in text or 'Canvas Local deadline editor v3' in text:
             continue
         for before, after in edits:
+            if 'Canvas Local class colors' in text and before.startswith('  function saveTask(task)'):
+                continue
             if after in text:
                 continue
             if text.count(before) != 1:
@@ -88,6 +90,8 @@ def main():
     pending = plan(PLUGINS, dict(pending))
     from twelve_hour_support import plan as plan_twelve_hour
     pending = plan_twelve_hour(PLUGINS, dict(pending))
+    from color_support import plan as plan_colors
+    pending = plan_colors(PLUGINS, dict(pending))
     backup = Path.home() / '.local/state/canvas-local/backups' / datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     # Backups stay outside watched plugin directories (which trigger shell reloads).
     for path, text in pending:

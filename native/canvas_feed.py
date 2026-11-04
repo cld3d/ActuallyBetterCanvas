@@ -5,6 +5,7 @@ import contextlib
 import fcntl
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import struct
@@ -17,6 +18,26 @@ from urllib.parse import urlsplit
 DATA = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'canvas-local'
 CACHE = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache')) / 'canvas-local'
 CALENDAR = Path.home() / '.config/omarchy/plugins/blacksheep.calendar/scripts'
+
+# Google Calendar's named class colors. Overrides are local, never Canvas writes.
+COURSE_COLORS = {
+    'philosophy': '#7cb342', 'chemistry': '#0b8043', 'calculus': '#039be5',
+    'engineering': '#3f51b5', 'physics': '#c0ca33', 'honors': '#7986cb',
+}
+DEFAULT_COURSE_COLOR = '#616161'
+
+
+def color_group(course, course_id):
+    text = str(course).casefold()
+    patterns = [
+        ('philosophy', r'\b(?:philosophy|hu\s*2700)\b'),
+        ('chemistry', r'\b(?:chem(?:istry)?|ch\s*115[01])\b'),
+        ('calculus', r'\b(?:calc(?:ulus)?|ma\s*2160)\b'),
+        ('engineering', r'\b(?:engineering|eng\s*1101|spat(?:ial)?\s*(?:viz|visualization|mastery))\b'),
+        ('physics', r'\b(?:physics|ph\s*1100)\b'),
+        ('honors', r'\b(?:honors|hon\s*1150)\b'),
+    ]
+    return next((group for group, pattern in patterns if re.search(pattern, text)), 'course:' + str(course_id))
 
 
 def now():
@@ -64,6 +85,7 @@ def database():
                 completion INTEGER, notes TEXT NOT NULL DEFAULT '',
                 active INTEGER NOT NULL DEFAULT 1, updated TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS course_colors (class_group TEXT PRIMARY KEY, color TEXT NOT NULL);
         ''')
         try:
             yield db
@@ -78,6 +100,7 @@ def meta(db, key, value):
 def snapshot(db):
     metadata = {r['key']: json.loads(r['value']) for r in db.execute('SELECT * FROM metadata')}
     rows = []
+    colors = dict(db.execute('SELECT class_group,color FROM course_colors'))
     for row in db.execute('SELECT * FROM assignments WHERE active=1'):
         item = json.loads(row['source'])
         item.update(uid=row['uid'], personalDue=row['personal_due'], dueOverride=bool(row['due_override']),
@@ -85,6 +108,8 @@ def snapshot(db):
                     notes=row['notes'], updated=row['updated'])
         item['effectiveDue'] = row['personal_due'] if row['due_override'] else item['canvasDue']
         item['completed'] = bool(row['completion']) if row['completion'] is not None else item['submitted']
+        item['colorGroup'] = color_group(item['course'], item['courseId'])
+        item['color'] = colors.get(item['colorGroup'], COURSE_COLORS.get(item['colorGroup'], DEFAULT_COURSE_COLOR))
         rows.append(item)
     rows.sort(key=lambda a: (a['effectiveDue'] or '9999', a['course'], a['title']))
     return dict(schema=1, generatedAt=now(), assignments=rows, **metadata)
@@ -96,6 +121,7 @@ def desktop_feed(state):
         due = datetime.fromisoformat(a['effectiveDue']).astimezone() if a['effectiveDue'] else None
         tasks.append(dict(uid=a['uid'], id=a['uid'], account='Canvas Local', provider='canvas-local',
                           taskList='assignments', listName=a['course'], title=a['title'],
+                          courseId=a['courseId'], colorGroup=a['colorGroup'], color=a['color'],
                           due=due.strftime('%Y-%m-%d') if due else '', dueAt=a['effectiveDue'],
                           canvasDue=a['canvasDue'], personalDue=a['personalDue'],
                           dueOverride=a['dueOverride'], completionOverride=a['completionOverride'],
@@ -166,9 +192,19 @@ def handle(request, publish=True):
             if not db.execute('SELECT 1 FROM assignments WHERE uid=? AND active=1', (uid,)).fetchone():
                 raise ValueError('Assignment not found in the active feed.')
             patch = request['patch']
-            if not isinstance(patch, dict) or set(patch) - {'personalDue', 'followCanvasDue', 'completion', 'notes'}:
+            if not isinstance(patch, dict) or set(patch) - {'personalDue', 'followCanvasDue', 'completion', 'notes', 'courseColor'}:
                 raise ValueError('Unknown assignment edit.')
             with db:
+                if 'courseColor' in patch:
+                    value = patch['courseColor']
+                    if value is not None and (not isinstance(value, str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', value)):
+                        raise ValueError('Class color must be a #RRGGBB color, or null to restore its default.')
+                    source = json.loads(db.execute('SELECT source FROM assignments WHERE uid=?', (uid,)).fetchone()[0])
+                    group = color_group(source['course'], source['courseId'])
+                    if value is None:
+                        db.execute('DELETE FROM course_colors WHERE class_group=?', (group,))
+                    else:
+                        db.execute('INSERT OR REPLACE INTO course_colors VALUES (?,?)', (group, value.lower()))
                 if 'personalDue' in patch:
                     db.execute('UPDATE assignments SET personal_due=?,due_override=1 WHERE uid=?', (instant(patch['personalDue']), uid))
                 if patch.get('followCanvasDue') is True:

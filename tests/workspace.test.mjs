@@ -228,7 +228,8 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.equal(await page.locator('aside').getByText('Original Canvas').count(), 0);
     assert.equal(await page.locator('footer,.sidebar-note').count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Tasks', exact: true}).count(), 1);
-    assert.equal(await page.getByRole('img', {name: 'Actually Better Canvas', exact: true}).count(), 1, 'wordmark has an accessible brand name');
+    assert.equal(await page.getByRole('img', {name: 'Canvas', exact: true}).count(), 1, 'wordmark is simply Canvas');
+    assert.equal(await page.locator('.brand-prefix').count(), 0, 'wordmark must not contain the Actually Better prefix');
     assert.equal(await page.locator('.brand-name').textContent(), 'canvas');
     assert.equal(await page.locator('#canvas-local-root .stats').count(), 0, 'task summary counters are removed');
     assert.deepEqual(await page.locator('.row .meta').allTextContents(), ['English', 'Math'], 'assignments only show their course, not redundant status tags');

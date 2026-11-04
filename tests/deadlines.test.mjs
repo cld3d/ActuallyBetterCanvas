@@ -15,6 +15,13 @@ process.env.TZ = 'America/Toronto';
 const now = new Date('2026-11-04T15:00:00-05:00');
 const timed = (uid, at, extra = {}) => ({uid, title:uid, account:'Canvas Local', taskList:'assignments', listName:'Course', due:'2026-11-04', dueAt:at, status:'needsAction', ...extra});
 
+test('class colors survive indexing for both timed and end-of-day deadline markers', () => {
+  for (const time of ['16:30', '23:59']) {
+    const task = timed('colored', `2026-11-04T${time}:00-05:00`, {color:'#7cb342'});
+    assert.equal(Tasks.indexByDay({tasks:[task]}, '#abcdef')['2026-11-04'][0].color, '#7cb342');
+  }
+});
+
 test('same-day deadlines become overdue at the exact instant; date-only tasks do not', () => {
   const earlier = timed('earlier', '2026-11-04T14:59:00-05:00');
   const later = timed('later', '2026-11-04T15:01:00-05:00');

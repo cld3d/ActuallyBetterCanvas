@@ -26,7 +26,7 @@ def append_to(output):
     output['tasks'].extend(t for t in data.get('tasks', []) if t.get('status') != 'completed')
 
 
-def update(uid, title=None, due=None, notes=None, completed=None):
+def update(uid, title=None, due=None, notes=None, completed=None, color=None):
     from . import sync
     data = feed() or {}
     item = next((t for t in data.get('tasks', []) if t['uid'] == uid), None)
@@ -35,6 +35,8 @@ def update(uid, title=None, due=None, notes=None, completed=None):
     if title is not None and title != item['title']:
         raise RuntimeError('Assignment titles come from Canvas and cannot be edited here.')
     patch = {}
+    if color is not None:
+        patch['courseColor'] = color or None
     if due is not None:
         if due:
             if len(due) < 16:
