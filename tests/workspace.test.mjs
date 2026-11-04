@@ -7,6 +7,19 @@ import {browserPath} from './environment.mjs';
 const content = await readFile(new URL('../extension/content.js', import.meta.url), 'utf8');
 
 const executablePath = browserPath();
+async function assertPlainTaskRow(page) {
+  const row = page.locator('.row:visible').first();
+  await page.locator('.topbar').hover();
+  const before = await row.evaluate(node => {
+    const style = getComputedStyle(node);
+    return {background: style.backgroundColor, radius: style.borderRadius, transition: style.transitionProperty};
+  });
+  assert.equal(before.radius, '0px', 'task dividers have straight ends');
+  assert.equal(before.transition, 'opacity', 'task rows do not animate background colors');
+  await row.hover();
+  assert.equal(await row.evaluate(node => getComputedStyle(node).backgroundColor), before.background, 'hovering task content leaves the row background unchanged');
+}
+
 test('workspace edits, completion overrides, source navigation, mobile and dark theme', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true,
     args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
@@ -123,6 +136,10 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     await page.goto('https://canvas.test/dashboard');
     await page.addScriptTag({content});
     await page.getByRole('link', {name: 'Personal deadline task', exact: true}).waitFor();
+    await assertPlainTaskRow(page);
+    await page.emulateMedia({colorScheme: 'dark'});
+    await assertPlainTaskRow(page);
+    await page.emulateMedia({colorScheme: 'light'});
     assert.equal(await page.locator('select').count(), 0, 'no OS-native dropdowns');
     assert.equal(await page.locator('aside').getByText('Original Canvas').count(), 0);
     assert.equal(await page.locator('footer,.sidebar-note').count(), 0);
@@ -154,6 +171,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     await page.getByRole('button', {name: 'Calendar', exact: true}).click();
     assert.equal(await page.locator('.calendar-day[aria-pressed=true] .day-count').textContent(), '1');
     assert.deepEqual(await page.locator('.agenda .title').allTextContents(), ['Personal deadline task'], 'calendar follows personal deadline, not Canvas date');
+    await assertPlainTaskRow(page);
     assert.equal(await page.getByRole('heading', {name: 'No deadline', exact: true}).count(), 0);
     assert.equal(await page.getByRole('link', {name: 'Math task', exact: true}).count(), 0, 'undated work stays out of the calendar');
     await page.getByRole('button', {name: 'Next month'}).click();
