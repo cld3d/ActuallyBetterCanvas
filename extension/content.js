@@ -216,12 +216,17 @@
     finally {loading = false; syncButton.disabled = false;}
   }
   const formatDate = value => value ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : 'No deadline';
-  function bucket(item) {
+  function bucket(item, today = new Date()) {
     if (item.completed) return 'Completed';
     if (!item.effectiveDue) return 'No deadline';
-    const due = new Date(item.effectiveDue), today = new Date();
+    const due = new Date(item.effectiveDue);
     if (due < today) return 'Overdue';
     if (due.toDateString() === today.toDateString()) return 'Today';
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    if (due.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+    // Use local calendar boundaries, not fixed 24-hour offsets, to handle DST.
+    const nextMonday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + ((8 - today.getDay()) % 7 || 7));
+    if (due < nextMonday) return 'This week';
     return 'Coming up';
   }
   function render() {
@@ -251,7 +256,7 @@
       list.append(el('div', {class: 'empty'}, state.assignments.length ? 'Nothing here. Try another filter, or enjoy the breathing room.' : 'No assignments cached yet. Connect your Canvas website from the extension icon, then sync.'));
       return;
     }
-    for (const group of ['Overdue', 'Today', 'Coming up', 'No deadline', 'Completed']) {
+    for (const group of ['Overdue', 'Today', 'Tomorrow', 'This week', 'Coming up', 'No deadline', 'Completed']) {
       const members = items.filter(a => bucket(a) === group);
       if (!members.length) continue;
       list.append(el('h2', {class: 'group-title'}, group + ' · ' + members.length));

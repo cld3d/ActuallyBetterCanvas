@@ -7,6 +7,28 @@ import {browserPath} from './environment.mjs';
 const content = await readFile(new URL('../extension/content.js', import.meta.url), 'utf8');
 
 const executablePath = browserPath();
+test('task sections render tomorrow and this week in chronological group order', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({timezoneId: 'America/New_York'});
+    await page.clock.setFixedTime(new Date('2026-11-04T12:00:00-05:00'));
+    await page.setContent('<button>Original Canvas</button>');
+    await page.evaluate(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      const assignments = [null, '2026-11-09T00:00:00-05:00', '2026-11-08T23:59:00-05:00', '2026-11-05T23:59:00-05:00', '2026-11-04T23:59:00-05:00', '2026-11-04T11:00:00-05:00'].map((effectiveDue, i) => ({
+        uid: 'task-' + i, title: 'Task ' + i, course: 'English', effectiveDue, completed: false, completionOverride: null, dueOverride: false, url: 'https://canvas.test/courses/34/assignments/' + i
+      }));
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments}})}};
+    });
+    await page.addScriptTag({content});
+    await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
+    await page.getByRole('heading', {name: 'Tomorrow · 1', exact: true}).waitFor();
+    assert.deepEqual(await page.locator('.group-title').allTextContents(), ['Overdue · 1', 'Today · 1', 'Tomorrow · 1', 'This week · 1', 'Coming up · 1', 'No deadline · 1']);
+    assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Task 5', 'Task 4', 'Task 3', 'Task 2', 'Task 1', 'Task 0']);
+  } finally {await browser.close();}
+});
+
 test('pending course loads keep cached content visible without placeholder bars', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
