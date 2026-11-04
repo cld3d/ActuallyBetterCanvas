@@ -30,7 +30,23 @@ test('sidebar URLs survive refresh, support history, and return to matching Orig
       assert.equal(await page.locator('nav [aria-current="page"]').textContent(), name, 'refresh restores the selected sidebar page');
     }
     await page.locator('#canvas-local-root').evaluate(node => {node.dataset.marker = 'same-document';});
-    for (const name of ['Tasks', 'Courses', 'Calendar', 'Inbox']) await page.getByRole('button', {name, exact: true}).click();
+    let previousIndicator = await page.locator('.sidebar-indicator').getAttribute('style');
+    for (const name of ['Tasks', 'Courses', 'Calendar', 'Inbox']) {
+      const button = page.getByRole('button', {name, exact: true});
+      await button.click();
+      const active = await button.evaluate(async node => {
+        await Promise.all(node.getAnimations().map(animation => animation.finished));
+        const style = getComputedStyle(node);
+        return {background: style.backgroundColor, weight: style.fontWeight};
+      });
+      assert.equal(active.background, 'rgba(0, 0, 0, 0)', 'selected sidebar item has no background, even while hovered');
+      assert.ok(Number(active.weight) >= 600, 'selected sidebar item stays bold');
+      const indicator = await page.locator('.sidebar-indicator').getAttribute('style');
+      assert.notEqual(indicator, previousIndicator, 'the shared sidebar rule moves between pages');
+      previousIndicator = indicator;
+    }
+    assert.equal(await page.locator('.sidebar-indicator').count(), 1);
+    assert.equal(await page.locator('.sidebar-indicator').evaluate(node => getComputedStyle(node).transitionProperty), 'transform');
     const historyLength = await page.evaluate(() => history.length);
     await page.getByRole('button', {name: 'Inbox', exact: true}).click();
     assert.equal(await page.evaluate(() => history.length), historyLength, 'reselecting the active page does not add duplicate history');

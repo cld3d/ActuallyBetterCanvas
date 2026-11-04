@@ -23,6 +23,8 @@
     .tabs button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}.tabs button:focus-visible{background:transparent;text-decoration:underline;text-underline-offset:4px}
     /* One shared underline moves between tabs instead of remounting on each selection. */
     .tabs{position:relative}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    /* Sidebar selection uses one moving rule, without a filled active surface. */
+    nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:3px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     /* Keep keyboard location visible without the browser's large focus rectangles. */
     *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -85,6 +87,14 @@
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
   const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
+  const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
+  navigation.append(sidebarIndicator);
+  function positionSidebarIndicator() {
+    const selected = navigation.querySelector('[aria-current="page"]');
+    if (!selected?.offsetHeight) return;
+    sidebarIndicator.style.transform = `translate(${selected.offsetLeft}px, ${selected.offsetTop + 12}px) scaleY(${Math.max(0, selected.offsetHeight - 24)})`;
+  }
+  new ResizeObserver(positionSidebarIndicator).observe(navigation);
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
     tabs, toolbar, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
@@ -116,6 +126,7 @@
     for (const [node] of inertElements) node.inert = true;
     opened = true; workspace.hidden = false; launcher.hidden = true;
     positionTabIndicator();
+    positionSidebarIndicator();
     main.focus();
     refresh();
     loadRemote();
@@ -212,10 +223,11 @@
   }
   function render() {
     main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'}[page]);
-    for (const button of navigation.children) {
+    for (const button of navigation.querySelectorAll('[data-page]')) {
       button.classList.toggle('selected', button.dataset.page === page);
       if (button.dataset.page === page) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
     }
+    positionSidebarIndicator();
     for (const tab of tabs.querySelectorAll('[role="tab"]')) {const selected = tab.id === 'tab-' + view; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;}
     taskPanel.setAttribute('aria-labelledby', 'tab-' + view);
     for (const tab of tabs.querySelectorAll('[role="tab"]')) tab.setAttribute('aria-controls', page === 'calendar' ? 'calendar-panel' : 'task-panel');

@@ -254,6 +254,12 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
         assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node.shadowRoot.activeElement).outlineStyle), 'none', `${name} has no rectangular keyboard focus outline`);
       }
       assert.equal(await page.locator('.tab-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables underline sliding');
+      assert.equal(await page.locator('.sidebar-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables sidebar sliding');
+      assert.equal(await page.locator('nav').evaluate(node => {
+        const selected = node.querySelector('[aria-current="page"]');
+        const line = new DOMMatrix(getComputedStyle(node.querySelector('.sidebar-indicator')).transform);
+        return line.m41 === selected.offsetLeft && line.m42 === selected.offsetTop + 12;
+      }), true, 'the sidebar rule follows the selected item after mobile resizing');
     }
     for (const [path, title] of [['courses', 'Courses'], ['calendar', 'Calendar'], ['conversations', 'Inbox']]) {
       await page.goto('https://canvas.test/' + path);
