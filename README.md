@@ -1,0 +1,72 @@
+# Canvas Local
+
+A Chromium extension that adds a focused workspace **inside Canvas**, backed by a private local SQLite assignment store. Datebook and the authenticated lock-screen task controls share the same published feed. No hosted backend, task-platform account, Canvas API token, or always-open tab.
+
+## Connect on this laptop
+
+1. Run `python3 scripts/install.py` (already run during initial setup).
+2. Open **`brave://extensions`**, enable **Developer mode**, choose **Load unpacked**, and select `/home/gavin/Projects/Canvas/extension`.
+3. Open the extension's toolbar icon, enter your Canvas website (for example `https://school.instructure.com`), and choose **Connect Canvas**. Grant access to that site only. Be signed into Canvas in the same Brave profile.
+4. Reload an open Canvas page. The dashboard opens the workspace automatically; **My workspace** opens it elsewhere. **Original Canvas** returns to the untouched page. Assignment links open the original assignment/submission page.
+
+The browser must be running for new Canvas data to arrive. Polling is approximately every two minutes, with **Sync now** available. Browser suspension, school authentication policies, or third-party cookie restrictions can delay or block session-based fetching; the first real sign-in must be verified. An authentication failure preserves the last good snapshot and exposes an error. No browser preferences or background-mode setting are changed.
+
+## Behavior
+
+- Exact UTC deadline instants are stored and displayed in the laptop's local time zone.
+- Personal deadlines override Canvas deadlines without editing Canvas. An explicitly empty personal deadline means **no personal deadline**. **Follow Canvas deadline** removes that override.
+- Only explicit submission evidence (`submitted_at`, `submitted`, or `pending_review`) completes an assignment automatically. A grade, score (including zero), attempt count, or excused flag does **not**.
+- Manual completion/reopening persists across every sync. **Follow Canvas submission status** clears the manual override. Local completion never submits, un-submits, or changes grades.
+- Sync fetches all pages for active student courses and their assignments. A failed course/page aborts the snapshot, preserving the prior feed. Disappeared assignments are archived rather than deleted, so overrides survive if they return.
+- One Canvas identity per installation. Unexpected account/site changes are rejected rather than mixing accounts. There is intentionally no destructive reset UI yet.
+- Existing Google calendars/tasks stay intact; Canvas tasks are added alongside them. Canvas assignments cannot be renamed or deleted from Datebook. Datebook has separate personal date (`YYYY-MM-DD`) and time (`h:mm AM/PM`, local time) fields, plus notes; clearing overrides and reopening completed work are available inside Canvas.
+- Timed deadlines appear at their due time in Datebook's day/week grids, with date-only tasks remaining in the all-day strip. Markers represent deadline points, not fabricated work sessions. Month chips, task lists, and the lock screen show exact times. Datebook displays and edits times in 12-hour AM/PM format, including calendar event editors; internal timestamp formats stay unchanged.
+- Timed tasks become overdue when their deadline passes, not at midnight. Date-only Google tasks remain date-only and become overdue the next day. Sorting uses exact instants rather than course/provider order; overdue tasks remain visible until completed. Displayed task dates are derived from the current local time zone rather than trusting a previously cached date.
+- Tasks due at local **11:59 PM** appear in Datebook's top/all-day strip as end-of-day work. This is display-only: their true deadline, time label, editor value, sync data, and overdue behavior remain unchanged. Other timed tasks retain their hour-grid position.
+
+## Local architecture
+
+`Canvas session → extension worker → native-messaging host → SQLite → feed.json → Datebook events.json → Datebook + lock screen`
+
+- `extension/`: Manifest V3, site-scoped optional permission, dynamically registered content script, isolated Shadow DOM workspace, background polling.
+- `native/canvas_feed.py`: Python standard library only. Native-message framing and CLI, transactional SQLite writes, persistent overrides, atomic feed publication, and Datebook republishing.
+- `integrations/canvas_local.py`: Datebook adapter; routes Canvas task edits to the local store and preserves Google's existing behavior.
+- `scripts/integrate_desktop.py`: narrowly matched, idempotent edits to this machine's user-owned Datebook and lock plugins, with backups outside watched plugin folders. Stops before edits if expected source differs. Not a general installer for arbitrary Datebook versions.
+- `scripts/deadline_support.py` and `integrations/desktop/`: time-aware desktop task logic and backed-up editor/grid integration. Installation does not rewrite assignment data or completion flags.
+
+Storage (honors XDG data/cache directories):
+
+```
+~/.local/share/canvas-local/assignments.sqlite3
+~/.cache/canvas-local/feed.json
+~/.config/canvas-local/integration.json
+~/.local/state/canvas-local/backups/<timestamp>/
+```
+
+Database and feed files are private (`0600`, enclosing new directories `0700`). Native messaging is allowlisted to the extension's stable ID; no localhost HTTP listener, cloud service, stored Canvas credentials, or page-accessible local API. Canvas fetches use GET only. The content script constructs text nodes rather than injecting assignment HTML.
+
+Do not move this project after installing without rerunning both install scripts: the native manifest and Datebook adapter configuration point to its absolute path. Keep the public `key` in `manifest.json` stable; it determines the extension ID. It is not a secret.
+
+## Tests
+
+```sh
+python3 -B -m unittest discover -s tests -v
+npm ci
+npm test
+bash ~/.config/omarchy/plugins/blacksheep.calendar/tests/run.sh
+```
+
+The workspace interaction test uses the installed Brave executable in an isolated headless process, with mocked Canvas/native responses; it does not open or modify your regular Brave profile. `tests/lock-canvas.qml` additionally checks Canvas completion against the installed lock-screen components in an offscreen Quickshell process.
+
+CLI examples:
+
+```sh
+python3 native/canvas_feed.py list
+python3 native/canvas_feed.py update '<uid>' --patch '{"completion":false}'
+python3 native/canvas_feed.py update '<uid>' --patch '{"completion":null}'
+python3 native/canvas_feed.py update '<uid>' --patch '{"personalDue":"2026-11-09T17:00:00-05:00"}'
+```
+
+## Uninstall / rollback
+
+Remove the extension through Brave. Remove only `com.canvas_local.feed.json` from the relevant Brave `NativeMessagingHosts` directory to unregister the bridge. Restore the desktop files from the timestamped backup, remove the added `omcal/canvas_local.py` adapter, then republish Datebook's cache. Do not delete local assignment data unless you want to discard personal deadlines and completion history. Existing calendars and Google credentials are not modified.

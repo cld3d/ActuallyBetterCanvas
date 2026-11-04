@@ -1,0 +1,38 @@
+import QtQuick
+import Quickshell
+import "file:/home/gavin/.config/omarchy/plugins/blacksheep.calendar" as Calendar
+
+ShellRoot {
+  Calendar.TaskEditor {
+    id: editor
+    width: 500
+    draft: ({provider:"canvas-local", title:"Essay", due:"2026-11-08", dueAt:"2026-11-08T23:59:00Z", notes:"Keep this", editable:true, account:"Canvas Local", taskList:"assignments"})
+  }
+  Timer {
+    interval: 100
+    running: true
+    onTriggered: {
+      function check(value,message) {if (!value) throw new Error(message)}
+      function find(item,name) {
+        if (item.objectName === name) return item
+        var children = item.children || []
+        for (var i=0;i<children.length;i++) {var found=find(children[i],name);if(found)return found}
+        return null
+      }
+      var date = find(editor,"taskDueDateField"), time = find(editor,"taskDueTimeField")
+      check(date && time,"Datebook must expose separate date and time fields")
+      check(date.text === Qt.formatDate(new Date(editor.draft.dueAt),"yyyy-MM-dd"),"Date must load in local time")
+      check(time.text === Qt.formatTime(new Date(editor.draft.dueAt),"h:mm AP"),"Time must load in local time with AM/PM")
+      date.text = "2026-11-09"; time.text = "4:30 PM"
+      check(editor.collect().due === "2026-11-09 16:30","Saving must preserve both date and time")
+      check(editor.collect().notes === "Keep this","Notes must be preserved")
+      date.text = ""
+      check(editor.collect().due === "","Clearing the date must clear the personal deadline")
+      editor.draft = {provider:"google",title:"Date only",due:"2026-11-10",editable:true,account:"Personal",taskList:"tasks"}
+      check(time.visible === false,"Google Tasks must not pretend to support due times")
+      check(editor.collect().due === "2026-11-10","Google Tasks must remain date-only")
+      console.log("DEADLINE_EDITOR_PASS: separate date/time, local zone, save payloads, notes, clearing, and Google date-only compatibility")
+      Qt.quit()
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Canvas Local",
+  "description": "A focused Canvas workspace with private local assignments and exact personal deadlines.",
+  "version": "0.1.0",
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "nativeMessaging"
+  ],
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Canvas Local settings",
+    "default_popup": "options.html"
+  },
+  "options_page": "options.html",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzXMgU/KfroGa9X6uCf71QRoldEDtWiLq3l1qIswvpBS6YOXgy5CAAiCps8oj/WfyGyR2/l7t0Q6aZTAV9cubAZhjbEmT9Rvj3jqnGGJ/M0BFyvUAskU9WC+hz9YAoWkIX0NtWnQxlLtjaavuBj6cyTuSbKlalFrLtvPmsYw+meOBQLslZp+HEn6JMsUsH8KpuPfcWzSSdlN/E7XhbZhspr4RlBU9iIJqxU26DmnTWrmN2oyFknwwh6KNqBqLDMga24S70rjiTxSLrK+Du7wCuEWCansf/+ZfMnG3gGucAvtD1Kuo1QQbTso7gO67isyQDnHdDJ1OuS96ZUw/J7XS6wIDAQAB"
+}
