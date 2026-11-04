@@ -40,6 +40,8 @@
     return node;
   }
   const routePages = {'/': 'tasks', '/dashboard': 'tasks', '/courses': 'courses', '/calendar': 'calendar', '/conversations': 'inbox'};
+  const pagePaths = {tasks: '/dashboard', courses: '/courses', calendar: '/calendar', inbox: '/conversations'};
+  const sourceRoute = location.pathname + location.search;
   const currentRoutePage = () => routePages[location.pathname.replace(/\/$/, '') || '/'];
   // Tab-scoped and origin-scoped: choosing Original Canvas survives its page navigations.
   // Storage may be blocked by the browser; workspace controls must still work in that case.
@@ -92,6 +94,9 @@
   let inertElements = [];
   function close() {
     rememberMode('original');
+    // Workspace routing leaves the Canvas document underneath on its original route.
+    // Keep the overlay visible until the matching Original Canvas document loads.
+    if (location.pathname + location.search !== sourceRoute) {location.reload(); return;}
     opened = false; workspace.hidden = true; launcher.hidden = false;
     document.body.style.overflow = priorOverflow;
     for (const [node, wasInert] of inertElements) node.inert = wasInert;
@@ -129,10 +134,17 @@
     if (!reply?.ok) throw new Error(reply?.error || 'Local feed did not respond.');
     return reply;
   }
-  function navigate(value) {
+  function navigate(value, updateURL = true) {
+    if (updateURL && currentRoutePage() !== value) history.pushState(null, '', pagePaths[value]);
     page = value; remoteError = ''; toggleCourses(false); render(); main.focus(); loadRemote();
     motion(page === 'tasks' ? taskPanel : pageContent, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}]);
   }
+  window.addEventListener('popstate', () => {
+    if (!opened) return;
+    const target = currentRoutePage();
+    if (target) navigate(target, false);
+    else close();
+  });
   function toggleCourses(show = courseOptions.hidden) {
     courseOptions.hidden = !show; courseButton.setAttribute('aria-expanded', String(show));
     if (show) courseOptions.querySelector('[aria-selected="true"]')?.focus();
