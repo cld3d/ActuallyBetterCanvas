@@ -7,6 +7,32 @@ import {browserPath} from './environment.mjs';
 const content = await readFile(new URL('../extension/content.js', import.meta.url), 'utf8');
 
 const executablePath = browserPath();
+test('task and calendar completion tabs sit below filters without a divider', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.goto('https://canvas.test/dashboard');
+    await page.evaluate(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}})}};
+    });
+    await page.addScriptTag({content});
+    for (const width of [1366, 390]) {
+      await page.setViewportSize({width, height: 844});
+      for (const name of ['Tasks', 'Calendar']) {
+        await page.getByRole('button', {name, exact: true}).click();
+        const filters = await page.locator('.toolbar').boundingBox();
+        const tabs = await page.getByRole('tablist').boundingBox();
+        assert.ok(tabs.y >= filters.y + filters.height, `${name} tabs follow the filters at ${width}px`);
+        assert.equal(await page.getByRole('tablist').evaluate(node => getComputedStyle(node).borderBottomWidth), '0px');
+        assert.equal(await page.locator('.tab-indicator').isVisible(), true, 'selection underline remains visible');
+      }
+    }
+  } finally {await browser.close();}
+});
+
 test('task sections render tomorrow and this week in chronological group order', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {

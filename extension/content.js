@@ -26,7 +26,7 @@
     /* Tab hover feedback belongs to the label, not a filled button surface. */
     .tabs button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}.tabs button:focus-visible{background:transparent;text-decoration:underline;text-underline-offset:4px}
     /* One shared underline moves between tabs instead of remounting on each selection. */
-    .tabs{position:relative}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    .tabs{position:relative;border-bottom:0}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     /* Sidebar selection uses one moving rule, without a filled active surface. */
     nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:3px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
@@ -102,7 +102,7 @@
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
-    tabs, toolbar, notice, taskPanel, pageContent);
+    toolbar, tabs, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('div', {class: 'brand', role: 'img', 'aria-label': 'Actually Better Canvas'},
       el('span', {class: 'brand-prefix', 'aria-hidden': 'true'}, 'actually ', el('strong', {}, 'better')),
