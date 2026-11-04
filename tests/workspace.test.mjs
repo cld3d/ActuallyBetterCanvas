@@ -60,7 +60,7 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     });
     await page.addScriptTag({content});
     await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
-    await page.getByRole('heading', {name: 'A clearer view of what’s next.'}).waitFor();
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
     const check = page.getByRole('checkbox');
     assert.equal(await check.isChecked(), false, 'a grade must not check the assignment');
     assert.equal(await page.locator('#canvas-local-root').locator('img').count(), 0, 'assignment titles render as text');
@@ -212,20 +212,22 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       await page.setViewportSize({width: 390, height: 844});
       for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks']) {
         await page.getByRole('button', {name, exact: true}).click();
+        assert.equal(await page.locator('#canvas-local-root h1, #canvas-local-root .intro').count(), 0, `${name} has no redundant page title or subtitle`);
+        assert.equal(await page.getByRole('main', {name, exact: true}).count(), 1, 'page identity remains accessible');
         assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
         await page.keyboard.press('Tab');
         assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node.shadowRoot.activeElement).outlineStyle), 'none', `${name} has no rectangular keyboard focus outline`);
       }
       assert.equal(await page.locator('.tab-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables underline sliding');
     }
-    for (const [path, title] of [['courses', 'Your courses.'], ['calendar', 'Make room for what’s next.'], ['conversations', 'Your inbox.']]) {
+    for (const [path, title] of [['courses', 'Courses'], ['calendar', 'Calendar'], ['conversations', 'Inbox']]) {
       await page.goto('https://canvas.test/' + path);
       await page.addScriptTag({content});
-      await page.getByRole('heading', {name: title, exact: true}).waitFor();
+      await page.getByRole('main', {name: title, exact: true}).waitFor();
       assert.equal(await page.locator('#original').evaluate(node => node.inert), true, path + ' opens the custom view automatically');
     }
     await page.getByRole('button', {name: 'Original Canvas', exact: true}).click();
-    for (const [path, title] of [['calendar', 'Make room for what’s next.'], ['conversations', 'Your inbox.'], ['courses', 'Your courses.'], ['dashboard', 'A clearer view of what’s next.']]) {
+    for (const [path, title] of [['calendar', 'Calendar'], ['conversations', 'Inbox'], ['courses', 'Courses'], ['dashboard', 'Tasks']]) {
       await page.goto('https://canvas.test/' + path);
       await page.addScriptTag({content});
       assert.equal(await page.locator('.workspace').isVisible(), false, 'Original Canvas mode survives navigation to ' + path);
@@ -234,16 +236,16 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       await page.addScriptTag({content});
       assert.equal(await page.locator('.workspace').isVisible(), false, 'Original Canvas mode survives reload');
       await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
-      await page.getByRole('heading', {name: title, exact: true}).waitFor();
+      await page.getByRole('main', {name: title, exact: true}).waitFor();
       await page.getByRole('button', {name: 'Original Canvas', exact: true}).click();
     }
     // Some Canvas navigation updates the URL without a new document.
     await page.evaluate(() => history.pushState({}, '', '/calendar'));
     await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
-    await page.getByRole('heading', {name: 'Make room for what’s next.', exact: true}).waitFor();
+    await page.getByRole('main', {name: 'Calendar', exact: true}).waitFor();
     await page.goto('https://canvas.test/conversations');
     await page.addScriptTag({content});
-    await page.getByRole('heading', {name: 'Your inbox.', exact: true}).waitFor();
+    await page.getByRole('main', {name: 'Inbox', exact: true}).waitFor();
     assert.equal(await page.locator('.workspace').isVisible(), true, 'returning to custom mode restores automatic opening');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}

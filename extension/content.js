@@ -79,15 +79,15 @@
     }
   });
   const syncButton = el('button', {class: 'quiet', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true);}}, 'Sync now');
-  const heading = el('h1', {tabindex: '-1'}), intro = el('p', {class: 'intro'});
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
   const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
+  const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
+    stats, tabs, toolbar, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('div', {class: 'brand'}, 'ACTUALLY BETTER', el('div', {class: 'local'}, 'CANVAS')), navigation),
-    el('main', {}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
-      heading, intro, stats, tabs, toolbar, notice, taskPanel, pageContent));
+    main);
   shadow.append(launcher, workspace);
   let inertElements = [];
   function close() {
@@ -111,7 +111,7 @@
     for (const [node] of inertElements) node.inert = true;
     opened = true; workspace.hidden = false; launcher.hidden = true;
     positionTabIndicator();
-    workspace.querySelector('h1').focus();
+    main.focus();
     refresh();
     loadRemote();
   }
@@ -130,7 +130,7 @@
     return reply;
   }
   function navigate(value) {
-    page = value; remoteError = ''; toggleCourses(false); render(); heading.focus(); loadRemote();
+    page = value; remoteError = ''; toggleCourses(false); render(); main.focus(); loadRemote();
     motion(page === 'tasks' ? taskPanel : pageContent, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}]);
   }
   function toggleCourses(show = courseOptions.hidden) {
@@ -199,8 +199,7 @@
     return 'Coming up';
   }
   function render() {
-    const titles = {tasks: ['A clearer view of what’s next.', 'Your assignments, with room to work on your own terms.'], courses: ['Your courses.', 'One place for your classes and the work ahead.'], calendar: ['Make room for what’s next.', 'Your tasks, on your timeline. Personal deadlines included.'], inbox: ['Your inbox.', 'Canvas conversations, without the clutter. Read-only; messages stay unread in Canvas.']};
-    heading.textContent = titles[page][0]; intro.textContent = titles[page][1];
+    main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'}[page]);
     for (const button of navigation.children) {
       button.classList.toggle('selected', button.dataset.page === page);
       if (button.dataset.page === page) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
@@ -407,7 +406,7 @@
     if (event.key === 'Tab' && opened && !shadow.querySelector('dialog')) {
       const focusable = [...workspace.querySelectorAll('button,input,a,textarea,[tabindex="0"]')].filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
       const first = focusable[0], last = focusable.at(-1);
-      if (event.shiftKey && (shadow.activeElement === first || shadow.activeElement === heading)) {event.preventDefault(); last?.focus();}
+      if (event.shiftKey && (shadow.activeElement === first || shadow.activeElement === main)) {event.preventDefault(); last?.focus();}
       else if (!event.shiftKey && shadow.activeElement === last) {event.preventDefault(); first?.focus();}
     }
   });
