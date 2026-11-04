@@ -437,4 +437,5 @@
   });
   render();
   if (currentRoutePage() && !originalMode()) open();
+  document.getElementById('canvas-local-preload-style')?.remove();
 })();

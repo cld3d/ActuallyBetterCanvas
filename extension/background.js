@@ -13,8 +13,13 @@ async function native(request) {
 }
 
 async function register(origin) {
-  await chrome.scripting.unregisterContentScripts({ids: ['canvas-local']}).catch(() => {});
-  await chrome.scripting.registerContentScripts([{id: 'canvas-local', matches: [origin + '/*'], js: ['content.js'], runAt: 'document_idle'}]);
+  const existing = await chrome.scripting.getRegisteredContentScripts();
+  const ids = existing.filter(script => ['canvas-local', 'canvas-local-preload'].includes(script.id)).map(script => script.id);
+  if (ids.length) await chrome.scripting.unregisterContentScripts({ids});
+  await chrome.scripting.registerContentScripts([
+    {id: 'canvas-local-preload', matches: [origin + '/*'], js: ['preload.js'], runAt: 'document_start'},
+    {id: 'canvas-local', matches: [origin + '/*'], js: ['content.js'], runAt: 'document_idle'}
+  ]);
 }
 
 async function sync() {
