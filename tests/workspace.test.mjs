@@ -106,6 +106,7 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     await page.getByRole('checkbox').click();
     await page.getByRole('tab', {name: 'To do', exact: true}).click();
     await page.getByRole('button', {name: /^Edit /}).click();
+    assert.equal(await page.getByRole('dialog', {name: /Essay/}).evaluate(node => getComputedStyle(node).scrollbarWidth), 'none', 'edit dialogs also hide scrollbars');
     const deadline = page.getByLabel('Personal deadline (this laptop’s time zone)');
     await deadline.fill('2026-11-10T16:30');
     await page.getByLabel('Personal notes', {exact: true}).fill('Finish the last paragraph');
@@ -250,6 +251,16 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
         assert.equal(await page.locator('#canvas-local-root h1, #canvas-local-root .intro').count(), 0, `${name} has no redundant page title or subtitle`);
         assert.equal(await page.getByRole('main', {name, exact: true}).count(), 1, 'page identity remains accessible');
         assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
+        assert.equal(await page.locator('#canvas-local-root').evaluate(node => [...node.shadowRoot.querySelectorAll('.workspace,.select-options,.threads,textarea')].every(element => getComputedStyle(element).scrollbarWidth === 'none')), true, `${name} hides workspace and nested scrollbars`);
+        if (name === 'Calendar') {
+          assert.equal(await page.locator('.workspace').evaluate(node => {
+            node.scrollTop = 0;
+            return getComputedStyle(node).overflowY === 'auto' && node.scrollHeight > node.clientHeight;
+          }), true, 'calendar retains its scrollable overflow');
+          await page.mouse.move(350, 500);
+          await page.mouse.wheel(0, 300);
+          await page.waitForFunction(() => document.querySelector('#canvas-local-root').shadowRoot.querySelector('.workspace').scrollTop > 0);
+        }
         await page.keyboard.press('Tab');
         assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node.shadowRoot.activeElement).outlineStyle), 'none', `${name} has no rectangular keyboard focus outline`);
       }
