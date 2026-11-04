@@ -33,6 +33,14 @@ test('sidebar URLs survive refresh, support history, and return to matching Orig
     let previousIndicator = await page.locator('.sidebar-indicator').getAttribute('style');
     for (const name of ['Tasks', 'Courses', 'Calendar', 'Inbox']) {
       const button = page.getByRole('button', {name, exact: true});
+      await button.hover();
+      const hover = await button.evaluate(async node => {
+        await Promise.all(node.getAnimations().map(animation => animation.finished));
+        const style = getComputedStyle(node);
+        return {background: style.backgroundColor, opacity: style.opacity};
+      });
+      assert.equal(hover.background, 'rgba(0, 0, 0, 0)', 'inactive sidebar hover never fills the background');
+      assert.equal(hover.opacity, '0.75', 'sidebar hover fades only the text');
       await button.click();
       const active = await button.evaluate(async node => {
         await Promise.all(node.getAnimations().map(animation => animation.finished));
