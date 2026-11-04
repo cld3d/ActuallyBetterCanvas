@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import "file:/home/gavin/.config/omarchy/plugins/blacksheep.calendar" as Calendar
+import "@CANVAS_CALENDAR_URL@" as Calendar
 
 ShellRoot {
   Calendar.TaskEditor {

@@ -1,10 +1,15 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {existsSync} from 'node:fs';
+import {join} from 'node:path';
+import {pluginDir, skipDesktop} from './environment.mjs';
 const require = createRequire(import.meta.url);
 const Tasks = require('../integrations/desktop/Tasks.js');
 const Agenda = require('../integrations/desktop/Agenda.js');
-const Model = require('/home/gavin/.config/omarchy/plugins/blacksheep.calendar/Model.js');
+const modelPath = join(pluginDir, 'blacksheep.calendar/Model.js');
+const Model = !skipDesktop && existsSync(modelPath) ? require(modelPath) : null;
+const desktopOptions = {skip: !Model && 'Installed Datebook unavailable or desktop tests disabled'};
 process.env.TZ = 'America/Toronto';
 
 const now = new Date('2026-11-04T15:00:00-05:00');
@@ -46,10 +51,6 @@ test('timed tasks are deadline points in day/week grids; date-only tasks stay al
   assert.equal(row.deadline, true);
   assert.equal(row.start, row.end, 'must not fabricate a work-session duration');
   assert.equal(byDay['2026-11-04'][1].allDay, true);
-  const blocks = Model.dayLayout(byDay['2026-11-04'],'2026-11-04');
-  assert.equal(blocks.length,1);
-  assert.equal(blocks[0].top,1438);
-  assert.equal(Model.hourRange(['2026-11-04'],byDay).last,24, 'Late deadlines must not create a 25th hour');
 });
 
 test('11:59 PM deadlines appear in the top strip without changing their true deadline', () => {
@@ -60,7 +61,6 @@ test('11:59 PM deadlines appear in the top strip without changing their true dea
     assert.equal(row.endOfDay,true);
     assert.equal(row.dueAt,instant);
     assert.equal(row.taskTime,'11:59 PM');
-    assert.equal(Model.dayLayout([row],'2026-11-04').length,0);
     assert.equal(Tasks.overdue(row,new Date('2026-11-04T23:58:59-05:00')),false);
     assert.equal(Tasks.overdue(row,new Date('2026-11-05T00:00:00-05:00')),true);
     assert.equal(task.allDay,undefined,'the underlying assignment must not be mutated');
@@ -69,7 +69,15 @@ test('11:59 PM deadlines appear in the top strip without changing their true dea
   assert.equal(noon.allDay,false,'11:59 AM is not an end-of-day deadline');
 });
 
-test('deadline markers use wall-clock positions through spring and fall DST changes', () => {
+test('installed Datebook places timed markers correctly and excludes end-of-day strip tasks', desktopOptions, () => {
+  const byDay = Tasks.indexByDay({tasks:[timed('late','2026-11-04T23:58:00-05:00'),timed('end-of-day','2026-11-04T23:59:00-05:00')]});
+  const blocks = Model.dayLayout(byDay['2026-11-04'],'2026-11-04');
+  assert.equal(blocks.length,1);
+  assert.equal(blocks[0].top,1438);
+  assert.equal(Model.hourRange(['2026-11-04'],byDay).last,24);
+});
+
+test('deadline markers use wall-clock positions through spring and fall DST changes', desktopOptions, () => {
   for (const [day, instant] of [['2026-03-08','2026-03-08T04:30:00-04:00'],['2026-11-01','2026-11-01T04:30:00-05:00']]) {
     const byDay = Tasks.indexByDay({tasks:[timed('dst',instant)]});
     assert.equal(Model.dayLayout(byDay[day],day)[0].top,270);

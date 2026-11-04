@@ -2,11 +2,13 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {chromium} from 'playwright-core';
+import {browserPath} from './environment.mjs';
 
 const content = await readFile(new URL('../extension/content.js', import.meta.url), 'utf8');
 
-test('workspace edits, completion overrides, source navigation, mobile and dark theme', async () => {
-  const browser = await chromium.launch({executablePath: '/opt/brave-origin-bin/brave', headless: true,
+const executablePath = browserPath();
+test('workspace edits, completion overrides, source navigation, mobile and dark theme', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true,
     args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
     const page = await browser.newPage({viewport: {width: 1366, height: 768}});

@@ -15,7 +15,8 @@ def main():
     manifest = json.loads(manifest_path.read_text())
     if 'key' not in manifest:
         # Only the PUBLIC key is retained, for a stable unpacked extension ID.
-        with tempfile.TemporaryDirectory(prefix='canvas-key-', dir='/tmp/opencode') as temp:
+        preferred_temp = Path('/tmp/opencode')
+        with tempfile.TemporaryDirectory(prefix='canvas-key-', dir=preferred_temp if preferred_temp.is_dir() else None) as temp:
             key = Path(temp) / 'key.pem'
             subprocess.run(['openssl', 'genrsa', '-out', str(key), '2048'], check=True, capture_output=True)
             public = subprocess.check_output(['openssl', 'rsa', '-in', str(key), '-pubout', '-outform', 'DER'], stderr=subprocess.DEVNULL)

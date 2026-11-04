@@ -1,8 +1,8 @@
 import QtQuick
 import Quickshell
-import "file:/home/gavin/.config/omarchy/plugins/gavin.lock" as Lock
-import "file:/home/gavin/.config/omarchy/plugins/gavin.lock/Agenda.js" as Agenda
-import "file:/home/gavin/.config/omarchy/plugins/blacksheep.calendar/Tasks.js" as Tasks
+import "@CANVAS_LOCK_URL@" as Lock
+import "@CANVAS_LOCK_URL@/Agenda.js" as Agenda
+import "@CANVAS_CALENDAR_URL@/Tasks.js" as Tasks
 
 ShellRoot {
   QtObject {

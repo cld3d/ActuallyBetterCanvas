@@ -5,7 +5,7 @@ A Chromium extension that adds a focused workspace **inside Canvas**, backed by 
 ## Connect on this laptop
 
 1. Run `python3 scripts/install.py` (already run during initial setup).
-2. Open **`brave://extensions`**, enable **Developer mode**, choose **Load unpacked**, and select `/home/gavin/Projects/Canvas/extension`.
+2. Open **`brave://extensions`**, enable **Developer mode**, choose **Load unpacked**, and select the `extension` directory inside your checkout.
 3. Open the extension's toolbar icon, enter your Canvas website (for example `https://school.instructure.com`), and choose **Connect Canvas**. Grant access to that site only. Be signed into Canvas in the same Brave profile.
 4. Reload an open Canvas page. The dashboard opens the workspace automatically; **My workspace** opens it elsewhere. **Original Canvas** returns to the untouched page. Assignment links open the original assignment/submission page.
 
@@ -53,10 +53,29 @@ Do not move this project after installing without rerunning both install scripts
 python3 -B -m unittest discover -s tests -v
 npm ci
 npm test
-bash ~/.config/omarchy/plugins/blacksheep.calendar/tests/run.sh
+python3 -B scripts/test_desktop.py
 ```
 
-The workspace interaction test uses the installed Brave executable in an isolated headless process, with mocked Canvas/native responses; it does not open or modify your regular Brave profile. `tests/lock-canvas.qml` additionally checks Canvas completion against the installed lock-screen components in an offscreen Quickshell process.
+Core tests require Node and Python, not Canvas access or Omarchy. Missing browser/desktop dependencies produce explicit skips, not failures. An installed but broken dependency still fails its test.
+
+The workspace interaction test discovers Chromium/Brave on `PATH` and launches an isolated headless process with mocked Canvas/native responses; it does not open or modify your regular browser profile. Set `CANVAS_BROWSER_PATH` to choose a specific executable. Two grid-integration tests use Datebook's installed `Model.js`, discovered relative to the user's config directory. The remaining deadline tests use repo sources and run anywhere.
+
+`scripts/test_desktop.py` renders the QML test templates into a temporary directory with paths to the installed plugins and runs Quickshell offscreen. Use `--strict` on the laptop to require all dependencies. Plugin and Omarchy-shell locations can be overridden with `CANVAS_DESKTOP_PLUGIN_DIR` and `CANVAS_OMARCHY_SHELL_DIR`. Explicit invalid paths fail. `CANVAS_SKIP_BROWSER_TESTS=1` and `CANVAS_SKIP_DESKTOP_TESTS=1` disable those integration checks explicitly. Datebook's own additional suite is available on the laptop at `~/.config/omarchy/plugins/blacksheep.calendar/tests/run.sh`.
+
+## Remote development and deploying pulls
+
+Read [AGENTS.md](AGENTS.md) for architecture, behavior invariants, data safety, and agent instructions. The repo is suitable for editing and running core tests on a dev server. **Do not run desktop/native installers on the server.** Installed Datebook and lock-screen sources are external dependencies, not files included in this checkout. Server tests cannot verify live Canvas authentication or the actual desktop.
+
+After pushing changes from the server, on the laptop:
+
+1. Pull using the HTTPS `origin`.
+2. For desktop changes, run `python3 -B scripts/integrate_desktop.py`. Stop and investigate if it refuses unfamiliar plugin code; do not force an overwrite.
+3. For extension changes, reload Canvas Local at `brave://extensions`, then reload Canvas pages.
+4. If native registration changed, or the checkout moved, rerun `python3 scripts/install.py` and the desktop installer so absolute paths point to this checkout.
+5. For desktop changes, restart the shell with `omarchy restart shell` **only while unlocked** and check `omarchy shell shell ping` and shell logs. Do not use `omarchy refresh shell`, which resets configuration.
+6. Run `python3 -B scripts/test_desktop.py --strict` to verify installed components. Also run Datebook's own suite when changing desktop behavior.
+
+A pull does not deploy plugin changes, refresh extension code, or restart the shell automatically. Keep the manifest public key stable and do not copy assignment data/browser credentials between machines. Normal pulls and installers preserve the external SQLite database and its personal deadlines/completion flags.
 
 CLI examples:
 
