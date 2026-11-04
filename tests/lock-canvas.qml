@@ -20,12 +20,25 @@ ShellRoot {
     cache: ({accounts:[{name:"Canvas Local",provider:"canvas-local",tasksWritable:true}],
       tasks:[{uid:"canvas-local/school/7/34/12", account:"Canvas Local", editable:true, status:"needsAction", etag:"v1"}]})
   }
+  Lock.CalendarAgenda {
+    id: agenda
+    width: 700
+    height: 280
+    watchCache: false
+    available: true
+    currentTime: new Date(2026,10,4,10,0)
+    eventData: ({calendars:[{account:"Test",id:"calendar",shown:true}],
+      events:[{account:"Test",calendar:"calendar",title:"Meeting",start:new Date(2026,10,4,12,0).toISOString(),end:new Date(2026,10,4,13,0).toISOString()}],
+      tasks:[{uid:"morning",title:"Earlier task",dueAt:new Date(2026,10,4,11,0).toISOString(),status:"needsAction"},
+        {uid:"afternoon",title:"Later task",dueAt:new Date(2026,10,4,14,0).toISOString(),status:"needsAction"}]})
+  }
   Timer {
     interval: 50
     running: true
     onTriggered: {
       function check(value, message) { if (!value) throw new Error(message) }
       var uid = "canvas-local/school/7/34/12"
+      check(agenda.rows.length === 3 && agenda.rows[0].uid === "morning" && agenda.rows[1].kind === "event" && agenda.rows[2].uid === "afternoon", "Running agenda component must interleave tasks and events by time")
       var timed = {uid:uid,title:"Essay",due:"2026-11-08",dueAt:"2026-11-08T23:59:00Z",listName:"English",status:"needsAction"}
       check(Agenda.remainingTasks({tasks:[timed]},new Date(),true)[0].location.indexOf("Due ") === 0, "Lock screen must show the exact due time")
       check(Tasks.dueLabel(timed,"2026-11-08").indexOf("Today · ") === 0, "Datebook must show the exact due time")

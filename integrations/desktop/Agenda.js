@@ -74,6 +74,7 @@ function remainingTasks(data, now, includeFuture) {
     return {
       kind: "task", title: task.title || "Untitled task", calendar: task.listName || "Tasks",
       uid: task.uid || "", editable: task.editable === true,
+      dueAt: taskDeadline(task) ? task.dueAt : "", due: day,
       version: String(task.etag || task.updated || data && data.generatedAt || ""),
       location: time ? (isLate ? "Overdue · " : "Due ") + time + " · " + (task.listName || "Canvas") : "",
       color: "", overdue: isLate, dueLabel: isLate && !time ? "Overdue" : label, timeLabel: time
@@ -81,4 +82,20 @@ function remainingTasks(data, now, includeFuture) {
   })
 }
 
-if (typeof module !== "undefined") module.exports = {remaining:remaining, remainingTasks:remainingTasks}
+function mergeRows(events, tasks) {
+  function time(row) {
+    var value = row.kind === "task" ? row.dueAt || row.due : row.start
+    if (!value) return Infinity
+    // Date-only rows belong at the beginning of their LOCAL day, not midnight UTC.
+    var date = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value + "T00:00:00") : new Date(value)
+    return isFinite(date.getTime()) ? date.getTime() : Infinity
+  }
+  return (events || []).concat(tasks || []).map(function(row, index) {
+    return {row:row, time:time(row), index:index}
+  }).sort(function(a, b) {
+    if (a.time !== b.time) return a.time < b.time ? -1 : 1
+    return a.index - b.index
+  }).map(function(entry) { return entry.row })
+}
+
+if (typeof module !== "undefined") module.exports = {remaining:remaining, remainingTasks:remainingTasks, mergeRows:mergeRows}

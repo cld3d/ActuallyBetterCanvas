@@ -28,6 +28,7 @@ The browser must be running for new Canvas data to arrive. Polling is approximat
 - Timed deadlines appear at their due time in Datebook's day/week grids, with date-only tasks remaining in the all-day strip. Markers represent deadline points, not fabricated work sessions. Month chips, task lists, and the lock screen show exact times. Datebook displays and edits times in 12-hour AM/PM format, including calendar event editors; internal timestamp formats stay unchanged.
 - Timed tasks become overdue when their deadline passes, not at midnight. Date-only Google tasks remain date-only and become overdue the next day. Sorting uses exact instants rather than course/provider order; overdue tasks remain visible until completed. Displayed task dates are derived from the current local time zone rather than trusting a previously cached date.
 - Tasks due at local **11:59 PM** appear in Datebook's top/all-day strip as end-of-day work. This is display-only: their true deadline, time label, editor value, sync data, and overdue behavior remain unchanged. Other timed tasks retain their hour-grid position.
+- The lock screen interleaves events and tasks chronologically by event start / task deadline, rather than putting all events first. Date-only entries sort at the beginning of their local day; undated tasks sort last. Overdue unfinished tasks stay visible, and 11:59 PM tasks retain their actual time in this lock-screen ordering.
 
 ## Local architecture
 

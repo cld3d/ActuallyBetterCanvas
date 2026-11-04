@@ -11,6 +11,8 @@ SOURCES = {
 
 def edits():
     return {
+      'gavin.lock/CalendarAgenda.qml': [
+        ('readonly property var rows: events.concat(tasks)', 'readonly property var rows: Agenda.mergeRows(events, tasks)')],
       'blacksheep.calendar/Panel.qml': [
         ('Tasks.forDay(eventData, selectedKey, todayKey, showAllTasks)', 'Tasks.forDay(eventData, selectedKey, todayKey, showAllTasks, root.clockNow)'),
         ('Tasks.indexByDay(eventData, String(Color.accent))', 'Tasks.indexByDay(eventData, String(Color.accent), root.use24h)')],
@@ -72,6 +74,7 @@ def plan(plugins, pending):
                 accepted.add('fba49bc64c3ce663ed80eef53ce6f9f9cdbdc70e70f62067eb6ab72a7b5f1592')
             if relative == 'gavin.lock/Agenda.js':
                 accepted.add('6e772906992ff98ac24ac2de60659a39a606879f3ffc9f8bb37544d999350c05')
+                accepted.add('a34794cb695b81ae811a74577582104632a3e11f3dadee8e72f114725380bb22')
             if hashlib.sha256(current.encode()).hexdigest() not in accepted:
                 raise RuntimeError('Refusing to overwrite unfamiliar deadline logic: ' + relative)
             result[path] = desired
