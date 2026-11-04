@@ -146,6 +146,17 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.equal(await page.getByRole('button', {name: 'Tasks', exact: true}).count(), 1);
     assert.deepEqual(await page.locator('.row .meta').allTextContents(), ['English', 'Math'], 'assignments only show their course, not redundant status tags');
     assert.equal(await page.getByRole('tab').count(), 2);
+    for (const tab of await page.getByRole('tab').all()) {
+      await tab.hover();
+      const hover = await tab.evaluate(async node => {
+        await Promise.all(node.getAnimations().map(animation => animation.finished));
+        const style = getComputedStyle(node);
+        return {background: style.backgroundColor, opacity: style.opacity, transition: style.transitionProperty};
+      });
+      assert.equal(hover.background, 'rgba(0, 0, 0, 0)', 'tab hover never fills the label background');
+      assert.equal(hover.opacity, '0.75', 'hover feedback fades only the tab label');
+      assert.ok(hover.transition.includes('opacity'), 'tab labels fade on hover');
+    }
     const initialIndicator = await page.locator('.tab-indicator').getAttribute('style');
     await page.getByRole('tab', {name: 'Completed', exact: true}).click();
     assert.notEqual(await page.locator('.tab-indicator').getAttribute('style'), initialIndicator, 'one shared selection indicator moves to the completed tab');

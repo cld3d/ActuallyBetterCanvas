@@ -19,6 +19,8 @@
     @media(prefers-reduced-motion:no-preference){.workspace:not([hidden]) main{animation:enter .3s ease-out}.select-options:not([hidden]),dialog[open]{animation:enter .18s ease-out}.tabs button[aria-selected=true]:after{animation:enter .18s ease-out}.skeleton>div{animation:breathe 1.4s ease-in-out infinite}}
     /* Task rows are content, not clickable cards: keep dividers straight and surfaces still. */
     .row,.row:hover{border-radius:0;background:transparent;transition:opacity .2s}
+    /* Tab hover feedback belongs to the label, not a filled button surface. */
+    .tabs button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}.tabs button:focus-visible{background:transparent;text-decoration:underline;text-underline-offset:4px}
     /* One shared underline moves between tabs instead of remounting on each selection. */
     .tabs{position:relative}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     /* Keep keyboard location visible without the browser's large focus rectangles. */
