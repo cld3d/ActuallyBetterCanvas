@@ -46,18 +46,18 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
       }}};
     });
     await page.addScriptTag({content});
-    await page.getByRole('button', {name: 'My workspace', exact: true}).click();
+    await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
     await page.getByRole('heading', {name: 'A clearer view of what’s next.'}).waitFor();
     const check = page.getByRole('checkbox');
     assert.equal(await check.isChecked(), false, 'a grade must not check the assignment');
     assert.equal(await page.locator('#canvas-local-root').locator('img').count(), 0, 'assignment titles render as text');
     assert.equal(await page.locator('#original').evaluate(node => node.inert), true, 'underlying Canvas is not focusable');
     await check.click();
-    await page.getByLabel('Completion filter').selectOption('completed');
+    await page.getByRole('tab', {name: 'Completed', exact: true}).click();
     await page.getByRole('checkbox').waitFor();
     assert.equal(await page.getByRole('checkbox').isChecked(), true);
     await page.getByRole('checkbox').click();
-    await page.getByLabel('Completion filter').selectOption('open');
+    await page.getByRole('tab', {name: 'To do', exact: true}).click();
     await page.getByRole('button', {name: /^Edit /}).click();
     const deadline = page.getByLabel('Personal deadline (this laptop’s time zone)');
     await deadline.fill('2026-11-10T16:30');
@@ -83,6 +83,107 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     assert.equal(overflow, false, 'mobile workspace must not scroll horizontally');
     await page.getByRole('button', {name: 'Original Canvas', exact: true}).last().click();
     assert.equal(await page.locator('#original').evaluate(node => node.inert), false);
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('custom navigation, task tabs, course listbox, calendar deadlines and read-only inbox', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({viewport: {width: 1366, height: 768}});
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<button id="original">Canvas</button>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      const now = new Date(), due = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59).toISOString();
+      const base = {course: 'English', courseId: '34', canvasDue: '2020-01-01T00:00:00Z', effectiveDue: due, dueOverride: true, completionOverride: null, completed: false, submitted: false, graded: false, notes: '', url: 'https://canvas.test/courses/34/assignments/1'};
+      window.testState = {assignments: [
+        {...base, uid: 'open', title: 'Personal deadline task'},
+        {...base, uid: 'other', title: 'Math task', course: 'Math', courseId: '35', effectiveDue: null},
+        {...base, uid: 'old', title: 'Older completed', completed: true, effectiveDue: '2024-01-01T00:00:00Z'},
+        {...base, uid: 'new', title: 'Latest completed', completed: true, effectiveDue: '2026-01-01T00:00:00Z'},
+        {...base, uid: 'undated', title: 'Undated completed', completed: true, effectiveDue: null}
+      ]};
+      window.requests = []; window.failInbox = false; window.failUpdate = false;
+      window.chrome = {runtime: {sendMessage: async message => {
+        window.requests.push(message);
+        if (message.action === 'courses') return {ok: true, courses: [{id: 34, name: 'English', course_code: 'ENG 101'}, {id: 35, name: 'Math'}, {id: 36, name: 'Empty course'}]};
+        if (message.action === 'inbox') return window.failInbox ? {ok: false, error: 'Inbox unavailable'} : {ok: true, conversations: [{id: 9, subject: 'Course update', last_message: 'Please read', workflow_state: 'unread', participants: [{id: 7, name: 'Teacher'}]}]};
+        if (message.action === 'conversation') return {ok: true, conversation: {id: 9, subject: 'Course update', participants: [{id: 7, name: 'Teacher'}], messages: [{id: 1, author_id: 7, body: '<img src=x onerror=alert(1)> Message body', created_at: '2026-11-01T12:00:00Z'}]}};
+        if (message.action === 'update') {
+          if (window.failUpdate) return {ok: false, error: 'Could not save completion'};
+          const item = window.testState.assignments.find(a => a.uid === message.uid);
+          item.completed = message.patch.completion; item.completionOverride = message.patch.completion;
+        }
+        return {ok: true, state: structuredClone(window.testState)};
+      }}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('link', {name: 'Personal deadline task', exact: true}).waitFor();
+    assert.equal(await page.locator('select').count(), 0, 'no OS-native dropdowns');
+    assert.equal(await page.locator('aside').getByText('Original Canvas').count(), 0);
+    assert.equal(await page.locator('footer,.sidebar-note').count(), 0);
+    assert.equal(await page.getByRole('tab').count(), 2);
+    await page.getByRole('tab', {name: 'Completed', exact: true}).click();
+    assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Latest completed', 'Older completed', 'Undated completed']);
+    await page.getByRole('tab', {name: 'Completed', exact: true}).press('ArrowLeft');
+    assert.equal(await page.getByRole('tab', {name: 'To do', exact: true}).getAttribute('aria-selected'), 'true');
+    await page.getByRole('button', {name: 'Filter by course'}).click();
+    await page.getByRole('option', {name: 'All courses', exact: true}).press('End');
+    await page.getByRole('option', {name: 'Math', exact: true}).press('Enter');
+    assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Math task']);
+    await page.getByRole('button', {name: 'Filter by course'}).click();
+    await page.getByRole('option', {name: 'Math', exact: true}).press('Escape');
+    assert.equal(await page.locator('.workspace').isVisible(), true, 'escape dismisses only the listbox');
+    await page.getByRole('button', {name: 'Filter by course'}).click();
+    await page.getByRole('option', {name: 'All courses', exact: true}).click();
+    await page.getByRole('button', {name: 'Courses', exact: true}).click();
+    await page.getByRole('heading', {name: 'Empty course', exact: true}).waitFor();
+    assert.equal(await page.locator('.course-card').count(), 3, 'courses without assignments remain visible');
+    assert.equal(await page.getByRole('link', {name: 'Open course'}).first().getAttribute('href'), '/courses/34');
+    await page.locator('.course-card').filter({has: page.getByRole('heading', {name: 'English', exact: true})}).getByRole('button', {name: 'View tasks'}).click();
+    assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Personal deadline task']);
+    await page.getByRole('button', {name: 'Calendar', exact: true}).click();
+    assert.equal(await page.locator('.calendar-day[aria-pressed=true] .day-count').textContent(), '1');
+    assert.deepEqual(await page.locator('.agenda .title').allTextContents(), ['Personal deadline task'], 'calendar follows personal deadline, not Canvas date');
+    await page.getByRole('button', {name: 'Next month'}).click();
+    await page.getByRole('button', {name: 'Today', exact: true}).click();
+    await page.evaluate(() => {window.failUpdate = true;});
+    await page.getByRole('checkbox', {name: 'Complete Personal deadline task', exact: true}).click();
+    await page.getByText('Could not save completion', {exact: true}).waitFor();
+    assert.equal(await page.getByRole('checkbox').isChecked(), false, 'failed completion rolls back');
+    await page.evaluate(() => {window.failUpdate = false;});
+    await page.getByRole('checkbox').click();
+    await page.getByText('No matching tasks due this day.', {exact: true}).waitFor();
+    await page.getByRole('tab', {name: 'Completed', exact: true}).click();
+    assert.equal(await page.getByRole('checkbox', {name: 'Reopen Personal deadline task', exact: true}).isChecked(), true, 'calendar task completion shares workspace state');
+    await page.evaluate(() => {window.failInbox = true;});
+    await page.getByRole('button', {name: 'Inbox', exact: true}).click();
+    await page.getByText('Inbox unavailable', {exact: false}).waitFor();
+    await page.evaluate(() => {window.failInbox = false;});
+    await page.getByRole('button', {name: 'Try again'}).click();
+    await page.locator('.thread').click();
+    await page.getByText('<img src=x onerror=alert(1)> Message body', {exact: true}).waitFor();
+    assert.equal(await page.locator('#canvas-local-root img').count(), 0);
+    assert.equal(await page.locator('.thread.unread').count(), 1, 'reading leaves unread state untouched');
+    assert.deepEqual(await page.evaluate(() => window.requests.filter(r => r.action === 'conversation')), [{action: 'conversation', id: 9}]);
+    for (const colorScheme of ['light', 'dark']) {
+      await page.emulateMedia({colorScheme, reducedMotion: 'reduce'});
+      await page.setViewportSize({width: 390, height: 844});
+      for (const name of ['Courses', 'Calendar', 'Inbox', 'My workspace']) {
+        await page.getByRole('button', {name, exact: true}).click();
+        assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
+      }
+    }
+    for (const [path, title] of [['courses', 'Your courses.'], ['calendar', 'Make room for what’s next.'], ['conversations', 'Your inbox.']]) {
+      await page.goto('https://canvas.test/' + path);
+      await page.addScriptTag({content});
+      await page.getByRole('heading', {name: title, exact: true}).waitFor();
+      assert.equal(await page.locator('#original').evaluate(node => node.inert), true, path + ' opens the custom view automatically');
+    }
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

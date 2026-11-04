@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {submitted, nextPage, pages, collect} from '../extension/api.mjs';
+import {submitted, nextPage, pages, collect, workspaceRead} from '../extension/api.mjs';
 
 test('only explicit submission evidence completes an assignment', () => {
   assert.equal(submitted({workflow_state: 'graded', score: 0, graded_at: '2026-11-01'}), false);
@@ -44,4 +44,41 @@ test('missing submission data aborts a sync', async () => {
     const data = url.includes('/profile') ? {id: 42} : url.includes('/assignments?') ? [{id: 3, name: 'Essay'}] : [{id: 2, name: 'English'}];
     return new Response(JSON.stringify(data), {headers: {'content-type': 'application/json'}});
   }), /submission/);
+});
+
+test('workspace courses and inbox paginate GET-only; reading never marks messages read', async () => {
+  const urls = [];
+  const fetcher = async (url, options) => {
+    urls.push(url);
+    assert.equal(options.method, undefined);
+    assert.equal(options.credentials, 'include');
+    assert.equal(options.redirect, 'error');
+    const data = url.includes('/profile') ? {id: 42} : url.includes('auto_mark_as_read=false') ? {id: 9, messages: [{body: '<img src=x>'}]} : [{id: 9}];
+    return new Response(JSON.stringify(data), {headers: {'content-type': 'application/json'}});
+  };
+  const origin = 'https://canvas.test', identity = origin + '/42';
+  assert.equal((await workspaceRead(origin, identity, 'courses', null, fetcher)).courses[0].id, 9);
+  assert.equal((await workspaceRead(origin, identity, 'inbox', null, fetcher)).conversations[0].id, 9);
+  assert.equal((await workspaceRead(origin, identity, 'conversation', 9, fetcher)).conversation.messages[0].body, '<img src=x>');
+  assert.ok(urls.includes(origin + '/api/v1/conversations/9?auto_mark_as_read=false'));
+  await assert.rejects(workspaceRead(origin, identity, 'conversation', '../users', fetcher), /Invalid conversation/);
+});
+
+test('workspace refuses unsynced or changed identities before loading private data', async () => {
+  const urls = [];
+  const fetcher = async url => {urls.push(url); return new Response('{"id":99}', {headers: {'content-type': 'application/json'}});};
+  await assert.rejects(workspaceRead('https://canvas.test', null, 'inbox', null, fetcher), /Sync your assignments/);
+  await assert.rejects(workspaceRead('https://canvas.test', 'https://canvas.test/42', 'inbox', null, fetcher), /Different Canvas account/);
+  assert.deepEqual(urls, ['https://canvas.test/api/v1/users/self/profile']);
+});
+
+test('failed inbox pagination and malformed conversation data reject rather than returning partial data', async () => {
+  const origin = 'https://canvas.test';
+  const fetcher = async url => {
+    if (url.includes('/profile')) return new Response('{"id":42}', {headers: {'content-type': 'application/json'}});
+    if (url.includes('page=2')) return new Response('', {status: 500});
+    return new Response('[{"id":9}]', {headers: {'content-type': 'application/json', link: `<${origin}/api/v1/conversations?page=2>; rel="next"`}});
+  };
+  await assert.rejects(workspaceRead(origin, origin + '/42', 'inbox', null, fetcher), /500/);
+  await assert.rejects(workspaceRead(origin, origin + '/42', 'conversation', 9, fetcher), /Unexpected Canvas conversation/);
 });

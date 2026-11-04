@@ -1,4 +1,4 @@
-import {collect} from './api.mjs';
+import {collect, workspaceRead} from './api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
 
@@ -68,6 +68,11 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       return {...result, lastError};
     }
     if (message.action === 'update') return native({action: 'update', uid: message.uid, patch: message.patch});
+    if (['courses', 'inbox', 'conversation'].includes(message.action)) {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await workspaceRead(origin, state.identity, message.action, message.id)};
+    }
     throw new Error('Unsupported request.');
   })().then(respond, error => respond({ok: false, error: error.message}));
   return true;
