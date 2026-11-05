@@ -112,6 +112,15 @@ test('lock screen retains overdue tasks, sorts exact times, and updates without 
   assert.equal(rows[0].location,'Overdue · 2:00 PM · Course');
   assert.equal(rows[1].location,'Due 4:00 PM · Course');
   assert.equal(rows[1].dueLabel,'Today');
+  const soon = Agenda.remainingTasks({tasks:[
+    timed('tonight','2026-11-04T23:00:00-05:00'),timed('morning','2026-11-05T08:00:00-05:00'),
+    timed('later','2026-11-06T08:00:00-05:00'),{uid:'dateless',title:'Dateless',due:''}
+  ]},now,true);
+  assert.deepEqual(soon.map(t=>t.uid),['tonight','morning','later','dateless']);
+  assert.deepEqual(soon.map(t=>t.dueLabel),['Today','Tomorrow','Nov 6','No date']);
+  const boundary = Agenda.remainingTasks({tasks:[timed('newyear','2026-01-01T09:00:00-05:00')]},
+    new Date('2025-12-31T15:00:00-05:00'),true);
+  assert.equal(boundary[0].dueLabel,'Tomorrow');
   const after = Agenda.remainingTasks({tasks},new Date('2026-11-04T16:01:00-05:00'),true);
   assert.equal(after[1].overdue,true);
 });

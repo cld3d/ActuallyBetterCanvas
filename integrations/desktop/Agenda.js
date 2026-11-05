@@ -47,6 +47,8 @@ function taskTime(task) {
 
 function remainingTasks(data, now, includeFuture) {
   var today = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2) + "-" + ("0" + now.getDate()).slice(-2)
+  var next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  var tomorrow = next.getFullYear() + "-" + ("0" + (next.getMonth() + 1)).slice(-2) + "-" + ("0" + next.getDate()).slice(-2)
   function late(task) {
     var deadline = taskDeadline(task)
     return deadline ? deadline.getTime() <= now.getTime() : !!task.due && task.due < today
@@ -69,7 +71,7 @@ function remainingTasks(data, now, includeFuture) {
     return String(a.position || "").localeCompare(String(b.position || ""))
   }).map(function(task) {
     var day = taskDay(task), time = taskTime(task), isLate = late(task)
-    var label = !day ? "No date" : day === today ? "Today"
+    var label = !day ? "No date" : day === today ? "Today" : day === tomorrow ? "Tomorrow"
       : ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][Number(day.slice(5, 7)) - 1] + " " + Number(day.slice(8, 10))
     return {
       kind: "task", title: task.title || "Untitled task", calendar: task.listName || "Tasks",

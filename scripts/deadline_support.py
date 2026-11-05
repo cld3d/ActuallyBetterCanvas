@@ -77,6 +77,7 @@ def plan(plugins, pending):
             if relative == 'gavin.lock/Agenda.js':
                 accepted.add('6e772906992ff98ac24ac2de60659a39a606879f3ffc9f8bb37544d999350c05')
                 accepted.add('a34794cb695b81ae811a74577582104632a3e11f3dadee8e72f114725380bb22')
+                accepted.add('853737e2738aca6fbee094a4329f28577cb06464b861d0ba796e52083c14fe19')
             if hashlib.sha256(current.encode()).hexdigest() not in accepted:
                 raise RuntimeError('Refusing to overwrite unfamiliar deadline logic: ' + relative)
             result[path] = desired
