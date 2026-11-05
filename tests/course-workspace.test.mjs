@@ -145,6 +145,37 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
   } finally {await browser.close();}
 });
 
+test('course loading never shows an ID placeholder, grades read as fractions, catalog leads with Open course', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.evaluate(() => {window.delayCourse = true;});
+    await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Pages', exact: true}).click();
+    await page.locator('.course-loading').waitFor();
+    assert.equal(await page.locator('.course-heading h1').textContent(), 'Course', 'no course ID placeholder while loading');
+    await page.evaluate(() => {window.delayCourse = false; window.finishCourse({ok: true, course: {name: 'English'}, tabs: [{id: 'home', label: 'Home', html_url: '/courses/34'}, {id: 'grades', label: 'Grades', html_url: '/courses/34/grades'}], view: 'pages', items: []});});
+    await page.locator('.course-body').getByText('Nothing has been posted here yet.', {exact: true}).waitFor();
+    await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Grades', exact: true}).click();
+    const fraction = page.locator('.course-grade-fraction');
+    await fraction.waitFor();
+    assert.equal(await fraction.textContent(), '0/20');
+    const layout = await page.locator('.course-record-grade').evaluate(node => {
+      const row = getComputedStyle(node), end = getComputedStyle(node.querySelector('.course-grade-fraction'));
+      return {display: row.display, justify: row.justifyContent, marginLeft: end.marginLeft};
+    });
+    assert.equal(layout.display, 'flex');
+    assert.equal(layout.justify, 'space-between');
+    assert.notEqual(layout.marginLeft, '0px', 'fraction sits at the right side of the row');
+    await page.getByRole('link', {name: 'All courses', exact: true}).click();
+    await page.getByRole('main', {name: 'Courses', exact: true}).waitFor();
+    const actions = page.locator('.course-card .actions').first();
+    assert.deepEqual(await actions.locator('a,button').allTextContents(), ['Open course', 'View tasks']);
+    assert.ok((await actions.getByRole('link', {name: 'Open course', exact: true}).getAttribute('class')).includes('primary'));
+    assert.ok(!(await actions.getByRole('button', {name: 'View tasks', exact: true}).getAttribute('class') || '').includes('primary'));
+  } finally {await browser.close();}
+});
+
 test('instructor HTML is rebuilt safely while preserving rich text, math and course links', {skip}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {

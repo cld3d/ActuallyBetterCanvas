@@ -349,8 +349,9 @@
         el('p', {class: 'meta'}, `${tasks.length - complete} to do · ${complete} completed`),
         el('progress', {max: String(tasks.length || 1), value: String(complete), 'aria-label': entry.name + ' task completion'}),
         el('p', {class: 'next-task'}, upcoming ? 'Next deadline: ' + formatDate(upcoming.effectiveDue) : 'No upcoming deadlines'),
-        el('div', {class: 'actions'}, el('button', {class: 'quiet primary', onclick: () => {course = entry.name; query = ''; search.value = ''; view = 'open'; navigate('tasks');}}, 'View tasks'),
-          entry.id ? el('a', {class: 'quiet course-link', href: '/courses/' + encodeURIComponent(entry.id)}, 'Open course') : null)));
+        el('div', {class: 'actions'},
+          entry.id ? el('a', {class: 'quiet primary course-link', href: '/courses/' + encodeURIComponent(entry.id)}, 'Open course') : null,
+          el('button', {class: 'quiet', onclick: () => {course = entry.name; query = ''; search.value = ''; view = 'open'; navigate('tasks');}}, 'View tasks'))));
     }
     pageContent.append(grid);
     if (!courses.length && !remoteLoading) pageContent.append(el('div', {class: 'empty'}, 'No active courses to show. Sync Canvas to refresh your classes.'));
