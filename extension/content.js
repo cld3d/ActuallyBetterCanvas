@@ -94,9 +94,9 @@
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
   const courseWorkspace = globalThis.CanvasCourseWorkspace?.create({request, assignments: () => state.assignments, taskRow,
-    navigate: url => {
+    navigate: (url, opts) => {
       const target = new URL(url, location.origin);
-      if (readCourseRoute(target.href)) navigateCourse(target.href);
+      if (readCourseRoute(target.href)) navigateCourse(target.href, true, opts?.replace);
       else {const value = routePages[target.pathname.replace(/\/$/, '') || '/']; if (value) navigate(value);}
     },
     original: url => {rememberMode('original'); location.assign(url);}
@@ -170,10 +170,13 @@
     page = value; remoteError = ''; toggleCourses(false); render(); main.focus(); loadRemote();
     motion(page === 'tasks' ? taskPanel : pageContent, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}]);
   }
-  function navigateCourse(url, updateURL = true) {
+  function navigateCourse(url, updateURL = true, replace = false) {
     const target = readCourseRoute(url);
     if (!target) return;
-    if (updateURL && target.path !== location.pathname + location.search + location.hash) history.pushState(null, '', target.path);
+    if (updateURL) {
+      if (replace) history.replaceState(null, '', target.path);
+      else if (target.path !== location.pathname + location.search + location.hash) history.pushState(null, '', target.path);
+    }
     page = 'course'; remoteError = ''; toggleCourses(false); render(); main.focus();
   }
   window.addEventListener('popstate', () => {

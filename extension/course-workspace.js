@@ -330,7 +330,8 @@
       const submission = item.submission;
       submitSection(body, item);
       if (submission) {
-        body.append(element('h3', {}, 'Submission and feedback'), element('p', {class: 'meta'}, [submission.workflow_state?.replaceAll('_', ' '), submission.submitted_at ? 'Submitted ' + date(submission.submitted_at) : '', submission.grade != null ? 'Grade: ' + submission.grade : '', submission.score != null ? 'Score: ' + submission.score : ''].filter(Boolean).join(' · ')));
+        body.append(element('h3', {}, 'Submission and feedback'));
+        gradedRow(body, submission.submitted_at ? 'Submitted ' + date(submission.submitted_at) : String(submission.workflow_state || 'unsubmitted').replaceAll('_', ' '), null, `${submission.score ?? '–'}/${item.points_possible ?? '–'}`, submission.grade != null && String(submission.grade) !== String(submission.score ?? '') ? 'Grade: ' + submission.grade : '');
         for (const comment of submission.submission_comments || []) body.append(element('article', {class: 'course-record'}, element('strong', {}, comment.author_name || 'Canvas user'), element('p', {}, comment.comment || '')));
       }
       if (local) {
@@ -505,22 +506,39 @@
       }
       return out;
     }
+    async function openTake(item, session) {
+      if (!session.validationToken) {takeNotice = 'Canvas did not return a session token. Take this quiz in Original Canvas.'; paint(); return;}
+      try {
+        const loaded = await request({action: 'quizQuestions', take: {courseId: route.courseId, quizId: String(item.id), qsId: session.qsId}});
+        if (take && take.itemId !== String(item.id)) return;
+        take = {qsId: session.qsId, attempt: session.attempt, token: session.validationToken, endAt: session.endAt, questions: loaded.questions, values: {}, itemId: String(item.id)};
+        takeNotice = '';
+        if (takeTimer) clearInterval(takeTimer);
+        takeTimer = setInterval(tickTakeTimer, 1000);
+      } catch (reason) {
+        takeNotice = 'Could not load questions: ' + reason.message;
+      }
+      paint();
+    }
     async function beginTake(item, code) {
       takeNotice = 'Starting your attempt…'; paint();
       try {
         const start = await request({action: 'quizStart', route: {courseId: route.courseId, id: String(item.id)}, options: code ? {access_code: code} : {}});
-        if (!start.validationToken) {takeNotice = 'Canvas did not return a session token. Take this quiz in Original Canvas.'; paint(); return;}
-        const loaded = await request({action: 'quizQuestions', take: {courseId: route.courseId, quizId: String(item.id), qsId: start.qsId}});
-        if (take && take.itemId !== String(item.id)) return;
-        take = {qsId: start.qsId, attempt: start.attempt, token: start.validationToken, endAt: start.endAt, questions: loaded.questions, values: {}, itemId: String(item.id)};
-        takeNotice = '';
-        if (takeTimer) clearInterval(takeTimer);
-        takeTimer = setInterval(tickTakeTimer, 1000);
-        paint();
+        await openTake(item, {qsId: start.qsId, attempt: start.attempt, validationToken: start.validationToken, endAt: start.endAt});
       } catch (reason) {
         if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.';}
+        else if (/already exists|in progress|conflict|409/i.test(reason.message)) {takeNotice = 'An attempt is already in progress. Trying to resume it…'; paint(); await resumeTake(item); return;}
         else takeNotice = 'Could not start: ' + reason.message;
         paint();
+      }
+    }
+    async function resumeTake(item) {
+      takeNotice = 'Picking up your in-progress attempt…'; paint();
+      try {
+        const resumed = await request({action: 'quizResume', route: {courseId: route.courseId, id: String(item.id)}});
+        await openTake(item, {qsId: resumed.qsId, attempt: resumed.attempt, validationToken: resumed.validationToken, endAt: resumed.endAt});
+      } catch (reason) {
+        takeNotice = reason.message; paint();
       }
     }
     function takeSection(body, item) {
@@ -543,13 +561,23 @@
         section.append(element('h3', {}, 'Take quiz'));
         const taken = attempts.length;
         section.append(element('p', {class: 'meta'}, taken ? `${taken} of ${allowed === -1 ? 'unlimited' : allowed ?? 'unlimited'} attempts taken. This will be your attempt ${taken + 1}.` : (allowed && allowed !== -1 ? `0 of ${allowed} attempts taken. This will be your 1st attempt.` : 'This will be your 1st attempt.')));
+        const resumable = attempts.find(attempt => attempt?.started_at && !attempt.finished_at);
         let code = '';
         if (takeCode) {
           const field = element('input', {type: 'password', class: 'course-submit-url', placeholder: 'Access code', 'aria-label': 'Quiz access code'});
           field.addEventListener('input', () => {code = field.value;});
           section.append(field);
         }
-        if (remaining) {
+        if (resumable) {
+          section.append(element('p', {class: 'course-original-note'}, 'You have an attempt in progress, including one that may have been started in Original Canvas.'));
+          const resume = element('button', {class: 'quiet primary'}, 'Resume attempt ' + (resumable.attempt ?? ''));
+          resume.addEventListener('click', async () => {
+            resume.disabled = true;
+            try {await resumeTake(item);}
+            finally {resume.disabled = false;}
+          });
+          section.append(element('div', {class: 'course-actions'}, resume));
+        } else if (remaining) {
           const begin = element('button', {class: 'quiet primary'}, takeCode ? 'Begin with access code' : 'Begin');
           begin.addEventListener('click', async () => {
             begin.disabled = true;
@@ -564,7 +592,7 @@
         section.append(status);
         return;
       }
-      section.append(element('h3', {}, 'Attempt ' + take.attempt));
+      section.append(element('h3', {}, 'Taking attempt ' + take.attempt));
       const left = takeTimeLeft();
       if (left || take.endAt) section.append(element('p', {class: 'course-quiz-timer', role: 'timer'}, left || ''));
       let number = 0, answerable = 0;
@@ -620,8 +648,8 @@
       if (attempts.length) {
         body.append(element('h3', {}, 'Your attempts'));
         for (const attempt of attempts) {
-          const meta = [attempt.workflow_state ? String(attempt.workflow_state).replaceAll('_', ' ') : '', attempt.score != null ? 'Score: ' + attempt.score : '', attempt.finished_at ? 'Finished ' + date(attempt.finished_at) : '', attempt.time_spent != null ? Math.round(attempt.time_spent / 60) + ' min' : ''].filter(Boolean).join(' · ');
-          record(body, 'Attempt ' + (attempt.attempt ?? '?'), null, meta);
+          const meta = [attempt.workflow_state ? String(attempt.workflow_state).replaceAll('_', ' ') : '', attempt.finished_at ? 'Finished ' + date(attempt.finished_at) : '', attempt.time_spent != null ? Math.round(attempt.time_spent / 60) + ' min' : ''].filter(Boolean).join(' · ');
+          gradedRow(body, 'Attempt ' + (attempt.attempt ?? '?'), null, `${attempt.score ?? '–'}/${item.points_possible ?? '–'}`, meta);
         }
       }
       const questions = data.quizQuestions;
@@ -735,7 +763,13 @@
         if (token !== version) return;
         data = reply;
       } catch (reason) {if (token === version) error = reason.message;}
-      finally {if (token === version) {loading = false; paint();}}
+      finally {
+        if (token !== version) return;
+        loading = false;
+        // A quiz-linked assignment page adds nothing over the quiz page itself.
+        if (!error && data?.view === 'assignments' && data.item?.is_quiz_assignment && data.quizId) {navigate(path('quizzes', data.quizId), {replace: true}); return;}
+        paint();
+      }
     }
     return {
       root,

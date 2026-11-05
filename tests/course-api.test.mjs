@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {courseFileRead, courseRead, quizAnswer, quizComplete, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
+import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
 
 const origin = 'https://canvas.test', identity = origin + '/42';
 const json = (value, headers = {}) => new Response(JSON.stringify(value), {headers: {'content-type': 'application/json', ...headers}});
@@ -274,6 +274,22 @@ test('quiz answering and completing verify ownership and shape fixed bodies', as
   const other = quizFixture(url => url.pathname.endsWith('/submissions/41') ? json({quiz_submissions: [{...quizSubmission, user_id: 77}]}) : json({quiz_submission_questions: []}));
   await assert.rejects(quizAnswer(origin, identity, {...base, answers: [{id: 1, answer: 1}]}, other.fetcher), /Unexpected/);
   await assert.rejects(quizComplete(origin, identity, base, other.fetcher), /Unexpected/);
+});
+
+test('quiz resume picks up only the signed-in student unfinished attempt with a token', async () => {
+  const session = {id: 41, quiz_id: 9, user_id: 42, attempt: 2, started_at: '2026-11-05T00:00:00Z', finished_at: null, end_at: '2099-11-06T00:00:00Z', validation_token: 'tok2'};
+  const {fetcher} = quizFixture(() => json({quiz_submissions: [session]}));
+  const resumed = await quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, fetcher);
+  assert.deepEqual([resumed.qsId, resumed.attempt, resumed.validationToken], ['41', 2, 'tok2']);
+  const finished = quizFixture(() => json({quiz_submissions: [{...session, finished_at: '2026-11-05T01:00:00Z'}]}));
+  await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, finished.fetcher), /No attempt in progress/);
+  const unstarted = quizFixture(() => json({quiz_submissions: [{...session, started_at: null}]}));
+  await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, unstarted.fetcher), /No attempt in progress/);
+  const noToken = quizFixture(() => json({quiz_submissions: [{...session, validation_token: null}]}));
+  await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, noToken.fetcher), /Original Canvas/);
+  const foreign = quizFixture(() => json({quiz_submissions: [{...session, user_id: 77}]}));
+  await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, foreign.fetcher), /No attempt in progress/);
+  await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '../9'}, fetcher), /Invalid course request/);
 });
 
 test('quiz take questions verify the submission before listing', async () => {

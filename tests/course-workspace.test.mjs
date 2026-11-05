@@ -32,6 +32,7 @@ async function setup(browser, path = '/courses/34') {
         if (window.requireCode && !message.options?.access_code) return {ok: false, error: 'Invalid access code'};
         return {ok: true, qsId: '41', attempt: 2, validationToken: 'tok', endAt: '2099-11-06T00:00:00Z', workflowState: 'untaken'};
       }
+      if (message.action === 'quizResume') return {ok: true, qsId: '42', attempt: 2, validationToken: 'tok2', endAt: '2099-11-06T02:00:00Z'};
       if (message.action === 'quizQuestions') return {ok: true, questions: [
         {id: 101, answer: null, quiz_question: {id: 501, question_name: 'First question', question_type: 'multiple_choice_question', question_text: '<p>What is two plus two?</p>', points_possible: 5, answers: [{id: 5, answer_text: 'Four'}, {id: 6, answer_text: 'Five'}]}},
         {id: 102, answer: null, quiz_question: {id: 502, question_name: 'Explain', question_type: 'essay_question', question_text: '<p>Explain why.</p>', points_possible: 5}}
@@ -60,12 +61,17 @@ async function setup(browser, path = '/courses/34') {
         if (sid === '14') {item.id = 14; item.name = 'Report'; item.submission_types = ['online_upload']; item.allowed_extensions = ['pdf']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '15') {item.id = 15; item.name = 'Homework'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '16') {item.id = 16; item.name = 'Link'; item.submission_types = ['online_url']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '17') {item.id = 17; item.name = 'Quiz work'; item.is_quiz_assignment = true; item.submission_types = ['online_quiz']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (id) result.item = item; else result.items = [item];
+        if (sid === '17') result.quizId = 9;
         result.enrollments = [{grades: {current_score: 87.4}}];
       }
       if (kind === 'quizzes') {
-        if (id) {
-          result.item = {id: 9, title: 'Practice quiz', description: '<p>Review chapter one.</p>', time_limit: 30, allowed_attempts: 2};
+        if (String(id) === '10') {
+          result.item = {id: 10, title: 'Resumable quiz', description: '<p>Pick up where you left off.</p>', time_limit: 30, allowed_attempts: 2, points_possible: 10};
+          result.quizAttempts = [{id: 42, quiz_id: 10, user_id: 42, attempt: 2, workflow_state: 'untaken', started_at: '2026-11-05T00:00:00Z', finished_at: null, score: null, time_spent: 60}];
+        } else if (id) {
+          result.item = {id: 9, title: 'Practice quiz', description: '<p>Review chapter one.</p>', time_limit: 30, allowed_attempts: 2, points_possible: 10};
           result.quizAttempts = [{id: 31, quiz_id: 9, user_id: 42, attempt: 1, workflow_state: 'complete', score: 8, finished_at: '2026-11-01T12:00:00Z', time_spent: 600}];
           result.quizQuestions = [{id: 101, answer: 5, quiz_question: {id: 501, question_name: 'First question', question_type: 'multiple_choice_question', question_text: '<p>What is two plus two?</p>', points_possible: 5, neutral_comments: 'Well done reading.', correct_comments: 'secret-correct-marker', incorrect_comments: 'secret-wrong-marker', answers: [{id: 5, answer_text: 'Four'}, {id: 6, answer_text: 'Five'}]}}];
           result.quizReviewAttempt = 1;
@@ -348,7 +354,7 @@ test('quiz taking starts an attempt, saves answers, and submits with confirm', {
     await page.getByRole('button', {name: 'Begin', exact: true}).click();
     await page.getByLabel('Quiz access code').fill('open-sesame');
     await page.getByRole('button', {name: 'Begin with access code', exact: true}).click();
-    await page.getByRole('heading', {name: 'Attempt 2', exact: true}).waitFor();
+    await page.getByRole('heading', {name: 'Taking attempt 2', exact: true}).waitFor();
     assert.equal(await page.locator('.course-quiz-timer').count(), 1, 'remaining time stays visible while taking');
     assert.equal(await page.locator('.course-take').getByText('What is two plus two?', {exact: true}).count(), 1);
     await page.getByRole('radio', {name: 'Four', exact: true}).check();
@@ -361,6 +367,39 @@ test('quiz taking starts an attempt, saves answers, and submits with confirm', {
     await page.getByRole('heading', {name: 'Attempt submitted', exact: true}).waitFor();
     assert.equal(await page.getByText('Score: 8', {exact: true}).count(), 1);
     assert.ok(await page.evaluate(() => window.quizCalls.some(call => call.action === 'quizComplete')));
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('quiz assignments redirect to the quiz, attempts use grade fractions, in-progress attempts resume', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    const historyLength = await page.evaluate(() => history.length);
+    await page.goto('https://canvas.test/courses/34/assignments/17');
+    await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/courses/34/quizzes/9');
+    assert.equal(await page.evaluate(() => history.length), historyLength + 1, 'the assignment page never lands in history');
+    assert.equal(await page.locator('.course-grade-fraction').first().textContent(), '8/10');
+    await page.goto('https://canvas.test/courses/34/assignments/12');
+    await page.getByRole('heading', {name: 'Essay', exact: true}).waitFor();
+    assert.equal(await page.locator('.course-record-grade .course-grade-fraction').first().textContent(), '0/20');
+    assert.equal(await page.getByText('Score:', {exact: false}).count(), 0, 'score labels give way to fractions');
+    await page.goto('https://canvas.test/courses/34/quizzes/10');
+    await page.getByRole('heading', {name: 'Resumable quiz', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Resume attempt 2', exact: true}).count(), 1);
+    assert.equal(await page.getByRole('button', {name: 'Begin', exact: true}).count(), 0, 'no new attempt starts while one is in progress');
+    await page.getByRole('button', {name: 'Resume attempt 2', exact: true}).click();
+    await page.getByRole('heading', {name: 'Taking attempt 2', exact: true}).waitFor();
+    await page.getByRole('radio', {name: 'Four', exact: true}).check();
+    await page.getByRole('button', {name: 'Save answers', exact: true}).click();
+    await page.getByText('Answers saved', {exact: false}).waitFor();
+    assert.equal(await page.evaluate(() => window.quizCalls.find(call => call.action === 'quizAnswer').take.qsId), '42', 'resumed session answers the in-progress submission');
+    await page.getByRole('button', {name: 'Submit quiz', exact: true}).click();
+    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('heading', {name: 'Attempt submitted', exact: true}).waitFor();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

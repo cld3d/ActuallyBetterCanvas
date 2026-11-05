@@ -218,6 +218,18 @@ export async function quizStart(origin, identity, route, options, fetcher = fetc
   return {qsId: String(submission.id), attempt: submission.attempt, validationToken: typeof submission.validation_token === 'string' ? submission.validation_token : null, endAt: submission.end_at || null, workflowState: submission.workflow_state || null};
 }
 
+export async function quizResume(origin, identity, route, fetcher = fetch) {
+  const {courseId, id} = route || {};
+  if (!/^\d+$/.test(String(courseId)) || !/^\d+$/.test(String(id))) throw new Error('Invalid course request.');
+  const profile = await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await getObject(origin, `/api/v1/courses/${courseId}/quizzes/${id}/submission`, fetcher);
+  const list = Array.isArray(data.quiz_submissions) ? data.quiz_submissions : [data];
+  const current = list.find(s => s && /^\d+$/.test(String(s.id)) && String(s.quiz_id) === String(id) && String(s.user_id) === String(profile.id) && s.started_at && !s.finished_at);
+  if (!current) throw new Error('No attempt in progress. Begin a new attempt below.');
+  if (typeof current.validation_token !== 'string' || !current.validation_token) throw new Error('Canvas did not share this attempt. Continue it in Original Canvas.');
+  return {qsId: String(current.id), attempt: current.attempt, validationToken: current.validation_token, endAt: current.end_at || null};
+}
+
 export async function quizTakeQuestions(origin, identity, take, fetcher = fetch) {
   const {courseId, quizId, qsId} = take || {};
   await checkQuizSubmission(origin, identity, courseId, quizId, qsId, fetcher);
