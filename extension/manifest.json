@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Canvas Local",
   "description": "A focused Canvas workspace with private local assignments and exact personal deadlines.",
-  "version": "0.1.33",
+  "version": "0.1.34",
   "permissions": [
     "storage",
     "alarms",

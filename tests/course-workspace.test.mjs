@@ -450,9 +450,12 @@ test('tool-delivered quizzes get a quiz launch instead of a generic tool handoff
     assert.equal(new URL(page.url()).pathname, '/courses/34/assignments/20', 'New Quizzes stay on the assignment page');
     assert.equal(await page.getByText('Watch the video first.', {exact: true}).count(), 1, 'New Quiz instructions render inline');
     assert.equal(await page.getByText('external website', {exact: false}).count(), 0, 'no generic tool copy for New Quizzes');
+    const frame = page.locator('iframe.course-quiz-frame');
+    await frame.waitFor();
+    assert.ok((await frame.getAttribute('src') || '').startsWith('https://tool.test/'), 'the quiz player embeds in the workspace');
     const [newQuizTool] = await Promise.all([
       page.context().waitForEvent('page'),
-      page.getByRole('button', {name: 'Take quiz in new window', exact: true}).click()
+      page.getByRole('link', {name: 'Open quiz in new window', exact: true}).click()
     ]);
     await newQuizTool.waitForURL('https://tool.test/**');
     assert.deepEqual(await page.evaluate(() => window.launches.at(-1)), {courseId: '34', launchType: 'assessment', assessmentId: '20'});
