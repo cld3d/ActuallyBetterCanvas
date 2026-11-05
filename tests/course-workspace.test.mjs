@@ -297,13 +297,10 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_url', url: 'example.com/work'}], 'scheme normalization happens in the API layer, covered by unit tests');
     await page.goto('https://canvas.test/courses/34/assignments/15');
     await page.getByRole('heading', {name: 'Homework', exact: true}).waitFor();
-    assert.equal(await page.getByRole('button', {name: 'Load tool here', exact: true}).count(), 0, 'tools load by default');
-    const toolFrame = page.locator('iframe.course-quiz-frame');
-    await toolFrame.waitFor();
-    assert.ok((await toolFrame.getAttribute('src') || '').startsWith('https://tool.test/'), 'the tool loads inside the workspace');
+    assert.equal(await page.locator('iframe.course-quiz-frame').count(), 0, 'external tools are never embedded');
     const [assessmentTool] = await Promise.all([
       page.context().waitForEvent('page'),
-      page.getByRole('link', {name: 'Open in new window', exact: true}).click()
+      page.getByRole('button', {name: 'Open tool in new window', exact: true}).click()
     ]);
     await assessmentTool.waitForURL('https://tool.test/**');
     assert.deepEqual(await page.evaluate(() => window.launches[0]), {courseId: '34', launchType: 'assessment', assessmentId: '15'});
