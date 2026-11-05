@@ -43,6 +43,7 @@ ShellRoot {
       check(!original.eventColorChanged,"Opening an event must not rewrite its color")
       var cells = swatches()
       check(cells.length === 2,"Swatch grid shows one circle per color (Calendar default is a separate button)")
+      check(cells[0].objectName === "eventSwatch:label:pistachio" && cells[1].objectName === "eventSwatch:color:9","Swatches follow Google picker order, not cache order")
       for(var i=0;i<cells.length;i++) {
         check(cells[i].tipText && cells[i].tipText.indexOf("#") < 0,"Hovering a swatch must name its color, never a hex code: " + cells[i].tipText)
       }

@@ -78,7 +78,9 @@ Item {
             height: width
             radius: width / 2
             color: modelData.color
-            border.width: modelData.value === root.value || swatch.activeFocus ? 2 : 0
+            // No selection outline: the checkmark alone marks the current
+            // color. The accent ring appears only for keyboard focus.
+            border.width: swatch.activeFocus ? 2 : 0
             border.color: Color.accent
             opacity: root.enabled ? 1 : 0.5
 

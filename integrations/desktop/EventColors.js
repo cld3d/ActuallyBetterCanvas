@@ -1,4 +1,16 @@
-// Provider-owned choices only: custom Google labels come from the calendar cache.
+// Display order matching Google Calendar's own picker: hue-sorted rows of
+// 9 + 9 + 6, dark to light within each family. Provider IDs are irrelevant
+// to display; sort by visible color so standard colors and custom labels
+// with identical hexes share one position.
+var googleOrder = [
+  "#ad1457","#d81b60","#e67c73","#d50000","#f4511e","#ef6c00","#f09300","#e4c441","#f6bf26",
+  "#c0ca33","#7cb342","#0b8043","#33b679","#009688","#039be5","#4285f4","#3f51b5","#7986cb",
+  "#b39ddb","#9e69af","#8e24aa","#795548","#616161","#a79b8e"
+]
+function orderIndex(color) {
+  var i = googleOrder.indexOf(String(color || "").toLowerCase())
+  return i < 0 ? googleOrder.length : i
+}
 var colorNames = {
   "#7986cb":"Lavender","#33b679":"Sage","#8e24aa":"Grape","#e67c73":"Flamingo",
   "#f6bf26":"Banana","#f4511e":"Tangerine","#039be5":"Peacock","#616161":"Graphite",
@@ -52,7 +64,12 @@ function options(calendar, event) {
     if (color && byColor[color] !== undefined) list[byColor[color]] = option
     else list.push(option)
   }
-  return list
+  var head = list.filter(function(o) {return !o.color})
+  var tail = list.filter(function(o) {return !!o.color}).sort(function(a, b) {
+    var d = orderIndex(a.color) - orderIndex(b.color)
+    return d !== 0 ? d : String(a.value) < String(b.value) ? -1 : 1
+  })
+  return head.concat(tail)
 }
 function args(draft, result) {
   if (!result || result.error || !draft.eventColorChanged) return result
@@ -62,4 +79,4 @@ function args(draft, result) {
   if (draft.series && args.indexOf("--series") < 0) args.push("--series")
   return {args:args}
 }
-if (typeof module !== "undefined") module.exports = {selection:selection,initial:initial,options:options,args:args,colorNames:colorNames}
+if (typeof module !== "undefined") module.exports = {selection:selection,initial:initial,options:options,args:args,colorNames:colorNames,googleOrder:googleOrder}

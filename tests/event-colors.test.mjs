@@ -26,6 +26,21 @@ test('all 24 Google colors display names, never cached hex labels or duplicate e
     assert.ok(options.some(o=>o.label==='Avocado'));
   }
 });
+test('swatches follow Google picker order: hue-sorted 9 + 9 + 6, default first', () => {
+  assert.equal(Colors.googleOrder.length,24);
+  const shuffled = [{value:'',label:'Calendar default',color:''}];
+  for (let i = Colors.googleOrder.length - 1; i >= 0; i--) {
+    const color = Colors.googleOrder[i];
+    shuffled.push({value:'label:' + color.slice(1),label:color,color});
+  }
+  const options = Colors.options({eventColors:shuffled},null);
+  assert.deepEqual(options.map(o=>o.color),['',...Colors.googleOrder]);
+  assert.equal(options[0].label,'Calendar default');
+  assert.deepEqual(options.slice(1,10).map(o=>o.label),
+    ['Beetroot','Cherry Blossom','Flamingo','Tomato','Tangerine','Pumpkin','Mango','Citron','Banana']);
+  assert.deepEqual(options.slice(-6).map(o=>o.label),
+    ['Wisteria','Amethyst','Grape','Cocoa','Graphite','Birch']);
+});
 test('current color selection distinguishes provider IDs, legacy cache colors and calendar defaults', () => {
   assert.equal(Colors.initial({eventColor:'label:custom',eventColorHint:'#7986cb'},null),'label:custom');
   assert.equal(Colors.initial({eventColor:'',eventColorKnown:true,eventColorHint:'#039be5'},null),'');
