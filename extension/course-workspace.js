@@ -449,7 +449,7 @@
         body.append(feedback);
       }
       if (local) {
-        body.append(element('h3', {}, 'Local task'), taskRow(local));
+        body.append(element('h3', {}, 'Local task'), taskRow(local, false));
       }
       if (item.rubric?.length) {
         const section = element('section', {class: 'course-rubric'}, element('h3', {}, 'Rubric'));

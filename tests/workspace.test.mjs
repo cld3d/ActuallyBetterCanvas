@@ -339,7 +339,18 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     assert.equal(await check.isChecked(), false, 'a grade must not check the assignment');
     assert.equal(await page.locator('#canvas-local-root').locator('img').count(), 0, 'assignment titles render as text');
     assert.equal(await page.locator('#original').evaluate(node => node.inert), true, 'underlying Canvas is not focusable');
+    await page.evaluate(() => {
+      window.rowSwipes = [];
+      const original = Element.prototype.animate;
+      Element.prototype.animate = function(frames, options) {
+        try {
+          if (this.matches && this.matches('.row') && JSON.stringify(frames).includes('translateX')) window.rowSwipes.push(true);
+        } catch {}
+        return original.call(this, frames, options);
+      };
+    });
     await check.click();
+    await page.waitForFunction(() => window.rowSwipes.length > 0, undefined, {timeout: 5000});
     await page.getByRole('tab', {name: 'Completed', exact: true}).click();
     await page.getByRole('checkbox').waitFor();
     assert.equal(await page.getByRole('checkbox').isChecked(), true);

@@ -657,7 +657,9 @@
     if (matchMedia('(prefers-reduced-motion: reduce)').matches || !node.animate) return Promise.resolve();
     return node.animate(frames, {duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)', ...options}).finished.catch(() => {});
   }
-  function taskRow(item) {
+  // The swipe-away runs only where the row actually leaves the list (Tasks tabs).
+  // Embedded rows that stay put, like the assignment page local task, skip it.
+  function taskRow(item, exit = true) {
     const checkbox = el('input', {type: 'checkbox', class: 'check', 'aria-label': (item.completed ? 'Reopen ' : 'Complete ') + item.title});
     checkbox.checked = item.completed; checkbox.disabled = pending.has(item.uid);
     const row = el('article', {class: 'row', 'data-uid': item.uid, 'data-completed': String(item.completed)}, checkbox,
@@ -668,7 +670,7 @@
       pending.add(item.uid); checkbox.disabled = true; row.classList.add('completing');
       try {
         const [reply] = await Promise.all([request({action: 'update', uid: item.uid, patch: {completion: checkbox.checked}}), motion(checkbox, [{transform: 'scale(.85)'}, {transform: 'scale(1.18)'}, {transform: 'scale(1)'}])]);
-        await motion(row, [{opacity: 1, transform: 'translateX(0)'}, {opacity: 0, transform: 'translateX(18px)'}], {duration: 180});
+        if (exit) await motion(row, [{opacity: 1, transform: 'translateX(0)'}, {opacity: 0, transform: 'translateX(18px)'}], {duration: 180});
         const positions = new Map([...shadow.querySelectorAll('.row')].map(node => [node.dataset.uid, node.getBoundingClientRect().top]));
         pending.delete(item.uid); ingest(reply);
         for (const node of shadow.querySelectorAll('.row')) {
@@ -739,7 +741,7 @@
     }
     const agenda = el('section', {class: 'agenda', 'aria-label': 'Selected day tasks'}, el('h2', {}, selectedDay.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})));
     const selected = days.get(dayKey(selectedDay)) || [];
-    if (selected.length) agenda.append(...selected.map(taskRow));
+    if (selected.length) agenda.append(...selected.map(item => taskRow(item)));
     else agenda.append(el('p', {class: 'meta'}, 'No matching tasks due this day.'));
     pageContent.append(controls, grid, agenda);
   }

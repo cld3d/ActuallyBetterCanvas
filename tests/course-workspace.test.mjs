@@ -123,9 +123,26 @@ test('course browsing covers enabled tabs, content, local overrides, history and
     assert.equal(await page.getByRole('checkbox').isChecked(), false, 'a zero grade never completes local work');
     assert.equal(await page.getByText('Please revise.', {exact: true}).isVisible(), true);
     assert.equal(await page.getByRole('heading', {name: 'Rubric', exact: true}).isVisible(), true);
+    await page.evaluate(() => {
+      window.rowSwipes = []; window.rowAnims = 0;
+      if (!window.animateWrapped) {
+        window.animateWrapped = true;
+        const original = Element.prototype.animate;
+        Element.prototype.animate = function(frames, options) {
+          try {
+            window.rowAnims++;
+            if (this.matches && this.matches('.row') && JSON.stringify(frames).includes('translateX')) window.rowSwipes.push(true);
+          } catch {}
+          return original.call(this, frames, options);
+        };
+      }
+    });
     await page.getByRole('checkbox').check();
     await page.waitForFunction(() => window.testState.assignments[0].completed);
     await page.getByRole('checkbox', {name: 'Reopen Essay', exact: true}).waitFor();
+    await page.waitForTimeout(400);
+    assert.ok(await page.evaluate(() => window.rowAnims) > 0, 'the animation spy observed the completion');
+    assert.deepEqual(await page.evaluate(() => window.rowSwipes), [], 'the assignment-page task stays put instead of swiping away');
     await page.goBack();
     await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
     await page.goForward();
