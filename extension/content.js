@@ -121,25 +121,28 @@
     main);
   shadow.append(launcher, workspace);
   let inertElements = [];
+  let priorOverflow = '', priorTitle = '';
   function close() {
     rememberMode('original');
     // Workspace routing leaves the Canvas document underneath on its original route.
     // Keep the overlay visible until the matching Original Canvas document loads.
     if (location.pathname + location.search !== sourceRoute) {location.reload(); return;}
     opened = false; workspace.hidden = true; launcher.hidden = false;
+    if (priorTitle) document.title = priorTitle;
     document.body.style.overflow = priorOverflow;
     for (const [node, wasInert] of inertElements) node.inert = wasInert;
     inertElements = [];
     if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus();
     else launcher.focus();
   }
-  let priorOverflow = '';
   let feedQueue = Promise.resolve(), feedVersion = 0, appliedFeedVersion = 0;
+  const pageTitles = {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'};
   function open() {
     if (opened) return;
     rememberMode('workspace');
     previousFocus = document.activeElement;
     priorOverflow = document.body.style.overflow;
+    priorTitle = document.title;
     document.body.style.overflow = 'hidden';
     inertElements = [...document.body.children].filter(node => node !== host).map(node => [node, node.inert]);
     for (const [node] of inertElements) node.inert = true;
@@ -262,6 +265,7 @@
   }
   function render() {
     main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
+    document.title = page === 'course' ? (courseWorkspace?.title() || 'Course') : (pageTitles[page] || 'Canvas Local');
     for (const button of navigation.querySelectorAll('[data-page]')) {
       const selected = button.dataset.page === (page === 'course' ? 'courses' : page);
       button.classList.toggle('selected', selected);

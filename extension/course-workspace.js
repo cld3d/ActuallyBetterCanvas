@@ -699,9 +699,19 @@
       actions.append(nativeButton(path('files', item.id), 'Preview / download in Original Canvas'));
       body.append(actions);
     }
+    function courseTitle() {
+      if (!route) return null;
+      if (data) {
+        const name = data.item?.title || data.item?.name || data.item?.display_name || labels[data.view] || labels[route.kind] || 'Course';
+        return data.course?.name ? name + ' - ' + data.course.name : name;
+      }
+      return 'Course';
+    }
     function paint() {
       const style = element('style', {}, css);
       root.replaceChildren(style);
+      const headingTitle = courseTitle();
+      if (headingTitle) document.title = headingTitle;
       const heading = element('header', {class: 'course-heading'}, element('div', {}, link('/courses', 'All courses'), data?.course.name ? element('h1', {}, data.course.name) : null));
       root.append(heading);
       if (data) {
@@ -776,7 +786,8 @@
       show(next) {if (route?.path === next.path) return; clearTake(); route = next; data = null; load();},
       refresh() {if (route) load(true);},
       leave() {++version; route = null; data = null; clearTake(); root.replaceChildren();},
-      repaint() {if (route) paint();}
+      repaint() {if (route) paint();},
+      title: courseTitle
     };
   }
   globalThis.CanvasCourseWorkspace = {create, richText};

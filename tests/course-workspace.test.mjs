@@ -404,6 +404,21 @@ test('quiz assignments redirect to the quiz, attempts use grade fractions, in-pr
   } finally {await browser.close();}
 });
 
+test('browser tab title follows workspace navigation', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    assert.equal(await page.title(), 'Modules - English');
+    await page.goto('https://canvas.test/courses/34/assignments/12');
+    await page.getByRole('heading', {name: 'Essay', exact: true}).waitFor();
+    assert.equal(await page.title(), 'Essay - English');
+    await page.getByRole('button', {name: 'Tasks', exact: true}).click();
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    assert.equal(await page.title(), 'Tasks', 'leaving a course page must not keep its title');
+  } finally {await browser.close();}
+});
+
 test('instructor HTML is rebuilt safely while preserving rich text, math and course links', {skip}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
