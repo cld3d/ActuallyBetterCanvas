@@ -16,13 +16,13 @@ test('sidebar URLs survive refresh, support history, and return to matching Orig
     await page.addInitScript(() => {
       const attach = Element.prototype.attachShadow;
       Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
-      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}, courses: [], conversations: []})}};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}, courses: [], conversations: [], announcements: []})}};
     });
     await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body:
       `<button id="original">Original ${new URL(route.request().url()).pathname}</button><script>${content}</script>`}));
     await page.goto('https://canvas.test/courses/34');
     await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).click();
-    for (const [name, path] of [['Tasks', '/dashboard'], ['Courses', '/courses'], ['Calendar', '/calendar'], ['Inbox', '/conversations']]) {
+    for (const [name, path] of [['Tasks', '/dashboard'], ['Announcements', '/announcements'], ['Courses', '/courses'], ['Calendar', '/calendar'], ['Inbox', '/conversations']]) {
       await page.getByRole('button', {name, exact: true}).click();
       assert.equal(new URL(page.url()).pathname, path, name + ' updates the browser URL');
       await page.reload();

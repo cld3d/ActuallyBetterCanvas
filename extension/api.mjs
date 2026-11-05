@@ -77,3 +77,11 @@ export async function workspaceRead(origin, identity, action, id, fetcher = fetc
   if (String(conversation.id) !== String(id) || !Array.isArray(conversation.messages)) throw new Error('Unexpected Canvas conversation response.');
   return {conversation};
 }
+
+export async function announcementsRead(origin, identity, courseIds, fetcher = fetch) {
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const ids = [...new Set((courseIds || []).map(String).filter(id => /^\d+$/.test(id)))];
+  if (!ids.length) return {announcements: []};
+  const query = ids.map(id => 'context_codes[]=course_' + id).join('&');
+  return {announcements: await pages(origin, '/api/v1/announcements?' + query + '&per_page=100', fetcher)};
+}

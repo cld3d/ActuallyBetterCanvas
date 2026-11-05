@@ -59,7 +59,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · System', exact: true}).count(), 1);
     assert.equal(await inlineVar(), '#edf3f5');
     await page.getByRole('button', {name: 'Color theme: Ocean · System', exact: true}).click();
-    await page.getByRole('option', {name: 'Color scheme: Dark', exact: true}).click();
+    await page.getByRole('option', {name: 'Appearance: Dark', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).count(), 1);
     assert.equal(await inlineVar(), '#0f1720');
     assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#0f1720');
@@ -70,7 +70,8 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     assert.equal(await inlineVar(), '#0f1720');
     await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).click();
     await page.getByRole('option', {name: 'Theme: Matcha', exact: true}).click();
-    await page.getByRole('option', {name: 'Color scheme: System', exact: true}).click();
+    await page.getByRole('button', {name: 'Color theme: Matcha · Dark', exact: true}).click();
+    await page.getByRole('option', {name: 'Appearance: System', exact: true}).click();
     assert.equal(await inlineVar(), '#f3f5f3', 'System reapplies the resolved Matcha pair');
     await page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true}).click();
     await page.keyboard.press('Escape');
@@ -349,7 +350,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     for (const colorScheme of ['light', 'dark']) {
       await page.emulateMedia({colorScheme, reducedMotion: 'reduce'});
       await page.setViewportSize({width: 390, height: 844});
-      for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks']) {
+      for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks', 'Announcements']) {
         await page.getByRole('button', {name, exact: true}).click();
         assert.equal(await page.locator('#canvas-local-root h1, #canvas-local-root .intro').count(), 0, `${name} has no redundant page title or subtitle`);
         assert.equal(await page.getByRole('main', {name, exact: true}).count(), 1, 'page identity remains accessible');
@@ -402,6 +403,61 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     await page.addScriptTag({content});
     await page.getByRole('main', {name: 'Inbox', exact: true}).waitFor();
     assert.equal(await page.locator('.workspace').isVisible(), true, 'returning to custom mode restores automatic opening');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('announcements page lists course announcements with expandable text', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<button>Original Canvas</button>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.requests = []; window.failAnnouncements = false; window.emptyAnnouncements = false;
+      window.chrome = {runtime: {sendMessage: async message => {
+        window.requests.push(message);
+        if (message.action === 'courses') return {ok: true, courses: [{id: 34, name: 'English'}, {id: 35, name: 'Math'}]};
+        if (message.action === 'announcements') {
+          if (window.failAnnouncements) return {ok: false, error: 'Announcements unavailable'};
+          if (window.emptyAnnouncements) return {ok: true, announcements: []};
+          return {ok: true, announcements: [
+            {id: 1, title: 'Exam moved', message: 'The exam moves to Friday.', posted_at: '2026-11-03T12:00:00Z', context_code: 'course_34', html_url: 'https://canvas.test/courses/34/discussion_topics/1', read_state: 'unread'},
+            {id: 2, title: 'Reading week', message: '', posted_at: null, context_code: 'course_35', html_url: 'https://canvas.test/courses/35/discussion_topics/2', read_state: 'read'}
+          ]};
+        }
+        return {ok: true, state: {assignments: []}};
+      }}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Announcements', exact: true}).click();
+    await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/announcements', 'announcements updates the browser URL');
+    assert.deepEqual(await page.locator('.announcement .announcement-title').allTextContents(), ['Exam moved', 'Reading week']);
+    assert.equal(await page.locator('.announcement.unread').count(), 1, 'unread announcements stand out');
+    assert.match(await page.locator('.announcement .meta').first().textContent(), /English/);
+    assert.match(await page.locator('.announcement .meta').nth(1).textContent(), /Math/);
+    assert.deepEqual(await page.evaluate(() => window.requests.find(request => request.action === 'announcements').courseIds), ['34', '35']);
+    assert.equal(await page.getByText('The exam moves to Friday.', {exact: true}).count(), 0, 'bodies stay collapsed until opened');
+    await page.getByRole('button', {name: 'Exam moved', exact: true}).click();
+    await page.getByText('The exam moves to Friday.', {exact: true}).waitFor();
+    assert.equal(await page.getByRole('link', {name: 'Open in Original Canvas', exact: true}).first().getAttribute('href'), 'https://canvas.test/courses/34/discussion_topics/1');
+    await page.getByRole('button', {name: 'Exam moved', exact: true}).click();
+    assert.equal(await page.getByText('The exam moves to Friday.', {exact: true}).count(), 0, 'clicking again collapses the body');
+    await page.evaluate(() => {window.emptyAnnouncements = true;});
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    await page.getByText('No announcements.', {exact: true}).waitFor();
+    await page.evaluate(() => {window.emptyAnnouncements = false; window.failAnnouncements = true;});
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    await page.getByText('Announcements unavailable', {exact: false}).waitFor();
+    await page.evaluate(() => {window.failAnnouncements = false;});
+    await page.getByRole('button', {name: 'Try again', exact: true}).click();
+    await page.getByText('Exam moved', {exact: true}).waitFor();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

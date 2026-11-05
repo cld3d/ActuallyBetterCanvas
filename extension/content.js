@@ -30,17 +30,23 @@
     /* Sidebar selection uses one moving rule, without a filled active surface. */
     nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:1.5px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
-    /* Sidebar bottom stack (theme picker + icon actions) sits below navigation. */
-    .sidebar-bottom{margin-top:auto;display:grid;gap:12px}
-    .theme-picker{position:relative}
+    /* Sidebar bottom: compact theme dot plus sync and Original Canvas icons in one row. */
+    .sidebar-bottom{margin-top:auto;display:flex;gap:8px;align-items:center}
+    .theme-picker{position:relative;flex:none}
     .sidebar-actions{display:flex;gap:8px}
-    .theme-button{width:100%;display:flex;align-items:center;gap:8px}
+    .theme-button{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .theme-button .swatch{width:14px;height:14px;border-radius:50%;background:var(--accent);flex:none}
     .theme-options{position:absolute;bottom:calc(100% + 8px);left:0;min-width:230px;width:max-content;max-width:min(340px,80vw);max-height:min(380px,60dvh);overflow:auto;z-index:2;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);box-shadow:0 12px 32px #17241a24}
     .theme-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 4px 8px}
     .mode-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:12px}
     .mode-row button{border:1px solid var(--line);background:none;color:var(--ink);padding:8px 4px;border-radius:8px;font-size:13px;font-weight:550}
     .mode-row button[aria-selected=true]{background:var(--tint);color:var(--accent);border-color:var(--accent);font-weight:700}
+    .announcement{padding:18px 4px;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+    .announcement-title{background:none;border:0;padding:0;color:var(--ink);font-weight:550;font-size:16px;text-align:left;cursor:pointer}
+    .announcement-title:hover{color:var(--accent)}
+    .announcement.unread .announcement-title{font-weight:700}
+    .announcement p{margin:8px 0}
+    .announcement .message-body{line-height:1.7;max-width:78ch;white-space:pre-wrap}
     .theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
     .theme-card{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);background:none;color:var(--ink);padding:12px 6px 10px;border-radius:10px;font-size:12px;font-weight:550}
     .theme-card[aria-selected=true]{border-color:var(--accent);background:var(--tint);color:var(--accent);font-weight:700}
@@ -49,7 +55,7 @@
     /* Keep keyboard location visible without the browser's large focus rectangles. */
     *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-    @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:12px}nav .selected:before{display:none}main{padding:22px}.row{grid-template-columns:26px minmax(0,1fr) 46px;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:300px}.reader{padding:20px}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:auto;bottom:8px;right:auto;left:5px}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
+    @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:11px}nav .selected:before{display:none}main{padding:22px}.row{grid-template-columns:26px minmax(0,1fr) 46px;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:300px}.reader{padding:20px}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:auto;bottom:8px;right:auto;left:5px}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
     @media(max-width:850px){.brand{display:flex;align-items:baseline;gap:8px;padding:0}.brand-prefix{margin:0}.brand-name{font-size:24px}}
     .sidebar-actions .quiet.icon-button{padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
@@ -71,8 +77,8 @@
     node.append(...children.filter(x => x != null));
     return node;
   }
-  const routePages = {'/': 'tasks', '/dashboard': 'tasks', '/courses': 'courses', '/calendar': 'calendar', '/conversations': 'inbox'};
-  const pagePaths = {tasks: '/dashboard', courses: '/courses', calendar: '/calendar', inbox: '/conversations'};
+  const routePages = {'/': 'tasks', '/dashboard': 'tasks', '/courses': 'courses', '/calendar': 'calendar', '/conversations': 'inbox', '/announcements': 'announcements'};
+  const pagePaths = {tasks: '/dashboard', announcements: '/announcements', courses: '/courses', calendar: '/calendar', inbox: '/conversations'};
   const sourceRoute = location.pathname + location.search;
   const readCourseRoute = input => globalThis.CanvasCourseWorkspace && globalThis.CanvasCourseRoutes?.parse(input);
   const currentRoutePage = () => readCourseRoute(location.href) ? 'course' : routePages[location.pathname.replace(/\/$/, '') || '/'];
@@ -83,7 +89,7 @@
   function originalMode() {try {return sessionStorage.getItem(modeKey) === 'original';} catch {return false;}}
   let state = {assignments: []}, view = 'open', query = '', course = '', loading = false, opened = false, previousFocus;
   let page = currentRoutePage() || 'tasks';
-  let catalog = null, conversations = null, remoteLoading = false, remoteError = '', selectedConversation = null, conversationLoading = false, conversationVersion = 0;
+  let catalog = null, conversations = null, announcements = null, expandedAnnouncement = null, remoteLoading = false, remoteError = '', selectedConversation = null, conversationLoading = false, conversationVersion = 0;
   let month = new Date(new Date().getFullYear(), new Date().getMonth(), 1), selectedDay = new Date();
   const pending = new Set();
   const launcher = el('button', {class: 'launcher', onclick: () => {page = currentRoutePage() || page; render(); open();}}, 'Actually Better Canvas');
@@ -125,7 +131,7 @@
       selectView(view); tabs.querySelector('[aria-selected="true"]').focus();
     }
   });
-  const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
+  const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox' || page === 'announcements') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
   const originalButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', 'data-tip': 'Original Canvas', onclick: close}, externalIcon);
   const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
@@ -139,7 +145,7 @@
     },
     original: url => {rememberMode('original'); location.assign(url);}
   });
-  const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
+  const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['announcements', 'Announcements'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
   const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
   navigation.append(sidebarIndicator);
   const themeVars = ['--bg', '--surface', '--ink', '--muted', '--line', '--accent', '--on-accent', '--tint'];
@@ -205,14 +211,13 @@
   function themeFamily() {return themeFamilies.find(candidate => candidate.id === themeFamilyId) || themeFamilies[0];}
   function themeModeLabel() {return themeModes.find(candidate => candidate.id === themeMode)?.label || 'System';}
   const themeSwatch = el('span', {class: 'swatch', 'aria-hidden': 'true'});
-  const themeButton = el('button', {class: 'quiet theme-button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Color theme', onclick: () => toggleThemePicker()}, themeSwatch, el('span', {}, 'Matcha · System'));
+  const themeButton = el('button', {class: 'quiet theme-button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Color theme', 'data-tip': 'Matcha · System', onclick: () => toggleThemePicker()}, themeSwatch);
   const themeOptions = el('div', {class: 'theme-options', role: 'listbox', 'aria-label': 'Color theme', hidden: ''});
   const themePicker = el('div', {class: 'theme-picker'}, themeButton, themeOptions);
-  const modeOptions = el('div', {class: 'mode-row', role: 'group', 'aria-label': 'Color scheme'});
+  const modeOptions = el('div', {class: 'mode-row', role: 'group', 'aria-label': 'Appearance'});
   const familyGrid = el('div', {class: 'theme-grid'});
-  themeOptions.append(el('div', {class: 'theme-section-label'}, 'Color scheme'), modeOptions, el('div', {class: 'theme-section-label'}, 'Themes'), familyGrid);
+  themeOptions.append(el('div', {class: 'theme-section-label'}, 'Appearance'), modeOptions, el('div', {class: 'theme-section-label'}, 'Themes'), familyGrid);
   const modeButtons = new Map(), familyButtons = new Map();
-  function themeLabel() {return themeButton.querySelector('span:last-child');}
   function dotBackground(vars) {return `linear-gradient(135deg, ${vars['--accent']} 0%, ${vars['--accent']} 38%, ${vars['--surface']} 100%)`;}
   function applyTheme(familyId = themeFamilyId, mode = themeMode, persist = true) {
     const family = themeFamilies.find(candidate => candidate.id === familyId) || themeFamilies[0];
@@ -223,11 +228,11 @@
     for (const key of themeVars) host.style.setProperty(key, vars[key]);
     host.style.setProperty('color-scheme', scheme);
     const label = `${themeFamily().label} · ${themeModeLabel()}`;
-    themeLabel().textContent = label;
     themeSwatch.style.background = dotBackground(vars);
     for (const candidate of themeModes) modeButtons.get(candidate.id)?.setAttribute('aria-selected', String(candidate.id === themeMode));
     for (const candidate of themeFamilies) familyButtons.get(candidate.id)?.setAttribute('aria-selected', String(candidate.id === themeFamilyId));
     themeButton.setAttribute('aria-label', 'Color theme: ' + label);
+    themeButton.dataset.tip = label;
     if (persist) {try {localStorage.setItem('canvas-local-theme', themeFamilyId); localStorage.setItem('canvas-local-mode', themeMode);} catch {}}
   }
   function toggleThemePicker(show = themeOptions.hidden) {
@@ -235,7 +240,7 @@
     if (show) (themeOptions.querySelector('[aria-selected="true"]') || themeOptions.querySelector('button'))?.focus();
   }
   for (const candidate of themeModes) {
-    const option = el('button', {role: 'option', 'aria-selected': 'false', 'aria-label': 'Color scheme: ' + candidate.label, onclick: () => {applyTheme(themeFamilyId, candidate.id); themeButton.focus();}}, candidate.label);
+    const option = el('button', {role: 'option', 'aria-selected': 'false', 'aria-label': 'Appearance: ' + candidate.label, onclick: () => {applyTheme(themeFamilyId, candidate.id); toggleThemePicker(false); themeButton.focus();}}, candidate.label);
     modeButtons.set(candidate.id, option);
     modeOptions.append(option);
   }
@@ -243,7 +248,7 @@
     const darkDot = el('span', {class: 'dot', 'aria-hidden': 'true'});
     darkDot.style.background = dotBackground(candidate.dark);
     const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, darkDot);
-    const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); themeButton.focus();}}, dots, el('span', {}, candidate.label));
+    const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); toggleThemePicker(false); themeButton.focus();}}, dots, el('span', {}, candidate.label));
     familyButtons.set(candidate.id, option);
     familyGrid.append(option);
   }
@@ -300,7 +305,7 @@
     else launcher.focus();
   }
   let feedQueue = Promise.resolve(), feedVersion = 0, appliedFeedVersion = 0;
-  const pageTitles = {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'};
+  const pageTitles = {tasks: 'Tasks', announcements: 'Announcements', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'};
   function open() {
     if (opened) return;
     rememberMode('workspace');
@@ -334,7 +339,7 @@
   function navigate(value, updateURL = true) {
     if (value === 'course') {navigateCourse(location.href, false); return;}
     if (updateURL && currentRoutePage() !== value) history.pushState(null, '', pagePaths[value]);
-    page = value; remoteError = ''; toggleCourses(false); render(); main.focus(); loadRemote();
+    page = value; remoteError = ''; expandedAnnouncement = null; toggleCourses(false); render(); main.focus(); loadRemote();
     motion(page === 'tasks' ? taskPanel : pageContent, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}]);
   }
   function navigateCourse(url, updateURL = true, replace = false) {
@@ -386,14 +391,29 @@
   courseSelect.addEventListener('focusout', event => {if (!courseSelect.contains(event.relatedTarget)) toggleCourses(false);});
   async function loadRemote(force = false) {
     const target = page;
-    if (!['courses', 'inbox'].includes(target) || remoteLoading || (!force && (target === 'courses' ? catalog : conversations))) return;
+    if (!['courses', 'inbox', 'announcements'].includes(target) || remoteLoading || (!force && (target === 'courses' ? catalog : target === 'inbox' ? conversations : announcements))) return;
     remoteLoading = true; remoteError = ''; render();
     try {
-      const reply = await request({action: target});
+      if (target === 'announcements' && !catalog) catalog = (await request({action: 'courses'})).courses;
+      const reply = await request(target === 'announcements' ? {action: 'announcements', courseIds: announcementCourseIds()} : {action: target});
       if (target === 'courses') catalog = reply.courses;
-      else conversations = reply.conversations;
+      else if (target === 'inbox') conversations = reply.conversations;
+      else announcements = reply.announcements || [];
     } catch (error) {remoteError = error.message;}
     finally {remoteLoading = false; render(); if (target !== page) loadRemote();}
+  }
+  function announcementCourseIds() {
+    const fromCatalog = (catalog || []).map(course => course.id);
+    const ids = fromCatalog.length ? fromCatalog : state.assignments.map(a => a.courseId);
+    return [...new Set(ids.map(String).filter(id => /^\d+$/.test(id)))];
+  }
+  function announcementCourse(item) {
+    const id = String(item.context_code || '').replace(/^course_/, '');
+    const entry = (catalog || []).find(course => String(course.id) === id);
+    if (entry) return entry.name;
+    const task = state.assignments.find(a => String(a.courseId) === id);
+    if (task) return task.course;
+    return item.context_name || '';
   }
   function ingest(reply) {
     // Exit animations can finish out of order. Never let an older reply undo newer UI state.
@@ -429,7 +449,7 @@
     return 'Coming up';
   }
   function render() {
-    main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
+    main.setAttribute('aria-label', {tasks: 'Tasks', announcements: 'Announcements', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
     document.title = page === 'course' ? (courseWorkspace?.title() || 'Course') : (pageTitles[page] || 'Canvas Local');
     for (const button of navigation.querySelectorAll('[data-page]')) {
       const selected = button.dataset.page === (page === 'course' ? 'courses' : page);
@@ -445,7 +465,7 @@
     else {pageContent.removeAttribute('role'); pageContent.removeAttribute('aria-labelledby');}
     tabs.hidden = toolbar.hidden = taskPanel.hidden = !['tasks', 'calendar'].includes(page);
     taskPanel.hidden = page !== 'tasks'; pageContent.hidden = page === 'tasks';
-    pageContent.setAttribute('aria-busy', String(remoteLoading && ['courses', 'inbox'].includes(page)));
+    pageContent.setAttribute('aria-busy', String(remoteLoading && ['courses', 'inbox', 'announcements'].includes(page)));
     positionTabIndicator();
     renderCoursesFilter();
     if (page === 'course') {
@@ -456,6 +476,7 @@
     courseWorkspace?.leave();
     if (page === 'courses') {renderCatalog(); return;}
     if (page === 'inbox') {renderInbox(); return;}
+    if (page === 'announcements') {renderAnnouncements(); return;}
     if (page === 'calendar') {renderCalendar(); return;}
     const items = filteredItems();
     list.replaceChildren();
@@ -602,6 +623,30 @@
       reader.append(el('p', {class: 'meta'}, 'Replies and attachments are available in Original Canvas.'));
     } else reader.append(el('div', {class: 'empty'}, 'Choose a conversation to read.'));
     pageContent.append(el('div', {class: 'inbox-layout'}, threads, reader));
+  }
+  function renderAnnouncements() {
+    pageContent.replaceChildren(); remoteStatus();
+    if (!announcements?.length) {
+      if (announcements && !remoteError) pageContent.append(el('div', {class: 'empty'}, 'No announcements.'));
+      return;
+    }
+    const items = [...announcements].sort((a, b) => {
+      if (!a.posted_at) return b.posted_at ? 1 : 0;
+      if (!b.posted_at) return -1;
+      return new Date(b.posted_at) - new Date(a.posted_at);
+    });
+    for (const item of items) {
+      const open = expandedAnnouncement != null && String(expandedAnnouncement) === String(item.id);
+      const card = el('article', {class: 'announcement' + (item.read_state === 'unread' ? ' unread' : '')},
+        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {expandedAnnouncement = open ? null : item.id; render();}},
+          item.title || 'Untitled announcement'),
+        el('div', {class: 'meta'}, [announcementCourse(item), item.posted_at ? formatDate(item.posted_at) : ''].filter(Boolean).join(' · ')));
+      if (open) {
+        card.append(item.message ? el('p', {class: 'message-body'}, item.message) : el('p', {class: 'meta'}, 'No text.'));
+        if (item.html_url) card.append(el('p', {}, el('a', {class: 'quiet', href: item.html_url}, 'Open in Original Canvas')));
+      }
+      pageContent.append(card);
+    }
   }
   function edit(item) {
     const dialog = el('dialog', {'aria-labelledby': 'edit-heading'});

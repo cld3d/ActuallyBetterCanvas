@@ -1,4 +1,4 @@
-import {collect, workspaceRead} from './api.mjs';
+import {announcementsRead, collect, workspaceRead} from './api.mjs';
 import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from './course-api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
@@ -123,6 +123,11 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
       return {ok: true, ...await courseFileRead(origin, state.identity, message.route, message.url)};
+    }
+    if (message.action === 'announcements') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await announcementsRead(origin, state.identity, message.courseIds)};
     }
     if (['courses', 'inbox', 'conversation'].includes(message.action)) {
       if (!origin) throw new Error('Connect your Canvas website first.');

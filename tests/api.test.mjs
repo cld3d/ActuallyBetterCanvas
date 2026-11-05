@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {submitted, nextPage, pages, collect, workspaceRead} from '../extension/api.mjs';
+import {announcementsRead, submitted, nextPage, pages, collect, workspaceRead} from '../extension/api.mjs';
 
 test('only explicit submission evidence completes an assignment', () => {
   assert.equal(submitted({workflow_state: 'graded', score: 0, graded_at: '2026-11-01'}), false);
@@ -62,6 +62,22 @@ test('workspace courses and inbox paginate GET-only; reading never marks message
   assert.equal((await workspaceRead(origin, identity, 'conversation', 9, fetcher)).conversation.messages[0].body, '<img src=x>');
   assert.ok(urls.includes(origin + '/api/v1/conversations/9?auto_mark_as_read=false'));
   await assert.rejects(workspaceRead(origin, identity, 'conversation', '../users', fetcher), /Invalid conversation/);
+});
+
+test('workspace announcements scope to the given courses and paginate GET-only', async () => {
+  const urls = [];
+  const fetcher = async (url, options) => {
+    urls.push(url);
+    assert.equal(options.method, undefined);
+    assert.equal(options.credentials, 'include');
+    const data = url.includes('/profile') ? {id: 42} : [{id: 1, title: 'Exam moved'}];
+    return new Response(JSON.stringify(data), {headers: {'content-type': 'application/json'}});
+  };
+  const origin = 'https://canvas.test', identity = origin + '/42';
+  assert.equal((await announcementsRead(origin, identity, [34, '35', 'nope', 34], fetcher)).announcements[0].id, 1);
+  assert.ok(urls.some(url => url.includes('/api/v1/announcements?context_codes[]=course_34&context_codes[]=course_35&per_page=100')), 'one request carries every course context');
+  assert.deepEqual(await announcementsRead(origin, identity, [], fetcher), {announcements: []});
+  await assert.rejects(announcementsRead(origin, null, [34], fetcher), /Sync your assignments/);
 });
 
 test('workspace refuses unsynced or changed identities before loading private data', async () => {

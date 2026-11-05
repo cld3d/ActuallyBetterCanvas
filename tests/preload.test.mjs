@@ -23,7 +23,7 @@ test('document-start guard prevents Canvas flashes, respects Original mode, and 
     await page.addInitScript({content: preload});
     for (const colorScheme of ['light', 'dark']) {
       await page.emulateMedia({colorScheme});
-      for (const path of ['/dashboard', '/courses', '/calendar/', '/conversations']) {
+      for (const path of ['/dashboard', '/announcements', '/courses', '/calendar/', '/conversations']) {
         await page.goto('https://canvas.test' + path);
         assert.equal(await page.locator('#canvas-local-preload-style').count(), 1);
         assert.equal(await page.locator('body').evaluate(node => getComputedStyle(node).opacity), '0', 'Original Canvas is hidden before the workspace script runs');
@@ -35,7 +35,7 @@ test('document-start guard prevents Canvas flashes, respects Original mode, and 
       }
     }
     await page.getByRole('button', {name: 'Original Canvas', exact: true}).click();
-    for (const path of ['/dashboard', '/courses', '/calendar', '/conversations']) {
+    for (const path of ['/dashboard', '/announcements', '/courses', '/calendar', '/conversations']) {
       await page.goto('https://canvas.test' + path);
       assert.equal(await page.locator('#canvas-local-preload-style').count(), 0, 'Original Canvas mode is never hidden');
       assert.equal(await page.locator('body').evaluate(node => getComputedStyle(node).opacity), '1');

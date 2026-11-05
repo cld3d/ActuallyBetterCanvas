@@ -1,5 +1,5 @@
 (() => {
-  const routes = ['/', '/dashboard', '/courses', '/calendar', '/conversations'];
+  const routes = ['/', '/dashboard', '/courses', '/calendar', '/conversations', '/announcements'];
   if (!routes.includes(location.pathname.replace(/\/$/, '') || '/') && !globalThis.CanvasCourseRoutes?.parse(location.href)) return;
   try {if (sessionStorage.getItem('actually-better-canvas-mode') === 'original') return;} catch {}
   if (document.getElementById('canvas-local-preload-style')) return;
