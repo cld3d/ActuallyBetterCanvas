@@ -53,7 +53,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     const inlineVar = () => page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--bg'));
     assert.equal(await inlineVar(), '#f3f5f3', 'System resolves the Matcha light pair in a light OS scheme');
     await themeButton.click();
-    assert.equal(await page.getByRole('option').count(), 9);
+    assert.equal(await page.getByRole('option').count(), 12);
     assert.equal(await page.locator('.theme-options').isVisible(), true);
     await page.getByRole('option', {name: 'Theme: Ocean', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · System', exact: true}).count(), 1);

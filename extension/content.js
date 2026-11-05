@@ -26,9 +26,9 @@
     /* Tab hover feedback belongs to the label, not a filled button surface. */
     .tabs button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}.tabs button:focus-visible{background:transparent;text-decoration:underline;text-underline-offset:4px}
     /* One shared underline moves between tabs instead of remounting on each selection. */
-    .tabs{position:relative;border-bottom:0}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:2px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    .tabs{position:relative;border-bottom:0}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:0;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     /* Sidebar selection uses one moving rule, without a filled active surface. */
-    nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:3px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:0;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
     /* Sidebar theme picker sits below navigation and opens upward. */
     .theme-picker{position:relative;margin-top:auto}
@@ -123,7 +123,8 @@
   // (System / Light / Dark) works the same way for every theme. Matcha keeps
   // its original light and dark values; Ocean/Rose reuse the earlier
   // Ocean/Abyss and Plum/Fig pairs, Ember reuses the Dune light with a new
-  // dark companion, and Iris reuses the Lavender light with a new dark.
+  // dark companion, Iris reuses the Lavender light with a new dark, and
+  // Lagoon/Crimson/Amber cover the missing teal, red, and gold hues.
   const themeFamilies = [
     {id: 'matcha', label: 'Matcha',
       light: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'},
@@ -142,7 +143,16 @@
       dark: {'--bg': '#17131f', '--surface': '#201a2c', '--ink': '#e7e1f2', '--muted': '#ab9dc4', '--line': '#3e3454', '--accent': '#b7a3ec', '--on-accent': '#1e1433', '--tint': '#2f2745'}},
     {id: 'graphite', label: 'Graphite',
       light: {'--bg': '#f3f3f4', '--surface': '#fafafa', '--ink': '#1e1e21', '--muted': '#65656c', '--line': '#d9d9de', '--accent': '#3f3f46', '--on-accent': '#fafafa', '--tint': '#e6e6ea'},
-      dark: {'--bg': '#101013', '--surface': '#18181c', '--ink': '#e9e9ec', '--muted': '#a3a3ad', '--line': '#2f2f36', '--accent': '#c9c9d2', '--on-accent': '#141417', '--tint': '#26262d'}}
+      dark: {'--bg': '#101013', '--surface': '#18181c', '--ink': '#e9e9ec', '--muted': '#a3a3ad', '--line': '#2f2f36', '--accent': '#c9c9d2', '--on-accent': '#141417', '--tint': '#26262d'}},
+    {id: 'lagoon', label: 'Lagoon',
+      light: {'--bg': '#edf4f3', '--surface': '#f7fbfa', '--ink': '#1f2f2c', '--muted': '#55706a', '--line': '#c9dcd8', '--accent': '#0f766e', '--on-accent': '#f2faf9', '--tint': '#dcefec'},
+      dark: {'--bg': '#0e1a18', '--surface': '#152624', '--ink': '#d8e8e4', '--muted': '#8fb0a9', '--line': '#29443f', '--accent': '#6fd3c6', '--on-accent': '#0a201d', '--tint': '#1d3532'}},
+    {id: 'crimson', label: 'Crimson',
+      light: {'--bg': '#f6f0f0', '--surface': '#fbf8f8', '--ink': '#352324', '--muted': '#7d5c5e', '--line': '#e3cfd0', '--accent': '#a02a2e', '--on-accent': '#fdf4f4', '--tint': '#f0dede'},
+      dark: {'--bg': '#1f1214', '--surface': '#2a171a', '--ink': '#f0dede', '--muted': '#bd9396', '--line': '#4a2b2f', '--accent': '#e08e90', '--on-accent': '#2a0e10', '--tint': '#3a2225'}},
+    {id: 'amber', label: 'Amber',
+      light: {'--bg': '#f6f2e4', '--surface': '#fbf8ec', '--ink': '#35301f', '--muted': '#7e7452', '--line': '#e3d9b8', '--accent': '#946200', '--on-accent': '#fdf9e7', '--tint': '#efe3bd'},
+      dark: {'--bg': '#1e1808', '--surface': '#2a2210', '--ink': '#f0e8cf', '--muted': '#bfae7e', '--line': '#4c3f1e', '--accent': '#e3b64b', '--on-accent': '#241a05', '--tint': '#3c3015'}}
   ];
   const themeModes = [
     {id: 'system', label: 'System'},
