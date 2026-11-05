@@ -62,7 +62,7 @@
     return container;
   }
   const css = `
-    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
+    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:8px}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:8px}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:8px;font-size:13px;line-height:1.6}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
     @media(max-width:850px){.course-heading{flex-direction:column;gap:12px}.course-nav{gap:4px 16px}.course-heading h1{font-size:26px}.course-meta{gap:8px 16px}.course-replies{margin-left:12px}}
   `;
 
@@ -96,6 +96,49 @@
     function record(body, title, href, meta = '') {
       const row = element('article', {class: 'course-record'}, element('h3', {}, href ? link(href, title) : title), meta ? element('p', {class: 'meta'}, meta) : null);
       body.append(row); return row;
+    }
+    function gradedRow(body, title, href, fraction, meta = '') {
+      const row = element('article', {class: 'course-record course-record-grade'},
+        element('div', {class: 'course-record-main'}, element('h3', {}, href ? link(href, title) : title), meta ? element('p', {class: 'meta'}, meta) : null),
+        element('span', {class: 'course-grade-fraction'}, fraction));
+      body.append(row); return row;
+    }
+    function gradeFraction(entry) {return `${entry.submission?.score ?? '–'}/${entry.points_possible ?? '–'}`;}
+    function plainText(html) {return new DOMParser().parseFromString(String(html || ''), 'text/html').body.textContent.trim();}
+    // Only the student's own submitted answer is ever shown. Correct answers,
+    // comments and unselected options are never rendered.
+    function answerText(question, answer) {
+      if (answer == null) return null;
+      const answers = question?.answers || [];
+      const byId = id => answers.find(a => String(a.id) === String(id));
+      const text = value => plainText(value);
+      switch (question?.question_type) {
+        case 'multiple_choice_question': case 'true_false_question': {
+          const found = byId(answer);
+          return found ? text(found.answer_text) || 'Selected answer' : String(answer);
+        }
+        case 'multiple_answers_question':
+          return Array.isArray(answer) ? answer.map(id => {const found = byId(id); return found ? text(found.answer_text) || 'Selected answer' : String(id);}).join('; ') : String(answer);
+        case 'matching_question':
+          return Array.isArray(answer) ? answer.map(pair => {
+            const prompt = byId(pair?.answer_id);
+            const match = byId(pair?.match_id);
+            const left = prompt ? text(prompt.answer_match_left || prompt.answer_text) : String(pair?.answer_id ?? '');
+            const right = match ? text(match.answer_match_right || match.answer_text) : String(pair?.match_id ?? '');
+            return left || right ? left + ' → ' + right : null;
+          }).filter(Boolean).join('; ') || null : String(answer);
+        case 'multiple_dropdowns_question': case 'fill_in_multiple_blanks_question':
+          if (answer && typeof answer === 'object' && !Array.isArray(answer)) {
+            const parts = Object.entries(answer).map(([blank, value]) => {
+              const found = typeof value === 'number' || /^\d+$/.test(String(value)) ? byId(value) : null;
+              return blank + ': ' + (found ? text(found.answer_text) || 'Selected answer' : String(value ?? ''));
+            });
+            return parts.length ? parts.join('; ') : null;
+          }
+          return String(answer);
+        case 'file_upload_question': return null;
+        default: return typeof answer === 'object' ? null : String(answer);
+      }
     }
     function lock(body, item) {
       if (!item.locked_for_user) return false;
@@ -168,6 +211,65 @@
       replies(data.discussion?.view, body);
       body.append(element('div', {class: 'course-actions'}, nativeButton(path('discussions', item.id), 'Reply in Original Canvas')));
     }
+    function quizDetail(body, item) {
+      body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Due: ' + date(item.due_at)), element('span', {}, item.time_limit ? item.time_limit + ' minute limit' : 'No time limit'), element('span', {}, item.allowed_attempts === -1 ? 'Unlimited attempts allowed' : (item.allowed_attempts ?? '—') + ' attempts allowed')));
+      if (lock(body, item)) return;
+      body.append(rich(item.description));
+      const attempts = data.quizAttempts || [];
+      if (attempts.length) {
+        body.append(element('h3', {}, 'Your attempts'));
+        for (const attempt of attempts) {
+          const meta = [attempt.workflow_state ? String(attempt.workflow_state).replaceAll('_', ' ') : '', attempt.score != null ? 'Score: ' + attempt.score : '', attempt.finished_at ? 'Finished ' + date(attempt.finished_at) : '', attempt.time_spent != null ? Math.round(attempt.time_spent / 60) + ' min' : ''].filter(Boolean).join(' · ');
+          record(body, 'Attempt ' + (attempt.attempt ?? '?'), null, meta);
+        }
+      }
+      const questions = data.quizQuestions;
+      if (questions?.length) {
+        body.append(element('h3', {}, data.quizReviewAttempt != null ? 'Review: attempt ' + data.quizReviewAttempt : 'Review'));
+        let number = 0;
+        for (const entry of questions) {
+          const question = entry.quiz_question || {};
+          number++;
+          const article = element('article', {class: 'course-quiz-question'}, element('h4', {}, (question.question_name || 'Question ' + number) + (question.points_possible != null ? ' · ' + question.points_possible + ' points' : '')));
+          if (question.question_text) article.append(rich(question.question_text));
+          const given = answerText(question, entry.answer);
+          const answerBox = element('div', {class: 'course-answer'}, element('p', {class: 'course-answer-label'}, 'Your answer'));
+          answerBox.append(element('p', {}, given || (entry.answer == null ? 'No answer submitted.' : 'Your answer is only available in Original Canvas.')));
+          article.append(answerBox);
+          if (question.neutral_comments) article.append(element('p', {class: 'meta'}, plainText(question.neutral_comments)));
+          body.append(article);
+        }
+      } else if (attempts.length) {
+        body.append(element('p', {class: 'course-original-note'}, 'Question review is not available for this quiz. Review your attempt in Original Canvas.'));
+      } else {
+        body.append(element('p', {class: 'course-original-note'}, 'You have not attempted this quiz yet.'));
+      }
+      body.append(element('div', {class: 'course-actions'}, nativeButton(path('quizzes', item.id), 'Take / review quiz in Original Canvas')));
+    }
+    function fileDetail(body, item) {
+      if (lock(body, item) || item.hidden_for_user) {if (item.hidden_for_user) empty(body, 'This file is not available to you.'); return;}
+      body.append(element('p', {class: 'meta'}, [item['content-type'], item.size != null ? Math.ceil(item.size / 1024) + ' KB' : ''].filter(Boolean).join(' · ')));
+      const type = item['content-type'] || '';
+      if (type.startsWith('image/') && item.url) {
+        body.append(element('img', {src: item.url, alt: item.display_name || item.filename || 'Course image', class: 'course-file-image', loading: 'lazy'}));
+      } else if (/^(text\/|application\/json)/.test(type) && item.url && (item.size == null || item.size <= 102400)) {
+        const preview = element('div', {class: 'course-file-text', role: 'status'}, 'Loading preview…');
+        body.append(preview);
+        const here = route;
+        request({action: 'courseFile', route: {courseId: route.courseId, kind: 'files', id: String(item.id)}, url: item.url}).then(reply => {
+          if (route !== here || !preview.isConnected) return;
+          preview.textContent = reply.text + (reply.truncated ? '\n… (preview truncated, open the full file in Original Canvas)' : '');
+          preview.removeAttribute('role');
+        }).catch(reason => {
+          if (route !== here || !preview.isConnected) return;
+          preview.textContent = 'Preview unavailable here: ' + reason.message;
+        });
+      }
+      const actions = element('div', {class: 'course-actions'});
+      if (item.url) actions.append(element('a', {href: item.url, target: '_blank', rel: 'noopener noreferrer', class: 'quiet', download: item.display_name || item.filename || ''}, 'Download file'));
+      actions.append(nativeButton(path('files', item.id), 'Preview / download in Original Canvas'));
+      body.append(actions);
+    }
     function paint() {
       const style = element('style', {}, css);
       root.replaceChildren(style);
@@ -197,16 +299,9 @@
       if (view === 'syllabus') {if (data.course.syllabus_body) body.append(rich(data.course.syllabus_body)); else empty(body, 'No syllabus has been posted.'); return;}
       if (view === 'front_page' || (view === 'pages' && item)) {if (!lock(body, item)) body.append(rich(item.body)); return;}
       if (view === 'assignments' && item) {assignmentDetail(body, item); return;}
-      if (view === 'quizzes' && item) {
-        body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Due: ' + date(item.due_at)), element('span', {}, item.time_limit ? item.time_limit + ' minute limit' : 'No time limit'), element('span', {}, item.allowed_attempts === -1 ? 'Unlimited attempts allowed' : (item.allowed_attempts ?? '—') + ' attempts allowed')));
-        if (!lock(body, item)) body.append(rich(item.description), element('div', {class: 'course-actions'}, nativeButton(path('quizzes', item.id), 'Take / review quiz in Original Canvas')));
-        return;
-      }
+      if (view === 'quizzes' && item) {quizDetail(body, item); return;}
       if (view === 'discussions' && item) {discussionDetail(body, item); return;}
-      if (view === 'files' && item) {
-        if (lock(body, item) || item.hidden_for_user) {if (item.hidden_for_user) empty(body, 'This file is not available to you.'); return;}
-        body.append(element('p', {class: 'meta'}, [item['content-type'], item.size != null ? Math.ceil(item.size / 1024) + ' KB' : ''].filter(Boolean).join(' · ')), nativeButton(path('files', item.id), 'Preview / download in Original Canvas')); return;
-      }
+      if (view === 'files' && item) {fileDetail(body, item); return;}
       if (view === 'grades') {
         for (const enrollment of data.enrollments || []) {
           const grades = enrollment.grades || {};
@@ -219,14 +314,15 @@
       for (const entry of items) {
         if (view === 'people') {record(body, entry.name || entry.display_name || 'Canvas user', null, (entry.enrollments || []).map(e => e.type?.replace('Enrollment', '')).filter(Boolean).join(', ')); continue;}
         if (view === 'activity') {record(body, entry.title || entry.type || 'Course activity', entry.html_url, entry.created_at ? date(entry.created_at) : ''); continue;}
-        if (view === 'grades') {
-          const fraction = `${entry.submission?.score ?? '–'}/${entry.points_possible ?? '–'}`;
-          const row = element('article', {class: 'course-record course-record-grade'}, element('h3', {}, link(path('assignments', entry.id), entry.title || entry.name || 'Untitled')), element('span', {class: 'course-grade-fraction'}, fraction));
-          body.append(row); continue;
+        if (view === 'grades' || view === 'assignments') {
+          const target = view === 'grades' ? 'assignments' : view;
+          const meta = [entry.locked_for_user ? 'Locked' : '', entry.due_at ? 'Due ' + date(entry.due_at) : ''].filter(Boolean).join(' · ');
+          gradedRow(body, entry.title || entry.name || entry.display_name || 'Untitled', path(target, entry.id), gradeFraction(entry), meta);
+          continue;
         }
-        const target = view === 'announcements' ? 'discussions' : view === 'grades' ? 'assignments' : view;
+        const target = view === 'announcements' ? 'discussions' : view;
         const id = view === 'pages' ? entry.url : entry.id;
-        const meta = [entry.locked_for_user ? 'Locked' : '', entry.due_at ? 'Due ' + date(entry.due_at) : '', entry.submission?.grade != null ? 'Grade: ' + entry.submission.grade : '', entry.points_possible != null ? entry.points_possible + ' points' : '', view === 'pages' && entry.front_page ? 'Front page' : ''].filter(Boolean).join(' · ');
+        const meta = [entry.locked_for_user ? 'Locked' : '', entry.due_at ? 'Due ' + date(entry.due_at) : '', view === 'pages' && entry.front_page ? 'Front page' : ''].filter(Boolean).join(' · ');
         record(body, entry.title || entry.name || entry.display_name || 'Untitled', path(target, id), meta);
       }
     }

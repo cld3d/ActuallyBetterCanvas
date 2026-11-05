@@ -25,6 +25,7 @@ async function setup(browser, path = '/courses/34') {
     window.chrome = {runtime: {sendMessage: async message => {
       if (message.action === 'update') {window.testState.assignments[0].completed = message.patch.completion; return {ok: true, state: structuredClone(window.testState)};}
       if (message.action === 'courses') return {ok: true, courses: [{id: 34, name: 'English'}]};
+      if (message.action === 'courseFile') return {ok: true, text: 'Hello file contents', truncated: false, contentType: 'text/plain'};
       if (message.action !== 'course') return {ok: true, state: structuredClone(window.testState), conversations: []};
       window.courseRequests.push(message.route);
       if (window.delayCourse) return new Promise(resolve => {window.finishCourse = resolve;});
@@ -42,7 +43,14 @@ async function setup(browser, path = '/courses/34') {
         if (id) result.item = item; else result.items = [item];
         result.enrollments = [{grades: {current_score: 87.4}}];
       }
-      if (kind === 'quizzes') {if (id) result.item = {id: 9, title: 'Practice quiz', description: '<p>Review chapter one.</p>', time_limit: 30, allowed_attempts: 2}; else result.items = [{id: 9, title: 'Practice quiz'}];}
+      if (kind === 'quizzes') {
+        if (id) {
+          result.item = {id: 9, title: 'Practice quiz', description: '<p>Review chapter one.</p>', time_limit: 30, allowed_attempts: 2};
+          result.quizAttempts = [{id: 31, quiz_id: 9, user_id: 42, attempt: 1, workflow_state: 'complete', score: 8, finished_at: '2026-11-01T12:00:00Z', time_spent: 600}];
+          result.quizQuestions = [{id: 101, answer: 5, quiz_question: {id: 501, question_name: 'First question', question_type: 'multiple_choice_question', question_text: '<p>What is two plus two?</p>', points_possible: 5, neutral_comments: 'Well done reading.', correct_comments: 'secret-correct-marker', incorrect_comments: 'secret-wrong-marker', answers: [{id: 5, answer_text: 'Four'}, {id: 6, answer_text: 'Five'}]}}];
+          result.quizReviewAttempt = 1;
+        } else result.items = [{id: 9, title: 'Practice quiz'}];
+      }
       if (kind === 'pages') {
         if (id) result.item = {title: 'Reading', body: '<h2>Chapter one</h2><p>Read <em>carefully</em>.</p><a href="/courses/34/assignments/12">Open essay</a>'};
         else result.items = [{title: 'Reading', url: 'reading'}];
@@ -52,7 +60,12 @@ async function setup(browser, path = '/courses/34') {
         if (id) {result.item = {id: 11, title: 'Welcome discussion', message: '<p>Introduce yourself.</p>'}; result.discussion = {participants: [{id: 42, display_name: 'Student'}], view: [{id: 1, user_id: 42, message: '<p>Hello class.</p>', replies: [{id: 2, message: 'Welcome.'}]}]};}
         else result.items = [{id: 11, title: 'Welcome discussion'}];
       }
-      if (kind === 'files') {if (id) result.item = {id: 5, display_name: 'Reading.pdf', size: 2048, 'content-type': 'application/pdf'}; else result.items = [{id: 5, display_name: 'Reading.pdf'}];}
+      if (kind === 'files') {
+        if (id === '6' || id === 6) result.item = {id: 6, display_name: 'Photo.png', size: 2048, 'content-type': 'image/png', url: 'https://canvas.test/files/6/download?verifier=img'};
+        else if (id === '7' || id === 7) result.item = {id: 7, display_name: 'Notes.txt', size: 21, 'content-type': 'text/plain', url: 'https://canvas.test/files/7/download?verifier=txt'};
+        else if (id) result.item = {id: 5, display_name: 'Reading.pdf', size: 2048, 'content-type': 'application/pdf'};
+        else result.items = [{id: 5, display_name: 'Reading.pdf'}, {id: 6, display_name: 'Photo.png'}, {id: 7, display_name: 'Notes.txt'}];
+      }
       if (kind === 'people') result.items = [{name: 'Teacher', enrollments: [{type: 'TeacherEnrollment'}]}];
       return result;
     }}};
@@ -174,6 +187,44 @@ test('course loading never shows an ID placeholder, grades read as fractions, ca
     assert.deepEqual(await actions.locator('a,button').allTextContents(), ['Open course', 'View tasks']);
     assert.ok((await actions.getByRole('link', {name: 'Open course', exact: true}).getAttribute('class')).includes('primary'));
     assert.ok(!(await actions.getByRole('button', {name: 'View tasks', exact: true}).getAttribute('class') || '').includes('primary'));
+  } finally {await browser.close();}
+});
+
+test('quiz review shows own answers without leaking options, assignments use fractions, files preview inline', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    const nav = page.getByRole('navigation', {name: 'Course navigation', exact: true});
+    await nav.getByRole('link', {name: 'Quizzes', exact: true}).click();
+    await page.getByRole('link', {name: 'Practice quiz', exact: true}).click();
+    await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
+    assert.equal(await page.getByText('Attempt 1', {exact: true}).count(), 1);
+    assert.equal(await page.getByText('What is two plus two?', {exact: true}).count(), 1);
+    assert.equal(await page.getByText('Four', {exact: true}).count(), 1);
+    assert.equal(await page.getByText('Five', {exact: true}).count(), 0, 'unselected options never render');
+    assert.equal(await page.getByText('secret-correct-marker', {exact: true}).count(), 0, 'correctness markers never render');
+    assert.equal(await page.getByText('secret-wrong-marker', {exact: true}).count(), 0);
+    assert.equal(await page.getByText('Well done reading.', {exact: true}).count(), 1);
+    await nav.getByRole('link', {name: 'Assignments', exact: true}).click();
+    await page.locator('.course-grade-fraction').first().waitFor();
+    assert.equal(await page.locator('.course-grade-fraction').first().textContent(), '0/20');
+    assert.equal(await page.locator('.course-body').getByText('Grade:', {exact: false}).count(), 0, 'assignment rows use fractions, not grade labels');
+    await nav.getByRole('link', {name: 'Files', exact: true}).click();
+    await page.getByRole('link', {name: 'Photo.png', exact: true}).click();
+    assert.equal(await page.locator('img.course-file-image').count(), 1);
+    await nav.getByRole('link', {name: 'Files', exact: true}).click();
+    await page.getByRole('link', {name: 'Notes.txt', exact: true}).click();
+    await page.locator('.course-file-text').waitFor();
+    assert.match(await page.locator('.course-file-text').textContent(), /Hello file contents/);
+    assert.equal(await page.getByRole('link', {name: 'Download file', exact: true}).count(), 1);
+    await nav.getByRole('link', {name: 'Files', exact: true}).click();
+    await page.getByRole('link', {name: 'Reading.pdf', exact: true}).click();
+    assert.equal(await page.locator('img.course-file-image').count(), 0);
+    assert.equal(await page.locator('.course-file-text').count(), 0);
+    assert.equal(await page.getByRole('link', {name: 'Preview / download in Original Canvas', exact: true}).count(), 1);
+    assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
 

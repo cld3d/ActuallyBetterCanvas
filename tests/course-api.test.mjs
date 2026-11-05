@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {courseRead} from '../extension/course-api.mjs';
+import {courseFileRead, courseRead} from '../extension/course-api.mjs';
 
 const origin = 'https://canvas.test', identity = origin + '/42';
 const json = (value, headers = {}) => new Response(JSON.stringify(value), {headers: {'content-type': 'application/json', ...headers}});
@@ -48,6 +48,7 @@ test('home follows Canvas default view and modules fetch every item page without
 
 test('course lists and details use fixed scoped read endpoints, including personalized submissions', async () => {
   const {fetcher, calls} = fixture(url => {
+    if (url.pathname.endsWith('/submissions')) return json({quiz_submissions: []});
     if (/\/(assignments|quizzes|files|discussion_topics)\/\d+$/.test(url.pathname)) return json({id: 12, user_can_see_posts: false});
     if (url.pathname.endsWith('/pages/week%201')) return json({url: 'week 1', body: '<p>Read</p>'});
     return json([]);
@@ -59,7 +60,7 @@ test('course lists and details use fixed scoped read endpoints, including person
   assert.ok(calls.some(url => url.includes('only_announcements=true')));
   assert.ok(calls.some(url => url.includes('/enrollments?user_id=42')));
   assert.ok(!calls.some(url => url.endsWith('/view')), 'initial-post gate does not fetch replies');
-  assert.ok(!calls.some(url => /submissions|mark_read|\/done|\/take|\/launch/.test(url)));
+  assert.ok(!calls.some(url => /mark_read|\/done|\/take|\/launch/.test(url)));
 });
 
 test('discussion reads retrieve permitted replies without changing read state or fetching locked replies', async () => {
@@ -81,6 +82,78 @@ test('failed pagination, denied content, wrong IDs and cross-origin pagination r
     });
     await assert.rejects(read(fetcher, 'assignments', failure === 'wrong-id' ? '12' : null), /restricted|Sign in|Unexpected|500|Unsafe/);
   }
+});
+
+test('quiz detail loads only the current user attempts and their submission questions', async () => {
+  const {fetcher, calls} = fixture(url => {
+    if (/\/(assignments|quizzes|files)\/\d+$/.test(url.pathname)) return json({id: 9, title: 'Practice quiz'});
+    if (url.pathname.endsWith('/submissions')) return json({quiz_submissions: [
+      {id: 31, quiz_id: 9, user_id: 42, attempt: 1, workflow_state: 'complete', score: 8},
+      {id: 32, quiz_id: 9, user_id: 42, attempt: 2, workflow_state: 'complete', score: 9},
+      {id: 33, quiz_id: 9, user_id: 77, attempt: 1, workflow_state: 'complete', score: 10},
+      {id: 34, quiz_id: 10, user_id: 42, attempt: 1, workflow_state: 'complete', score: 10},
+      {id: 'bad', quiz_id: 9, user_id: 42, attempt: 3}
+    ]});
+    if (url.pathname === '/api/v1/quiz_submissions/32/questions') return json({quiz_submission_questions: [
+      {id: 101, answer: 5, quiz_question: {id: 501, question_type: 'multiple_choice_question', question_text: 'Pick four', answers: [{id: 5, answer_text: 'Four'}]}}
+    ]});
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  const data = await read(fetcher, 'quizzes', '9');
+  assert.deepEqual(data.quizAttempts.map(s => s.id), [31, 32]);
+  assert.equal(data.quizReviewAttempt, 2);
+  assert.equal(data.quizQuestions.length, 1);
+  assert.ok(calls.some(url => url.includes('/quizzes/9/submissions?include[]=submission')));
+  assert.ok(calls.some(url => url.includes('/quiz_submissions/32/questions?include[]=quiz_question')));
+  assert.ok(!calls.some(url => /\/take|\/complete|answer|flag/.test(url)), 'review never writes or takes the quiz');
+});
+
+test('unavailable quiz review still renders the quiz description', async () => {
+  for (const failure of ['submissions-denied', 'questions-denied']) {
+    const {fetcher} = fixture(url => {
+      if (/\/(assignments|quizzes|files)\/\d+$/.test(url.pathname)) return json({id: 9, title: 'Practice quiz'});
+      if (failure === 'submissions-denied' && url.pathname.endsWith('/submissions')) return new Response('', {status: 403});
+      if (url.pathname.endsWith('/submissions')) return json({quiz_submissions: [{id: 31, quiz_id: 9, user_id: 42, attempt: 1, workflow_state: 'complete', score: 8}]});
+      if (failure === 'questions-denied') return new Response('', {status: 403});
+      return json({quiz_submission_questions: []});
+    });
+    const data = await read(fetcher, 'quizzes', '9');
+    assert.equal(data.item.title, 'Practice quiz');
+    if (failure === 'submissions-denied') {assert.deepEqual(data.quizAttempts, []); assert.equal(data.quizQuestions, null);}
+    else {assert.equal(data.quizAttempts.length, 1); assert.equal(data.quizQuestions, null);}
+  }
+});
+
+test('malformed quiz envelopes degrade to attempts and description instead of failing the page', async () => {
+  const {fetcher} = fixture(url => {
+    if (url.pathname === '/api/v1/courses/34') return json({id: 34, name: 'English', default_view: 'modules'});
+    if (url.pathname.endsWith('/submissions')) return json([{id: 31}]);
+    return json({id: 9, title: 'Practice quiz'});
+  });
+  const data = await read(fetcher, 'quizzes', '9');
+  assert.equal(data.item.title, 'Practice quiz');
+  assert.deepEqual(data.quizAttempts, []);
+  assert.equal(data.quizQuestions, null);
+});
+
+const fileRoute = {courseId: '34', kind: 'files', id: '5'};
+const fileURL = origin + '/courses/34/files/5/download?verifier=abc';
+const fileFetcher = (body, contentType = 'text/plain', status = 200) => fixture(() => new Response(body, {status, headers: {'content-type': contentType}})).fetcher;
+
+test('course file previews accept only the matching same-origin download URL and small text files', async () => {
+  const reply = await courseFileRead(origin, identity, fileRoute, fileURL, fileFetcher('Hello file'));
+  assert.equal(reply.text, 'Hello file');
+  assert.equal(reply.truncated, false);
+  const long = await courseFileRead(origin, identity, fileRoute, fileURL, fileFetcher('x'.repeat(60000)));
+  assert.equal(long.text.length, 50000);
+  assert.equal(long.truncated, true);
+  await assert.rejects(courseFileRead(origin, identity, fileRoute, 'https://evil.test/courses/34/files/5/download', fileFetcher('x')), /Invalid file URL/);
+  await assert.rejects(courseFileRead(origin, identity, fileRoute, origin + '/courses/99/files/5/download', fileFetcher('x')), /Invalid file URL/);
+  await assert.rejects(courseFileRead(origin, identity, fileRoute, origin + '/courses/34/files/6/download', fileFetcher('x')), /Invalid file URL/);
+  await assert.rejects(courseFileRead(origin, identity, fileRoute, origin + '/courses/34/files/5', fileFetcher('x')), /Invalid file URL/);
+  await assert.rejects(courseFileRead(origin, identity, fileRoute, fileURL, fileFetcher('%PDF', 'application/pdf')), /cannot be previewed/);
+  await assert.rejects(courseFileRead(origin, identity, {...fileRoute, id: '../5'}, fileURL, fileFetcher('x')), /Invalid file request/);
+  await assert.rejects(courseFileRead(origin, null, fileRoute, fileURL, fileFetcher('x')), /Sync your assignments/);
 });
 
 test('wiki, syllabus, assignments and activity course home configurations are honored', async () => {
