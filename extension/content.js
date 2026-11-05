@@ -422,6 +422,13 @@
     if (!reply?.ok) throw new Error(reply?.error || 'Local feed did not respond.');
     return reply;
   }
+  // Raw browser fetch failures read as gibberish in the UI. Name the moment
+  // instead: a dropped connection with saved work still on screen.
+  function friendlyError(reason) {
+    const message = String(reason?.message || reason || '');
+    if (/^failed to fetch$/i.test(message.trim())) return "Couldn't reach Canvas just now. Showing saved work.";
+    return message;
+  }
   function navigate(value, updateURL = true) {
     if (value === 'course') {navigateCourse(location.href, false); return;}
     if (updateURL && currentRoutePage() !== value) history.pushState(null, '', pagePaths[value]);
@@ -508,7 +515,7 @@
       if (target === 'courses') catalog = reply.courses;
       else if (target === 'inbox') conversations = reply.conversations;
       else announcements = reply.announcements || [];
-    } catch (error) {remoteError = error.message;}
+    } catch (error) {remoteError = friendlyError(error);}
     finally {remoteLoading = false; render(); if (target !== page) loadRemote();}
   }
   function announcementCourseIds() {
@@ -560,7 +567,7 @@
     loading = true; syncButton.disabled = true; syncButton.classList.add('busy');
     if (!state.assignments.length) list.replaceChildren(el('div', {class: 'empty'}, 'Reading the local assignment feed…'));
     try { ingest(await request({action: force ? 'sync' : 'list'})); }
-    catch (error) { notice.textContent = error.message; render(); }
+    catch (error) { notice.textContent = friendlyError(error); render(); }
     finally {loading = false; syncButton.disabled = false; syncButton.classList.remove('busy');}
   }
   const formatDate = value => value ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : 'No deadline';

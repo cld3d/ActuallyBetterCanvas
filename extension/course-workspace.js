@@ -69,6 +69,13 @@
   function create({request, navigate, original, assignments, taskRow}) {
     const root = element('section', {class: 'course-workspace', 'aria-label': 'Course workspace'});
     let route = null, data = null, error = '', loading = false, version = 0;
+    // Raw browser fetch failures read as gibberish in the UI. Name the moment
+    // instead: a dropped connection with saved content still on screen.
+    function friendlyError(reason) {
+      const message = String(reason?.message || reason || '');
+      if (/^failed to fetch$/i.test(message.trim())) return "Couldn't reach Canvas just now. Showing saved work.";
+      return message;
+    }
     let scoreTimer = null, stopScoreFocus = null;
     function clearScorePoll() {if (scoreTimer) {clearInterval(scoreTimer); scoreTimer = null;} if (stopScoreFocus) {stopScoreFocus(); stopScoreFocus = null;}}
     function submissionSignature(submission) {
@@ -102,7 +109,7 @@
           last = submissionSignature(fresh);
           if (feedback.isConnected) renderFeedback(feedback, item, fresh);
           setStatus('Score updated.');
-        } catch (reason) {if (manual && route === here) setStatus('Could not check the score: ' + reason.message);}
+        } catch (reason) {if (manual && route === here) setStatus('Could not check the score: ' + friendlyError(reason));}
         finally {busy = false;}
       }
       const refresh = element('button', {class: 'quiet', type: 'button'}, 'Check for new score');
@@ -868,7 +875,7 @@
         const reply = await request({action: 'course', route: {courseId: route.courseId, kind: route.kind, id: route.id}});
         if (token !== version) return;
         data = reply;
-      } catch (reason) {if (token === version) error = reason.message;}
+      } catch (reason) {if (token === version) error = friendlyError(reason);}
       finally {
         if (token !== version) return;
         loading = false;

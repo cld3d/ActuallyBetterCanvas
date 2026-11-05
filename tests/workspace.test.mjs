@@ -188,6 +188,43 @@ test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromi
   } finally {await browser.close();}
 });
 
+test('a dropped connection shows a friendly notice instead of a raw fetch error', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}})}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    await page.evaluate(() => {
+      const original = window.chrome.runtime.sendMessage;
+      window.failSyncOnce = true;
+      window.chrome.runtime.sendMessage = async message => {
+        if ((message.action === 'sync' || message.action === 'list') && window.failSyncOnce) {
+          window.failSyncOnce = false;
+          throw new TypeError('Failed to fetch');
+        }
+        return original(message);
+      };
+    });
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    const notice = page.locator('.notice');
+    await notice.waitFor();
+    assert.match(await notice.textContent(), /Couldn't reach Canvas just now/, 'transient blips read as plain language');
+    assert.doesNotMatch(await notice.textContent(), /Failed to fetch/, 'raw browser errors never reach the UI');
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    await page.waitForFunction(() => !document.querySelector('#canvas-local-root').shadowRoot.querySelector('.notice')?.textContent);
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('task sections render tomorrow and this week in chronological group order', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
