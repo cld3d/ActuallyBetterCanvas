@@ -447,7 +447,7 @@
   function updateAnnouncementBadge() {
     const button = navigation.querySelector('[data-page="announcements"]');
     if (!button) return;
-    const count = (announcements || []).filter(item => item.read_state === 'unread').length;
+    const count = (announcements || []).filter(isAnnouncementUnread).length;
     let badge = button.querySelector('.nav-badge');
     if (!count) {badge?.remove(); return;}
     if (!badge) {badge = el('span', {class: 'nav-badge', 'aria-hidden': 'true'}); button.append(badge);}
@@ -512,6 +512,25 @@
     const fromCatalog = (catalog || []).map(course => course.id);
     const ids = fromCatalog.length ? fromCatalog : state.assignments.map(a => a.courseId);
     return [...new Set(ids.map(String).filter(id => /^\d+$/.test(id)))];
+  }
+  const readAnnouncementIds = (() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('canvas-local-read-announcements') || '[]');
+      if (Array.isArray(saved)) return new Set(saved.map(String).filter(id => /^[\w-]{1,64}$/.test(id)));
+    } catch {}
+    return new Set();
+  })();
+  function saveReadAnnouncements() {
+    try {
+      const known = new Set((announcements || []).map(item => String(item.id)));
+      const ids = [...readAnnouncementIds].filter(id => known.has(id)).slice(-500);
+      readAnnouncementIds.clear();
+      for (const id of ids) readAnnouncementIds.add(id);
+      localStorage.setItem('canvas-local-read-announcements', JSON.stringify(ids));
+    } catch {}
+  }
+  function isAnnouncementUnread(item) {
+    return item.read_state === 'unread' && !readAnnouncementIds.has(String(item.id));
   }
   function announcementCourse(item) {
     const id = String(item.context_code || '').replace(/^course_/, '');
@@ -754,8 +773,8 @@
     });
     for (const item of items) {
       const open = expandedAnnouncement != null && String(expandedAnnouncement) === String(item.id);
-      const card = el('article', {class: 'announcement' + (item.read_state === 'unread' ? ' unread' : '')},
-        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {if (!open && item.read_state !== 'read') item.read_state = 'read'; expandedAnnouncement = open ? null : item.id; render();}},
+      const card = el('article', {class: 'announcement' + (isAnnouncementUnread(item) ? ' unread' : '')},
+        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {if (!open && isAnnouncementUnread(item)) {readAnnouncementIds.add(String(item.id)); saveReadAnnouncements();} expandedAnnouncement = open ? null : item.id; render();}},
           item.title || 'Untitled announcement'),
         el('div', {class: 'meta'}, [announcementCourse(item), item.posted_at ? formatDate(item.posted_at) : ''].filter(Boolean).join(' · ')));
       if (open) {

@@ -532,8 +532,13 @@ test('announcements page lists course announcements with expandable text', {skip
     await page.getByRole('button', {name: 'Tasks', exact: true}).click();
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
     assert.equal(await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').count(), 0, 'reading clears the badge');
+    await page.reload();
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').count(), 0, 'read state survives reloads');
     await page.getByRole('button', {name: 'Announcements', exact: true}).click();
     await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
+    assert.equal(await page.locator('.announcement.unread').count(), 0, 'read announcements stay read after reload');
     await page.evaluate(() => {window.emptyAnnouncements = true;});
     await page.getByRole('button', {name: 'Sync now', exact: true}).click();
     await page.getByText('No announcements.', {exact: true}).waitFor();
