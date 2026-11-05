@@ -310,6 +310,12 @@ test('assignment pages keep one Original Canvas exit, custom file picker, and su
     const submitTop = await page.getByRole('heading', {name: 'Submit work', exact: true}).boundingBox();
     const feedbackTop = await page.getByRole('heading', {name: 'Submission and feedback', exact: true}).boundingBox();
     assert.ok(submitTop.y < feedbackTop.y, 'Submit work comes before Submission and feedback');
+    await page.goto('https://canvas.test/courses/34/assignments/12');
+    await page.getByRole('heading', {name: 'Essay', exact: true}).waitFor();
+    assert.equal(await page.getByText('Canvas deadline', {exact: false}).count(), 0);
+    assert.equal(await page.getByText('Deadline:', {exact: false}).count(), 1);
+    const sectionOrder = await page.evaluate(() => [...document.querySelector('#canvas-local-root').shadowRoot.querySelectorAll('.course-body h3')].map(heading => heading.textContent));
+    assert.deepEqual(sectionOrder.filter(title => ['Submit work', 'Submission and feedback', 'Local task'].includes(title)), ['Submit work', 'Submission and feedback', 'Local task']);
     await page.goto('https://canvas.test/courses/34/assignments/14');
     await page.getByRole('heading', {name: 'Report', exact: true}).waitFor();
     assert.equal(await page.getByRole('button', {name: 'Choose files', exact: true}).isVisible(), true);

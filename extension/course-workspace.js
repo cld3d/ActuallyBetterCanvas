@@ -323,18 +323,18 @@
       section.append(element('p', {class: 'course-original-note'}, 'Submitting here sends work to Canvas. It appears in Tasks after the next sync.'));
     }
     function assignmentDetail(body, item) {
-      body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Canvas deadline: ' + date(item.due_at)), element('span', {}, item.points_possible != null ? item.points_possible + ' points' : 'Not graded')));
+      body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Deadline: ' + date(item.due_at)), element('span', {}, item.points_possible != null ? item.points_possible + ' points' : 'Not graded')));
       if (lock(body, item)) return;
       body.append(rich(item.description));
       const local = assignments().find(a => String(a.courseId) === route.courseId && String(a.url?.match(/\/assignments\/(\d+)/)?.[1]) === String(item.id));
-      if (local) {
-        body.append(element('h3', {}, 'Your local task'), taskRow(local));
-      }
       const submission = item.submission;
       submitSection(body, item);
       if (submission) {
         body.append(element('h3', {}, 'Submission and feedback'), element('p', {class: 'meta'}, [submission.workflow_state?.replaceAll('_', ' '), submission.submitted_at ? 'Submitted ' + date(submission.submitted_at) : '', submission.grade != null ? 'Grade: ' + submission.grade : '', submission.score != null ? 'Score: ' + submission.score : ''].filter(Boolean).join(' · ')));
         for (const comment of submission.submission_comments || []) body.append(element('article', {class: 'course-record'}, element('strong', {}, comment.author_name || 'Canvas user'), element('p', {}, comment.comment || '')));
+      }
+      if (local) {
+        body.append(element('h3', {}, 'Local task'), taskRow(local));
       }
       if (item.rubric?.length) {
         const section = element('section', {class: 'course-rubric'}, element('h3', {}, 'Rubric'));
