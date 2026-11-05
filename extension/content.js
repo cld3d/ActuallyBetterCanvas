@@ -48,7 +48,7 @@
     .announcement p{margin:8px 0}
     .announcement .message-body{line-height:1.7;max-width:78ch;white-space:pre-wrap}
     .theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-    .theme-card{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);background:none;color:var(--ink);padding:12px 6px 10px;border-radius:10px;font-size:12px;font-weight:550}
+    .theme-card{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);background:none;color:var(--ink);padding:12px 6px 10px;border-radius:10px;font-size:12px;font-weight:550;min-width:min(88px,22vw)}
     .theme-card[aria-selected=true]{border-color:var(--accent);background:var(--tint);color:var(--accent);font-weight:700}
     .theme-card .dots{display:flex;gap:8px}
     .theme-card .dot{width:26px;height:26px;border-radius:50%;flex:none;border:1px solid var(--line);box-shadow:inset 0 0 6px #00000022}
@@ -149,40 +149,37 @@
   const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
   navigation.append(sidebarIndicator);
   const themeVars = ['--bg', '--surface', '--ink', '--muted', '--line', '--accent', '--on-accent', '--tint'];
-  // Theme families: each ships an explicit light + dark pair so the mode row
-  // (System / Light / Dark) works the same way for every theme. Matcha keeps
-  // its original light and dark values; Ocean/Rose reuse the earlier
-  // Ocean/Abyss and Plum/Fig pairs, Ember reuses the Dune light with a new
-  // dark companion, Iris reuses the Lavender light with a new dark, and
-  // Lagoon/Crimson/Amber cover the missing teal, red, and gold hues.
+  // Theme families run red to purple around the color wheel after the default
+  // Graphite; each ships an explicit light + dark pair so the mode row
+  // (System / Light / Dark) works the same way for every theme.
   const themeFamilies = [
-    {id: 'matcha', label: 'Matcha',
-      light: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'},
-      dark: {'--bg': '#171e1a', '--surface': '#1e2821', '--ink': '#e2eae4', '--muted': '#a7b9ad', '--line': '#394a3e', '--accent': '#acd1b7', '--on-accent': '#16291d', '--tint': '#2c3c31'}},
-    {id: 'ocean', label: 'Ocean',
-      light: {'--bg': '#edf3f5', '--surface': '#f7fafb', '--ink': '#20313a', '--muted': '#57707d', '--line': '#cfdde3', '--accent': '#2a6b8a', '--on-accent': '#f2f9fb', '--tint': '#dfebef'},
-      dark: {'--bg': '#0f1720', '--surface': '#16222c', '--ink': '#d9e7ee', '--muted': '#8fa6b3', '--line': '#2b3e49', '--accent': '#82c7de', '--on-accent': '#0c1a21', '--tint': '#1e303b'}},
-    {id: 'rose', label: 'Rose',
-      light: {'--bg': '#f5f1f4', '--surface': '#faf7f9', '--ink': '#32262e', '--muted': '#77636f', '--line': '#e0d2da', '--accent': '#8e4470', '--on-accent': '#fdf7fa', '--tint': '#efe0e8'},
-      dark: {'--bg': '#1c141a', '--surface': '#251c23', '--ink': '#eadde5', '--muted': '#b49aa6', '--line': '#453543', '--accent': '#d99ab9', '--on-accent': '#221419', '--tint': '#372731'}},
-    {id: 'ember', label: 'Ember',
-      light: {'--bg': '#f5f1e8', '--surface': '#faf7ef', '--ink': '#33302a', '--muted': '#7c7362', '--line': '#e2d8c2', '--accent': '#8a5f16', '--on-accent': '#fdf9ee', '--tint': '#eee0c3'},
-      dark: {'--bg': '#1f1510', '--surface': '#2a1e16', '--ink': '#f0e3d3', '--muted': '#bfa48c', '--line': '#4e382a', '--accent': '#e0a061', '--on-accent': '#271307', '--tint': '#3d2c1f'}},
-    {id: 'iris', label: 'Iris',
-      light: {'--bg': '#f0eff6', '--surface': '#f6f5fb', '--ink': '#2a2936', '--muted': '#6e6c80', '--line': '#d8d5e5', '--accent': '#5a53a6', '--on-accent': '#f4f3fb', '--tint': '#e2e0f1'},
-      dark: {'--bg': '#17131f', '--surface': '#201a2c', '--ink': '#e7e1f2', '--muted': '#ab9dc4', '--line': '#3e3454', '--accent': '#b7a3ec', '--on-accent': '#1e1433', '--tint': '#2f2745'}},
     {id: 'graphite', label: 'Graphite',
       light: {'--bg': '#f3f3f4', '--surface': '#fafafa', '--ink': '#1e1e21', '--muted': '#65656c', '--line': '#d9d9de', '--accent': '#3f3f46', '--on-accent': '#fafafa', '--tint': '#e6e6ea'},
       dark: {'--bg': '#101013', '--surface': '#18181c', '--ink': '#e9e9ec', '--muted': '#a3a3ad', '--line': '#2f2f36', '--accent': '#c9c9d2', '--on-accent': '#141417', '--tint': '#26262d'}},
-    {id: 'lagoon', label: 'Lagoon',
-      light: {'--bg': '#edf4f3', '--surface': '#f7fbfa', '--ink': '#1f2f2c', '--muted': '#55706a', '--line': '#c9dcd8', '--accent': '#0f766e', '--on-accent': '#f2faf9', '--tint': '#dcefec'},
-      dark: {'--bg': '#0e1a18', '--surface': '#152624', '--ink': '#d8e8e4', '--muted': '#8fb0a9', '--line': '#29443f', '--accent': '#6fd3c6', '--on-accent': '#0a201d', '--tint': '#1d3532'}},
     {id: 'crimson', label: 'Crimson',
       light: {'--bg': '#f6f0f0', '--surface': '#fbf8f8', '--ink': '#352324', '--muted': '#7d5c5e', '--line': '#e3cfd0', '--accent': '#a02a2e', '--on-accent': '#fdf4f4', '--tint': '#f0dede'},
       dark: {'--bg': '#1f1214', '--surface': '#2a171a', '--ink': '#f0dede', '--muted': '#bd9396', '--line': '#4a2b2f', '--accent': '#e08e90', '--on-accent': '#2a0e10', '--tint': '#3a2225'}},
+    {id: 'ember', label: 'Ember',
+      light: {'--bg': '#f5f1e8', '--surface': '#faf7ef', '--ink': '#33302a', '--muted': '#7c7362', '--line': '#e2d8c2', '--accent': '#8a5f16', '--on-accent': '#fdf9ee', '--tint': '#eee0c3'},
+      dark: {'--bg': '#1f1510', '--surface': '#2a1e16', '--ink': '#f0e3d3', '--muted': '#bfa48c', '--line': '#4e382a', '--accent': '#e0a061', '--on-accent': '#271307', '--tint': '#3d2c1f'}},
     {id: 'amber', label: 'Amber',
       light: {'--bg': '#f6f2e4', '--surface': '#fbf8ec', '--ink': '#35301f', '--muted': '#7e7452', '--line': '#e3d9b8', '--accent': '#946200', '--on-accent': '#fdf9e7', '--tint': '#efe3bd'},
-      dark: {'--bg': '#1e1808', '--surface': '#2a2210', '--ink': '#f0e8cf', '--muted': '#bfae7e', '--line': '#4c3f1e', '--accent': '#e3b64b', '--on-accent': '#241a05', '--tint': '#3c3015'}}
+      dark: {'--bg': '#1e1808', '--surface': '#2a2210', '--ink': '#f0e8cf', '--muted': '#bfae7e', '--line': '#4c3f1e', '--accent': '#e3b64b', '--on-accent': '#241a05', '--tint': '#3c3015'}},
+    {id: 'matcha', label: 'Matcha',
+      light: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'},
+      dark: {'--bg': '#171e1a', '--surface': '#1e2821', '--ink': '#e2eae4', '--muted': '#a7b9ad', '--line': '#394a3e', '--accent': '#acd1b7', '--on-accent': '#16291d', '--tint': '#2c3c31'}},
+    {id: 'lagoon', label: 'Lagoon',
+      light: {'--bg': '#ecf3f4', '--surface': '#f6fafb', '--ink': '#1f313a', '--muted': '#54707a', '--line': '#c4dbe0', '--accent': '#0e7a90', '--on-accent': '#f2faf9', '--tint': '#d9edf0'},
+      dark: {'--bg': '#0d1a1e', '--surface': '#14262b', '--ink': '#d8e8e4', '--muted': '#8dafb8', '--line': '#27414a', '--accent': '#62c2da', '--on-accent': '#0a201d', '--tint': '#1b3238'}},
+    {id: 'ocean', label: 'Ocean',
+      light: {'--bg': '#edf3f5', '--surface': '#f7fafb', '--ink': '#20313a', '--muted': '#57707d', '--line': '#cfdde3', '--accent': '#2a6b8a', '--on-accent': '#f2f9fb', '--tint': '#dfebef'},
+      dark: {'--bg': '#0f1720', '--surface': '#16222c', '--ink': '#d9e7ee', '--muted': '#8fa6b3', '--line': '#2b3e49', '--accent': '#82c7de', '--on-accent': '#0c1a21', '--tint': '#1e303b'}},
+    {id: 'iris', label: 'Iris',
+      light: {'--bg': '#f0eff6', '--surface': '#f6f5fb', '--ink': '#2a2936', '--muted': '#6e6c80', '--line': '#d8d5e5', '--accent': '#5a53a6', '--on-accent': '#f4f3fb', '--tint': '#e2e0f1'},
+      dark: {'--bg': '#17131f', '--surface': '#201a2c', '--ink': '#e7e1f2', '--muted': '#ab9dc4', '--line': '#3e3454', '--accent': '#b7a3ec', '--on-accent': '#1e1433', '--tint': '#2f2745'}},
+    {id: 'rose', label: 'Rose',
+      light: {'--bg': '#f5f1f4', '--surface': '#faf7f9', '--ink': '#32262e', '--muted': '#77636f', '--line': '#e0d2da', '--accent': '#8e4470', '--on-accent': '#fdf7fa', '--tint': '#efe0e8'},
+      dark: {'--bg': '#1c141a', '--surface': '#251c23', '--ink': '#eadde5', '--muted': '#b49aa6', '--line': '#453543', '--accent': '#d99ab9', '--on-accent': '#221419', '--tint': '#372731'}}
   ];
   const themeModes = [
     {id: 'system', label: 'System'},
@@ -191,7 +188,7 @@
   ];
   // Migrate pre-split theme ids to a family + mode pair.
   const legacyThemeMap = {
-    system: ['matcha', 'system'],
+    system: ['graphite', 'system'],
     matcha: ['matcha', 'light'],
     'matcha-dark': ['matcha', 'dark'],
     ocean: ['ocean', 'light'],
@@ -201,7 +198,7 @@
     dune: ['ember', 'light'],
     lavender: ['iris', 'light']
   };
-  let themeFamilyId = 'matcha', themeMode = 'system';
+  let themeFamilyId = 'graphite', themeMode = 'system';
   const mediaQuery = matchMedia('(prefers-color-scheme: dark)');
   function resolvedScheme() {
     if (themeMode === 'light') return 'light';
@@ -254,7 +251,7 @@
   }
   mediaQuery.addEventListener?.('change', () => {if (themeMode === 'system') applyTheme(themeFamilyId, themeMode);});
   function loadTheme() {
-    let family = 'matcha', mode = 'system';
+    let family = 'graphite', mode = 'system';
     try {
       const savedFamily = localStorage.getItem('canvas-local-theme');
       const savedMode = localStorage.getItem('canvas-local-mode');

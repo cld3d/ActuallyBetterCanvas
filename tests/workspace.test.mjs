@@ -48,11 +48,17 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     await page.goto('https://canvas.test/dashboard');
     await page.addScriptTag({content});
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
-    const themeButton = page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true});
-    assert.equal(await themeButton.count(), 1, 'Matcha + System is the default theme');
+    const themeButton = page.getByRole('button', {name: 'Color theme: Graphite · System', exact: true});
+    assert.equal(await themeButton.count(), 1, 'Graphite + System is the default theme');
     const inlineVar = () => page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--bg'));
-    assert.equal(await inlineVar(), '#f3f5f3', 'System resolves the Matcha light pair in a light OS scheme');
+    assert.equal(await inlineVar(), '#f3f3f4', 'System resolves the Graphite light pair in a light OS scheme');
     await themeButton.click();
+    assert.equal(await page.locator('.theme-grid .theme-card').first().getAttribute('aria-label'), 'Theme: Graphite', 'Graphite lists first');
+    assert.equal(await page.locator('.theme-card').first().evaluate(node => getComputedStyle(node).minWidth), '88px', 'cards reserve room for bold labels');
+    const beforeWidth = await page.locator('.theme-options').boundingBox().then(box => Math.round(box.width));
+    await page.getByRole('option', {name: 'Theme: Crimson', exact: true}).click();
+    await page.getByRole('button', {name: 'Color theme: Crimson · System', exact: true}).click();
+    assert.equal(await page.locator('.theme-options').boundingBox().then(box => Math.round(box.width)), beforeWidth, 'selecting a long bold name does not widen the picker');
     assert.equal(await page.getByRole('option').count(), 12);
     assert.equal(await page.locator('.theme-options').isVisible(), true);
     await page.getByRole('option', {name: 'Theme: Ocean', exact: true}).click();
@@ -80,6 +86,8 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     await page.setViewportSize({width: 390, height: 844});
     await page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true}).click();
     assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, 'picker fits mobile widths');
+    await page.getByRole('option', {name: 'Theme: Lagoon', exact: true}).click();
+    assert.equal(await page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--accent').trim()), '#0e7a90', 'lagoon light leans blue while staying teal');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
@@ -222,7 +230,7 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     await page.getByRole('dialog', {name: /Essay/}).waitFor({state: 'detached'});
     assert.equal(await page.locator('.deadline small').count(), 0, 'Canvas deadlines show their date without a redundant tag');
     await page.emulateMedia({colorScheme: 'dark', reducedMotion: 'reduce'});
-    assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#171e1a');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('#canvas-local-root')).getPropertyValue('--bg').trim() === '#101013', undefined, {timeout: 5000});
     await page.setViewportSize({width: 390, height: 844});
     const overflow = await page.locator('#canvas-local-root').evaluate(node => {
       const section = node.shadowRoot.querySelector('.workspace');
