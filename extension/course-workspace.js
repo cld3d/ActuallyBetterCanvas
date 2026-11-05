@@ -62,7 +62,7 @@
     return container;
   }
   const css = `
-    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:8px}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:8px}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:8px;font-size:13px;line-height:1.6}.course-submit{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-submit h4{font-size:15px;font-weight:600;margin:22px 0 10px}.course-submit-text{width:100%;min-height:160px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;margin-bottom:12px}.course-submit-url{width:100%;max-width:46ch;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}.course-submit input[type=file]{margin-bottom:12px}.course-file-list{font-size:13px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.course-file-list:empty{display:none}.course-status{margin:12px 0 0;font-size:13px;color:var(--muted)}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
+    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-take{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-quiz-timer{font-variant-numeric:tabular-nums;font-weight:650;color:var(--accent)}.course-take-option{display:flex;gap:10px;align-items:flex-start;padding:8px 0}.course-take-blank{display:grid;gap:6px;margin:10px 0;max-width:46ch}.course-take-input input[type=text],.course-take-input textarea,.course-take-input select,.course-take-blank input,.course-take-blank select{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:inherit;max-width:46ch}.course-take-input textarea{width:100%;min-height:120px}.course-take-question{padding:16px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-take-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:8px}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:8px}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:8px;font-size:13px;line-height:1.6}.course-submit{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-submit h4{font-size:15px;font-weight:600;margin:22px 0 10px}.course-submit-text{width:100%;min-height:160px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;margin-bottom:12px}.course-submit-url{width:100%;max-width:46ch;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}.course-submit input[type=file]{margin-bottom:12px}.course-file-list{font-size:13px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.course-file-list:empty{display:none}.course-status{margin:12px 0 0;font-size:13px;color:var(--muted)}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
     @media(max-width:850px){.course-heading{flex-direction:column;gap:12px}.course-nav{gap:4px 16px}.course-heading h1{font-size:26px}.course-meta{gap:8px 16px}.course-replies{margin-left:12px}}
   `;
 
@@ -364,10 +364,258 @@
       replies(data.discussion?.view, body);
       body.append(element('div', {class: 'course-actions'}, nativeButton(path('discussions', item.id), 'Reply in Original Canvas')));
     }
+    let take = null, takeTimer = null, takeNotice = '', takeCode = false;
+    function clearTake() {if (takeTimer) clearInterval(takeTimer); takeTimer = null; take = null; takeNotice = ''; takeCode = false;}
+    function takeTimeLeft() {
+      if (!take?.endAt) return null;
+      const left = new Date(take.endAt).getTime() - Date.now();
+      if (!Number.isFinite(left)) return null;
+      if (left <= 0) return 'Time is up — submit your answers now.';
+      const minutes = Math.floor(left / 60000), seconds = Math.floor(left % 60000 / 1000);
+      return minutes >= 60 ? `${Math.floor(minutes / 60)}h ${minutes % 60}m left` : `${minutes}m ${String(seconds).padStart(2, '0')} left`;
+    }
+    function tickTakeTimer() {
+      const node = root.querySelector('.course-quiz-timer');
+      if (node) node.textContent = takeTimeLeft() || '';
+    }
+    function takeOptionLabel(answer) {
+      const label = element('span', {});
+      const text = plainText(answer.answer_text);
+      if (text) label.append(document.createTextNode(text));
+      else label.append(rich(answer.answer_text || ''));
+      return label;
+    }
+    function takeInput(question, record) {
+      const type = question.question_type;
+      const answers = question.answers || [];
+      const box = element('div', {class: 'course-take-input'});
+      const current = take.values[record.id];
+      if (type === 'multiple_choice_question' || type === 'true_false_question') {
+        for (const answer of answers) {
+          const radio = element('input', {type: 'radio', name: 'take-q' + record.id, value: String(answer.id)});
+          if (current != null && String(current) === String(answer.id)) radio.checked = true;
+          radio.addEventListener('change', () => {take.values[record.id] = /^\d+$/.test(String(answer.id)) ? Number(answer.id) : String(answer.id);});
+          const label = element('label', {class: 'course-take-option'}, radio);
+          label.append(takeOptionLabel(answer));
+          box.append(label);
+        }
+        return box;
+      }
+      if (type === 'multiple_answers_question') {
+        const chosen = new Set((Array.isArray(current) ? current : []).map(String));
+        for (const answer of answers) {
+          const check = element('input', {type: 'checkbox', value: String(answer.id)});
+          if (chosen.has(String(answer.id))) check.checked = true;
+          check.addEventListener('change', () => {
+            const next = new Set((Array.isArray(take.values[record.id]) ? take.values[record.id] : []).map(String));
+            if (check.checked) next.add(String(answer.id)); else next.delete(String(answer.id));
+            take.values[record.id] = [...next].map(value => /^\d+$/.test(value) ? Number(value) : value);
+          });
+          const label = element('label', {class: 'course-take-option'}, check);
+          label.append(takeOptionLabel(answer));
+          box.append(label);
+        }
+        return box;
+      }
+      if (type === 'short_answer_question' || type === 'numerical_question' || type === 'calculated_question') {
+        const field = element('input', {type: 'text', value: current ?? '', 'aria-label': question.question_name || 'Answer'});
+        field.addEventListener('input', () => {take.values[record.id] = field.value;});
+        box.append(field);
+        return box;
+      }
+      if (type === 'essay_question') {
+        const area = element('textarea', {'aria-label': question.question_name || 'Answer'});
+        area.value = current ?? '';
+        area.addEventListener('input', () => {take.values[record.id] = area.value;});
+        box.append(area);
+        return box;
+      }
+      if (type === 'matching_question') {
+        const prompts = answers.filter(answer => answer.answer_match_left);
+        const rights = [...new Set(answers.map(answer => answer.answer_match_right).filter(Boolean))];
+        for (const answer of answers) {
+          for (const extra of String(answer.matching_answer_incorrect_matches || '').split(/\r?\n/)) {
+            if (extra.trim() && !rights.includes(extra.trim())) rights.push(extra.trim());
+          }
+        }
+        const pairs = Array.isArray(current) ? current : [];
+        for (const prompt of prompts) {
+          const select = element('select', {'aria-label': plainText(prompt.answer_match_left) || 'Match'});
+          select.append(element('option', {value: ''}, 'Choose…'));
+          for (const right of rights) {
+            const owner = answers.find(answer => answer.answer_match_right === right);
+            const option = element('option', {value: owner ? String(owner.id) : right}, right);
+            const existing = pairs.find(pair => String(pair?.answer_id) === String(prompt.id));
+            if (existing && String(existing.match_id) === option.value) option.selected = true;
+            select.append(option);
+          }
+          select.addEventListener('change', () => {
+            const next = (Array.isArray(take.values[record.id]) ? take.values[record.id] : []).filter(pair => String(pair?.answer_id) !== String(prompt.id));
+            if (select.value) next.push({answer_id: /^\d+$/.test(String(prompt.id)) ? Number(prompt.id) : String(prompt.id), match_id: /^\d+$/.test(select.value) ? Number(select.value) : select.value});
+            take.values[record.id] = next;
+          });
+          box.append(element('label', {class: 'course-take-blank'}, plainText(prompt.answer_match_left), select));
+        }
+        if (!prompts.length) box.append(element('p', {class: 'meta'}, 'This question can only be answered in Original Canvas.'));
+        return box;
+      }
+      if (type === 'fill_in_multiple_blanks_question' || type === 'multiple_dropdowns_question') {
+        const blanks = [...new Set(answers.map(answer => answer.blank_id).filter(Boolean))];
+        const stored = current && typeof current === 'object' && !Array.isArray(current) ? current : {};
+        for (const blank of blanks) {
+          if (type === 'fill_in_multiple_blanks_question') {
+            const field = element('input', {type: 'text', value: stored[blank] ?? '', 'aria-label': blank});
+            field.addEventListener('input', () => {
+              const next = {...(take.values[record.id] || {})};
+              if (field.value) next[blank] = field.value; else delete next[blank];
+              take.values[record.id] = next;
+            });
+            box.append(element('label', {class: 'course-take-blank'}, blank, field));
+          } else {
+            const select = element('select', {'aria-label': blank});
+            select.append(element('option', {value: ''}, 'Choose…'));
+            for (const answer of answers.filter(answer => answer.blank_id === blank)) {
+              const option = element('option', {value: String(answer.id)}, plainText(answer.answer_text));
+              if (stored[blank] != null && String(stored[blank]) === String(answer.id)) option.selected = true;
+              select.append(option);
+            }
+            select.addEventListener('change', () => {
+              const next = {...(take.values[record.id] || {})};
+              if (select.value) next[blank] = /^\d+$/.test(select.value) ? Number(select.value) : select.value; else delete next[blank];
+              take.values[record.id] = next;
+            });
+            box.append(element('label', {class: 'course-take-blank'}, blank, select));
+          }
+        }
+        if (!blanks.length) box.append(element('p', {class: 'meta'}, 'This question can only be answered in Original Canvas.'));
+        return box;
+      }
+      if (type === 'text_only_question') return null;
+      box.append(element('p', {class: 'meta'}, 'This question type can only be answered in Original Canvas.'));
+      return box;
+    }
+    function collectTakeAnswers() {
+      const out = [];
+      for (const entry of take?.questions || []) {
+        const value = take.values[entry.id];
+        if (value == null || value === '') continue;
+        if (Array.isArray(value) && !value.length) continue;
+        if (typeof value === 'object' && !Array.isArray(value) && !Object.keys(value).length) continue;
+        out.push({id: /^\d+$/.test(String(entry.id)) ? Number(entry.id) : String(entry.id), answer: value});
+      }
+      return out;
+    }
+    async function beginTake(item, code) {
+      takeNotice = 'Starting your attempt…'; paint();
+      try {
+        const start = await request({action: 'quizStart', route: {courseId: route.courseId, id: String(item.id)}, options: code ? {access_code: code} : {}});
+        if (!start.validationToken) {takeNotice = 'Canvas did not return a session token. Take this quiz in Original Canvas.'; paint(); return;}
+        const loaded = await request({action: 'quizQuestions', take: {courseId: route.courseId, quizId: String(item.id), qsId: start.qsId}});
+        if (take && take.itemId !== String(item.id)) return;
+        take = {qsId: start.qsId, attempt: start.attempt, token: start.validationToken, endAt: start.endAt, questions: loaded.questions, values: {}, itemId: String(item.id)};
+        takeNotice = '';
+        if (takeTimer) clearInterval(takeTimer);
+        takeTimer = setInterval(tickTakeTimer, 1000);
+        paint();
+      } catch (reason) {
+        if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.';}
+        else takeNotice = 'Could not start: ' + reason.message;
+        paint();
+      }
+    }
+    function takeSection(body, item) {
+      const section = element('section', {class: 'course-take'});
+      body.append(section);
+      const attempts = data.quizAttempts || [];
+      const allowed = item.allowed_attempts;
+      const remaining = allowed == null || allowed === -1 || attempts.length < allowed;
+      const status = element('p', {class: 'course-status', role: 'status'});
+      const showNotice = message => {takeNotice = message; status.textContent = message;};
+      if (take && !take.done && take.itemId !== String(item.id)) clearTake();
+      if (take?.done) {
+        section.append(element('h3', {}, 'Attempt submitted'));
+        section.append(element('p', {class: 'course-grade'}, take.score != null ? 'Score: ' + take.score + (take.keptScore != null && take.keptScore !== take.score ? ' (kept: ' + take.keptScore + ')' : '') : 'Submitted for grading.'));
+        if (take.finishedAt) section.append(element('p', {class: 'meta'}, 'Finished ' + date(take.finishedAt)));
+        section.append(element('p', {class: 'course-original-note'}, 'Attempts and review above refresh automatically.'));
+        return;
+      }
+      if (!take) {
+        section.append(element('h3', {}, 'Take quiz'));
+        const taken = attempts.length;
+        section.append(element('p', {class: 'meta'}, taken ? `${taken} of ${allowed === -1 ? 'unlimited' : allowed ?? 'unlimited'} attempts taken. This will be your attempt ${taken + 1}.` : (allowed && allowed !== -1 ? `0 of ${allowed} attempts taken. This will be your 1st attempt.` : 'This will be your 1st attempt.')));
+        let code = '';
+        if (takeCode) {
+          const field = element('input', {type: 'password', class: 'course-submit-url', placeholder: 'Access code', 'aria-label': 'Quiz access code'});
+          field.addEventListener('input', () => {code = field.value;});
+          section.append(field);
+        }
+        if (remaining) {
+          const begin = element('button', {class: 'quiet primary'}, takeCode ? 'Begin with access code' : 'Begin');
+          begin.addEventListener('click', async () => {
+            begin.disabled = true;
+            try {await beginTake(item, code || undefined);}
+            finally {begin.disabled = false;}
+          });
+          section.append(element('div', {class: 'course-actions'}, begin));
+        } else {
+          section.append(element('p', {class: 'course-original-note'}, 'No attempts remaining.'));
+        }
+        if (takeNotice) status.textContent = takeNotice;
+        section.append(status);
+        return;
+      }
+      section.append(element('h3', {}, 'Attempt ' + take.attempt));
+      const left = takeTimeLeft();
+      if (left || take.endAt) section.append(element('p', {class: 'course-quiz-timer', role: 'timer'}, left || ''));
+      let number = 0, answerable = 0;
+      for (const entry of take.questions) {
+        const question = entry.quiz_question || {};
+        number++;
+        const article = element('article', {class: 'course-take-question'}, element('h4', {}, (question.question_name || 'Question ' + number) + (question.points_possible != null ? ' · ' + question.points_possible + ' points' : '')));
+        if (question.question_text) article.append(rich(question.question_text));
+        const input = takeInput(question, entry);
+        if (input) {article.append(input); answerable++;}
+        section.append(article);
+      }
+      if (!take.questions.length) section.append(element('p', {class: 'course-original-note'}, 'No questions were returned. Take this quiz in Original Canvas.'));
+      const save = element('button', {class: 'quiet'}, 'Save answers');
+      save.addEventListener('click', async () => {
+        save.disabled = true;
+        try {
+          const answers = collectTakeAnswers();
+          if (!answers.length) {showNotice('Answer at least one question before saving.'); return;}
+          showNotice('Saving answers…');
+          const reply = await request({action: 'quizAnswer', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token, answers}});
+          showNotice(`Answers saved (${reply.answered} recorded).`);
+          paint();
+        } catch (reason) {showNotice('Could not save: ' + reason.message);}
+        finally {save.disabled = false;}
+      });
+      const submit = confirmButton('Submit quiz', async () => {
+        showNotice('Submitting…');
+        const answers = collectTakeAnswers();
+        if (answers.length) {
+          try {await request({action: 'quizAnswer', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token, answers}});}
+          catch (reason) {throw new Error('Could not save answers: ' + reason.message);}
+        }
+        const done = await request({action: 'quizComplete', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token}});
+        const finished = {done: true, score: done.score, keptScore: done.keptScore, finishedAt: done.finishedAt, itemId: String(item.id)};
+        clearTake(); take = finished;
+        takeNotice = '';
+        paint();
+        try {await request({action: 'sync'});} catch {}
+        load(true);
+      }, reason => {takeNotice = 'Could not submit: ' + reason.message; paint();});
+      section.append(element('div', {class: 'course-actions'}, save, submit));
+      if (takeNotice) status.textContent = takeNotice;
+      section.append(status);
+      if (!answerable) section.append(element('p', {class: 'course-original-note'}, 'None of these questions can be answered here. Take this quiz in Original Canvas.'));
+    }
     function quizDetail(body, item) {
       body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Due: ' + date(item.due_at)), element('span', {}, item.time_limit ? item.time_limit + ' minute limit' : 'No time limit'), element('span', {}, item.allowed_attempts === -1 ? 'Unlimited attempts allowed' : (item.allowed_attempts ?? '—') + ' attempts allowed')));
       if (lock(body, item)) return;
       body.append(rich(item.description));
+      takeSection(body, item);
       const attempts = data.quizAttempts || [];
       if (attempts.length) {
         body.append(element('h3', {}, 'Your attempts'));
@@ -491,9 +739,9 @@
     }
     return {
       root,
-      show(next) {if (route?.path === next.path) return; route = next; data = null; load();},
+      show(next) {if (route?.path === next.path) return; clearTake(); route = next; data = null; load();},
       refresh() {if (route) load(true);},
-      leave() {++version; route = null; data = null; root.replaceChildren();},
+      leave() {++version; route = null; data = null; clearTake(); root.replaceChildren();},
       repaint() {if (route) paint();}
     };
   }

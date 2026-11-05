@@ -19,26 +19,9 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
     return data;
   }
   const list = path => pages(origin, path + (path.includes('?') ? '&' : '?') + 'per_page=100', fetcher);
-  function fail(response) {
-    throw new Error(response.status === 401 ? 'Sign in to Canvas to read this course.' : response.status === 403 ? 'Canvas has restricted access to this content.' : response.status === 404 ? 'This content is unavailable or has been removed.' : `Canvas returned ${response.status}. Try again.`);
-  }
   // Some read endpoints wrap arrays in a named envelope instead of returning a bare list.
   async function envelope(path, key) {
-    const out = [];
-    let url = path.startsWith('http') ? path : origin + path;
-    const visited = new Set();
-    while (url) {
-      if (visited.has(url) || visited.size >= 100) throw new Error('Canvas pagination did not finish.');
-      visited.add(url);
-      const response = await fetcher(url, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
-      if (!response.ok) fail(response);
-      if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
-      const data = await response.json();
-      if (!data || typeof data !== 'object' || !Array.isArray(data[key])) throw new Error('Unexpected Canvas course response.');
-      out.push(...data[key]);
-      url = nextPage(response.headers.get('link'), origin);
-    }
-    return out;
+    return envelopeList(origin, path, key, fetcher);
   }
   const course = await object(base + '?include[]=syllabus_body&include[]=total_scores', courseId);
   const tabs = await list(base + '/tabs');
@@ -184,6 +167,115 @@ export async function toolLaunch(origin, identity, launch, fetcher = fetch) {
   try {parsed = new URL(data.url);} catch {throw new Error('Unexpected Canvas course response.');}
   if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Unexpected Canvas course response.');
   return {url: parsed.href, name: typeof data.name === 'string' ? data.name : 'External tool'};
+}
+
+async function envelopeList(origin, path, key, fetcher) {
+  const out = [];
+  let url = path.startsWith('http') ? path : origin + path;
+  const visited = new Set();
+  while (url) {
+    if (visited.has(url) || visited.size >= 100) throw new Error('Canvas pagination did not finish.');
+    visited.add(url);
+    const response = await fetcher(url, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
+    if (!response.ok) failStatus(response);
+    if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
+    const data = await response.json();
+    if (!data || typeof data !== 'object' || !Array.isArray(data[key])) throw new Error('Unexpected Canvas course response.');
+    out.push(...data[key]);
+    url = nextPage(response.headers.get('link'), origin);
+  }
+  return out;
+}
+
+// Student-initiated quiz taking. Answering and completing re-verify that the
+// quiz submission belongs to the signed-in student and the requested quiz.
+function checkQuizIds(courseId, quizId, qsId) {
+  if (!/^\d+$/.test(String(courseId)) || !/^\d+$/.test(String(quizId)) || !/^\d+$/.test(String(qsId))) throw new Error('Invalid quiz request.');
+}
+
+async function checkQuizSubmission(origin, identity, courseId, quizId, qsId, fetcher) {
+  checkQuizIds(courseId, quizId, qsId);
+  const profile = await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await getObject(origin, `/api/v1/courses/${courseId}/quizzes/${quizId}/submissions/${qsId}`, fetcher);
+  const submission = Array.isArray(data.quiz_submissions) ? data.quiz_submissions[0] : data;
+  if (!submission || !/^\d+$/.test(String(submission.id)) || String(submission.quiz_id) !== String(quizId) || String(submission.user_id) !== String(profile.id)) throw new Error('Unexpected Canvas course response.');
+  return {profile, submission};
+}
+
+function checkValidationToken(token) {
+  if (typeof token !== 'string' || token.length < 1 || token.length > 4096) throw new Error('Invalid quiz session. Start a new attempt in Original Canvas.');
+}
+
+export async function quizStart(origin, identity, route, options, fetcher = fetch) {
+  const {courseId, id} = route || {};
+  if (!/^\d+$/.test(String(courseId)) || !/^\d+$/.test(String(id))) throw new Error('Invalid course request.');
+  const accessCode = options?.access_code;
+  if (accessCode != null && (typeof accessCode !== 'string' || accessCode.length > 255)) throw new Error('Invalid access code.');
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await postJSON(origin, `/api/v1/courses/${courseId}/quizzes/${id}/submissions`, accessCode ? {access_code: accessCode} : {}, fetcher);
+  const submission = Array.isArray(data.quiz_submissions) ? data.quiz_submissions[0] : null;
+  if (!submission || !/^\d+$/.test(String(submission.id)) || String(submission.quiz_id) !== String(id)) throw new Error('Unexpected Canvas course response.');
+  return {qsId: String(submission.id), attempt: submission.attempt, validationToken: typeof submission.validation_token === 'string' ? submission.validation_token : null, endAt: submission.end_at || null, workflowState: submission.workflow_state || null};
+}
+
+export async function quizTakeQuestions(origin, identity, take, fetcher = fetch) {
+  const {courseId, quizId, qsId} = take || {};
+  await checkQuizSubmission(origin, identity, courseId, quizId, qsId, fetcher);
+  const questions = await envelopeList(origin, `/api/v1/quiz_submissions/${qsId}/questions?include[]=quiz_question&per_page=100`, 'quiz_submission_questions', fetcher);
+  for (const entry of questions) {
+    if (!entry || !/^\d+$/.test(String(entry.id))) throw new Error('Unexpected Canvas course response.');
+  }
+  return {questions};
+}
+
+function checkQuizAnswers(answers) {
+  if (!Array.isArray(answers) || answers.length < 1 || answers.length > 200) throw new Error('Invalid quiz answers.');
+  const clean = [];
+  for (const entry of answers) {
+    if (!entry || !/^\d+$/.test(String(entry.id))) throw new Error('Invalid quiz answers.');
+    if (entry.answer === undefined) continue;
+    const answer = entry.answer;
+    if (answer == null || ['string', 'number', 'boolean'].includes(typeof answer)) {clean.push({id: String(entry.id), answer}); continue;}
+    if (Array.isArray(answer)) {
+      if (answer.length > 100 || !answer.every(value => value == null || ['string', 'number', 'boolean'].includes(typeof value))) throw new Error('Invalid quiz answers.');
+      clean.push({id: String(entry.id), answer}); continue;
+    }
+    if (typeof answer === 'object' && !Object.values(answer).some(value => value != null && typeof value === 'object')) {
+      if (Object.keys(answer).length > 100) throw new Error('Invalid quiz answers.');
+      const kept = {};
+      for (const [key, value] of Object.entries(answer)) {
+        if (/^[\w.+-/-]{1,64}$/.test(key) && (value == null || ['string', 'number', 'boolean'].includes(typeof value))) kept[key] = value;
+      }
+      clean.push({id: String(entry.id), answer: kept}); continue;
+    }
+    throw new Error('Invalid quiz answers.');
+  }
+  if (!clean.length) throw new Error('Invalid quiz answers.');
+  return clean;
+}
+
+export async function quizAnswer(origin, identity, take, fetcher = fetch) {
+  const {courseId, quizId, qsId, attempt, validationToken, answers} = take || {};
+  checkQuizIds(courseId, quizId, qsId);
+  if (!Number.isInteger(attempt) || attempt < 1) throw new Error('Invalid quiz attempt.');
+  checkValidationToken(validationToken);
+  const clean = checkQuizAnswers(answers);
+  await checkQuizSubmission(origin, identity, courseId, quizId, qsId, fetcher);
+  const data = await postJSON(origin, `/api/v1/quiz_submissions/${qsId}/questions`, {attempt, validation_token: validationToken, quiz_questions: clean}, fetcher);
+  if (!Array.isArray(data.quiz_submission_questions)) throw new Error('Unexpected Canvas course response.');
+  return {answered: data.quiz_submission_questions.length};
+}
+
+export async function quizComplete(origin, identity, take, fetcher = fetch) {
+  const {courseId, quizId, qsId, attempt, validationToken} = take || {};
+  checkQuizIds(courseId, quizId, qsId);
+  if (!Number.isInteger(attempt) || attempt < 1) throw new Error('Invalid quiz attempt.');
+  checkValidationToken(validationToken);
+  await checkQuizSubmission(origin, identity, courseId, quizId, qsId, fetcher);
+  const data = await postJSON(origin, `/api/v1/courses/${courseId}/quizzes/${quizId}/submissions/${qsId}/complete`, {attempt, validation_token: validationToken}, fetcher);
+  const submission = Array.isArray(data.quiz_submissions) ? data.quiz_submissions[0] : null;
+  if (!submission || String(submission.quiz_id) !== String(quizId)) throw new Error('Unexpected Canvas course response.');
+  return {score: submission.score ?? null, keptScore: submission.kept_score ?? null, workflowState: submission.workflow_state || null, finishedAt: submission.finished_at || null};
 }
 
 // Fetches a small text preview of a course file. The URL must be a

@@ -1,5 +1,5 @@
 import {collect, workspaceRead} from './api.mjs';
-import {courseFileRead, courseRead, submissionUploadInit, submitAssignment, toolLaunch} from './course-api.mjs';
+import {courseFileRead, courseRead, quizAnswer, quizComplete, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from './course-api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
 
@@ -93,6 +93,26 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
       return {ok: true, ...await toolLaunch(origin, state.identity, message.launch)};
+    }
+    if (message.action === 'quizStart') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await quizStart(origin, state.identity, message.route, message.options)};
+    }
+    if (message.action === 'quizQuestions') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await quizTakeQuestions(origin, state.identity, message.take)};
+    }
+    if (message.action === 'quizAnswer') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await quizAnswer(origin, state.identity, message.take)};
+    }
+    if (message.action === 'quizComplete') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await quizComplete(origin, state.identity, message.take)};
     }
     if (message.action === 'courseFile') {
       if (!origin) throw new Error('Connect your Canvas website first.');

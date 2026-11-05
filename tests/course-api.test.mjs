@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {courseFileRead, courseRead, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
+import {courseFileRead, courseRead, quizAnswer, quizComplete, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
 
 const origin = 'https://canvas.test', identity = origin + '/42';
 const json = (value, headers = {}) => new Response(JSON.stringify(value), {headers: {'content-type': 'application/json', ...headers}});
@@ -213,6 +213,83 @@ test('tool launches use fixed sessionless endpoints with validated targets', asy
   await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'assessment', assessmentId: '12'}, evil.fetcher), /Unexpected/);
   await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'assessment', assessmentId: '../12'}, fetcher), /Invalid tool launch/);
   await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'take'}, fetcher), /Invalid tool launch/);
+});
+
+function quizFixture(handler) {
+  const calls = [];
+  const fetcher = async (input, options) => {
+    const url = new URL(input); calls.push({url: url.pathname + url.search, method: options.method, body: options.body});
+    assert.equal(url.origin, origin);
+    assert.equal(options.credentials, 'include');
+    assert.equal(options.redirect, 'error');
+    if (url.pathname.endsWith('/profile')) return json({id: 42});
+    return handler(url, options);
+  };
+  return {fetcher, calls};
+}
+const quizIds = {courseId: '34', quizId: '9', qsId: '41'};
+const quizSubmission = {id: 41, quiz_id: 9, user_id: 42, attempt: 2, validation_token: 'tok', end_at: '2026-11-06T00:00:00Z', workflow_state: 'untaken'};
+
+test('quiz start sends only an optional access code and returns the session', async () => {
+  const {fetcher, calls} = quizFixture((url, options) => {
+    assert.equal(url.pathname, '/api/v1/courses/34/quizzes/9/submissions');
+    assert.equal(options.method, 'POST');
+    return json({quiz_submissions: [quizSubmission]});
+  });
+  const start = await quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher);
+  assert.deepEqual({qsId: start.qsId, attempt: start.attempt, validationToken: start.validationToken}, {qsId: '41', attempt: 2, validationToken: 'tok'});
+  assert.deepEqual(JSON.parse(calls.at(-1).body), {});
+  await quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {access_code: 'open'}, fetcher);
+  assert.deepEqual(JSON.parse(calls.at(-1).body), {access_code: 'open'});
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '../9'}, {}, fetcher), /Invalid course request/);
+  const wrong = quizFixture(() => json({quiz_submissions: [{id: 41, quiz_id: 10, user_id: 42, attempt: 1}]}));
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, wrong.fetcher), /Unexpected/);
+  const empty = quizFixture(() => json({quiz_submissions: []}));
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, empty.fetcher), /Unexpected/);
+});
+
+test('quiz answering and completing verify ownership and shape fixed bodies', async () => {
+  const {fetcher, calls} = quizFixture((url, options) => {
+    if (url.pathname.endsWith('/submissions/41') && options.method !== 'POST') return json({quiz_submissions: [quizSubmission]});
+    if (url.pathname === '/api/v1/quiz_submissions/41/questions') {
+      assert.deepEqual(JSON.parse(options.body), {attempt: 2, validation_token: 'tok', quiz_questions: [{id: '101', answer: 5}, {id: '102', answer: {color: 'red'}}]});
+      return json({quiz_submission_questions: [{id: 101}, {id: 102}]});
+    }
+    if (url.pathname.endsWith('/complete')) {
+      assert.deepEqual(JSON.parse(options.body), {attempt: 2, validation_token: 'tok'});
+      return json({quiz_submissions: [{id: 41, quiz_id: 9, score: 8, kept_score: 9, workflow_state: 'complete', finished_at: '2026-11-06T00:00:00Z'}]});
+    }
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  const base = {...quizIds, attempt: 2, validationToken: 'tok'};
+  const saved = await quizAnswer(origin, identity, {...base, answers: [{id: 101, answer: 5}, {id: '102', answer: {color: 'red'}}, {id: 103}]}, fetcher);
+  assert.equal(saved.answered, 2, 'unanswered questions are not sent');
+  const done = await quizComplete(origin, identity, base, fetcher);
+  assert.deepEqual([done.score, done.keptScore, done.workflowState], [8, 9, 'complete']);
+  assert.ok(calls.some(call => call.url.endsWith('/submissions/41') && call.method === undefined), 'ownership is re-verified with a GET before writing');
+  await assert.rejects(quizAnswer(origin, identity, {...base, validationToken: ''}, fetcher), /Invalid quiz session/);
+  await assert.rejects(quizAnswer(origin, identity, {...base, answers: []}, fetcher), /Invalid quiz answers/);
+  await assert.rejects(quizAnswer(origin, identity, {...base, attempt: 0, answers: [{id: 1, answer: 1}]}, fetcher), /Invalid quiz attempt/);
+  await assert.rejects(quizAnswer(origin, identity, {...base, answers: [{id: 1, answer: {nested: {evil: 1}}}]}, fetcher), /Invalid quiz answers/);
+  const other = quizFixture(url => url.pathname.endsWith('/submissions/41') ? json({quiz_submissions: [{...quizSubmission, user_id: 77}]}) : json({quiz_submission_questions: []}));
+  await assert.rejects(quizAnswer(origin, identity, {...base, answers: [{id: 1, answer: 1}]}, other.fetcher), /Unexpected/);
+  await assert.rejects(quizComplete(origin, identity, base, other.fetcher), /Unexpected/);
+});
+
+test('quiz take questions verify the submission before listing', async () => {
+  const {fetcher, calls} = quizFixture(url => {
+    if (url.pathname.endsWith('/submissions/41')) return json({quiz_submissions: [quizSubmission]});
+    if (url.pathname === '/api/v1/quiz_submissions/41/questions') {
+      assert.ok(url.search.includes('include%5B%5D=quiz_question') || url.search.includes('include[]=quiz_question'));
+      return json({quiz_submission_questions: [{id: 101, answer: null, quiz_question: {id: 501}}]});
+    }
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  const loaded = await quizTakeQuestions(origin, identity, quizIds, fetcher);
+  assert.equal(loaded.questions.length, 1);
+  assert.ok(calls.filter(call => !call.url.endsWith('/profile')).every(call => call.method === undefined), 'reads stay GET-only');
+  const foreign = quizFixture(url => url.pathname.endsWith('/submissions/41') ? json({quiz_submissions: [{...quizSubmission, quiz_id: 10}]}) : json({quiz_submission_questions: []}));
+  await assert.rejects(quizTakeQuestions(origin, identity, quizIds, foreign.fetcher), /Unexpected/);
 });
 
 test('course file previews accept only the matching same-origin download URL and small text files', async () => {

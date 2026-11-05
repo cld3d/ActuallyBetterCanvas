@@ -26,7 +26,18 @@ async function setup(browser, path = '/courses/34') {
       if (message.action === 'update') {window.testState.assignments[0].completed = message.patch.completion; return {ok: true, state: structuredClone(window.testState)};}
       if (message.action === 'courses') return {ok: true, courses: [{id: 34, name: 'English'}]};
       if (message.action === 'courseFile') return {ok: true, text: 'Hello file contents', truncated: false, contentType: 'text/plain'};
-      if (window.submissions === undefined) {window.submissions = []; window.launches = [];}
+      if (window.submissions === undefined) {window.submissions = []; window.launches = []; window.quizCalls = [];}
+      if (message.action === 'quizStart') {
+        window.quizCalls.push({action: 'quizStart', options: message.options});
+        if (window.requireCode && !message.options?.access_code) return {ok: false, error: 'Invalid access code'};
+        return {ok: true, qsId: '41', attempt: 2, validationToken: 'tok', endAt: '2099-11-06T00:00:00Z', workflowState: 'untaken'};
+      }
+      if (message.action === 'quizQuestions') return {ok: true, questions: [
+        {id: 101, answer: null, quiz_question: {id: 501, question_name: 'First question', question_type: 'multiple_choice_question', question_text: '<p>What is two plus two?</p>', points_possible: 5, answers: [{id: 5, answer_text: 'Four'}, {id: 6, answer_text: 'Five'}]}},
+        {id: 102, answer: null, quiz_question: {id: 502, question_name: 'Explain', question_type: 'essay_question', question_text: '<p>Explain why.</p>', points_possible: 5}}
+      ]};
+      if (message.action === 'quizAnswer') {window.quizCalls.push({action: 'quizAnswer', take: message.take}); return {ok: true, answered: message.take.answers.length};}
+      if (message.action === 'quizComplete') {window.quizCalls.push({action: 'quizComplete'}); return {ok: true, score: 8, keptScore: 8, workflowState: 'complete', finishedAt: '2026-11-05T00:00:00Z'};}
       if (message.action === 'submitAssignment') {window.submissions.push(message.submission); return {ok: true, submission: {id: 1, assignment_id: Number(message.route.id), submitted_at: '2026-11-05T00:00:00Z', workflow_state: 'submitted'}};}
       if (message.action === 'submissionUploadInit') return {ok: true, uploadUrl: 'https://uploads.test/put', uploadParams: {key: 'abc'}};
       if (message.action === 'toolLaunch') {window.launches.push(message.launch); return {ok: true, url: 'https://tool.test/launch?x=1', name: 'Example tool'};}
@@ -314,6 +325,36 @@ test('assignment pages keep one Original Canvas exit, custom file picker, and su
     await page.goto('https://canvas.test/courses/34/quizzes/9');
     await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
     assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0, 'other course pages keep no header handoff either');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('quiz taking starts an attempt, saves answers, and submits with confirm', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.goto('https://canvas.test/courses/34/quizzes/9');
+    await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
+    assert.equal(await page.getByText('1 of 2 attempts taken.', {exact: false}).count(), 1);
+    await page.evaluate(() => {window.requireCode = true;});
+    await page.getByRole('button', {name: 'Begin', exact: true}).click();
+    await page.getByLabel('Quiz access code').fill('open-sesame');
+    await page.getByRole('button', {name: 'Begin with access code', exact: true}).click();
+    await page.getByRole('heading', {name: 'Attempt 2', exact: true}).waitFor();
+    assert.equal(await page.locator('.course-quiz-timer').count(), 1, 'remaining time stays visible while taking');
+    assert.equal(await page.locator('.course-take').getByText('What is two plus two?', {exact: true}).count(), 1);
+    await page.getByRole('radio', {name: 'Four', exact: true}).check();
+    await page.getByLabel('Explain').fill('Because arithmetic.');
+    await page.getByRole('button', {name: 'Save answers', exact: true}).click();
+    await page.getByText('Answers saved', {exact: false}).waitFor();
+    assert.deepEqual(await page.evaluate(() => window.quizCalls.filter(call => call.action === 'quizAnswer').map(call => call.take.answers)), [[{id: 101, answer: 5}, {id: 102, answer: 'Because arithmetic.'}]]);
+    await page.getByRole('button', {name: 'Submit quiz', exact: true}).click();
+    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('heading', {name: 'Attempt submitted', exact: true}).waitFor();
+    assert.equal(await page.getByText('Score: 8', {exact: true}).count(), 1);
+    assert.ok(await page.evaluate(() => window.quizCalls.some(call => call.action === 'quizComplete')));
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
