@@ -120,6 +120,34 @@ test('sidebar settings icon opens an in-workspace connection dialog', {skip: !ex
   } finally {await browser.close();}
 });
 
+test('sidebar bottom icons spread edge to edge with the theme dot first', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({viewport: {width: 1366, height: 900}});
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}})}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    const row = await page.locator('.sidebar-bottom').boundingBox();
+    const dot = await page.getByRole('button', {name: 'Color theme: Graphite · System', exact: true}).boundingBox();
+    const sync = await page.getByRole('button', {name: 'Sync now', exact: true}).boundingBox();
+    const oc = await page.getByRole('button', {name: 'Original Canvas', exact: true}).boundingBox();
+    const settings = await page.getByRole('button', {name: 'Extension settings', exact: true}).boundingBox();
+    assert.ok(Math.abs(dot.x - row.x) < 2, 'theme dot stays pinned to the left');
+    assert.ok(Math.abs((settings.x + settings.width) - (row.x + row.width)) < 2, 'last icon ends flush with the row');
+    const gaps = [sync.x - (dot.x + dot.width), oc.x - (sync.x + sync.width), settings.x - (oc.x + oc.width)];
+    assert.ok(Math.max(...gaps) - Math.min(...gaps) < 2, 'icons are evenly spaced');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
@@ -145,6 +173,11 @@ test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromi
       const viewport = page.viewportSize();
       assert.ok(box.x >= 0, `${name} tooltip stays on screen`);
       assert.ok(box.x + box.width <= viewport.width, `${name} tooltip never bleeds off the edge`);
+      await page.evaluate(() => document.querySelector('#canvas-local-root').shadowRoot.querySelector('.workspace').dispatchEvent(new Event('scroll')));
+      await page.waitForTimeout(500);
+      assert.equal(await bubble.count(), 1, 'scroll momentum does not cancel the tooltip');
+      const moved = await bubble.boundingBox();
+      assert.ok(moved && moved.x >= 0 && moved.x + moved.width <= viewport.width, 'tooltip stays clamped after scrolling');
       await page.mouse.move(viewport.width - 5, 5);
       await page.locator('.tooltip-bubble').waitFor({state: 'hidden', timeout: 5000});
     }

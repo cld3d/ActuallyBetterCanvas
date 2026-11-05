@@ -370,8 +370,11 @@
   shadow.addEventListener('focusin', event => {const anchor = event.target.closest?.('[data-tip]'); if (anchor) showTooltip(anchor, 0);});
   shadow.addEventListener('focusout', () => {tooltipAnchor = null; hideTooltip();});
   shadow.addEventListener('click', () => hideTooltip(), true);
-  workspace.addEventListener('scroll', hideTooltip, true);
-  window.addEventListener('resize', hideTooltip);
+  // Scrolling or resizing moves the anchor, so follow it instead of hiding:
+  // hiding here would strand users whose scroll momentum outlasts the show delay.
+  const repositionTooltip = () => {if (tooltipAnchor && !tooltipBubble.hidden) placeTooltip(tooltipAnchor);};
+  workspace.addEventListener('scroll', repositionTooltip, true);
+  window.addEventListener('resize', repositionTooltip);
   let inertElements = [];
   let priorOverflow = '', priorTitle = '';
   function close(remember = true) {
