@@ -1,9 +1,13 @@
-// Class names identify the requested preset colors; their stored hex values stay unchanged.
+// Class-color presets use Google Calendar's event color names; any #RRGGBB
+// also works. The stored value is always a hex string, so labels are just
+// shortcuts and per-class choices persist in the local color table.
 var options = [
-  {value:"#7cb342",label:"Philosophy"}, {value:"#0b8043",label:"Chemistry"},
-  {value:"#039be5",label:"Calculus"}, {value:"#3f51b5",label:"Engineering"},
-  {value:"#c0ca33",label:"Physics"}, {value:"#7986cb",label:"Honors"},
-  {value:"#616161",label:"Other"}
+  {value:"#7986cb",label:"Lavender"}, {value:"#33b679",label:"Sage"},
+  {value:"#8e24aa",label:"Grape"}, {value:"#e67c73",label:"Flamingo"},
+  {value:"#f6bf26",label:"Banana"}, {value:"#f4511e",label:"Tangerine"},
+  {value:"#039be5",label:"Peacock"}, {value:"#616161",label:"Graphite"},
+  {value:"#3f51b5",label:"Blueberry"}, {value:"#0b8043",label:"Basil"},
+  {value:"#d50000",label:"Tomato"}
 ]
 function normalize(value) { return String(value || "").trim().toLowerCase() }
 function optionsFor(value) {

@@ -11,7 +11,9 @@ def plan(plugins, pending):
         return list(result.items())
     module = plugins / 'blacksheep.calendar/CourseColors.js'
     desired = (ROOT / 'integrations/desktop/CourseColors.js').read_text()
-    if module.exists() and module.read_text() != desired and hashlib.sha256(module.read_bytes()).hexdigest() != '1d8030015c16dd4a9bb3bbd63b94f6058f783e59a7734aac4268a84718ae24b2':
+    if module.exists() and module.read_text() != desired and hashlib.sha256(module.read_bytes()).hexdigest() not in {
+            '1d8030015c16dd4a9bb3bbd63b94f6058f783e59a7734aac4268a84718ae24b2',
+            'a0c5539b671d89ff080e1c876b504a8f803f18af0a7cffc9cba7665f29056083'}:  # class-name presets, then Google palette
         raise RuntimeError('Refusing to overwrite unfamiliar CourseColors.js')
     if not module.exists() or module.read_text() != desired:
         result[module] = desired

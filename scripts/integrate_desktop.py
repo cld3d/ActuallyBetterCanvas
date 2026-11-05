@@ -70,6 +70,11 @@ def changes():
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Integrate Canvas Local with the installed Datebook and lock plugins.')
+    parser.add_argument('--configure-colors', action='store_true',
+                        help='choose a Datebook color per class after integrating')
+    options = parser.parse_args()
     from plugin_scope import installed
     if not (PLUGINS / 'blacksheep.calendar').is_dir():
         raise RuntimeError('Datebook plugin not found at ' + str(PLUGINS / 'blacksheep.calendar') + '; install it first, then rerun.')
@@ -116,6 +121,9 @@ def main():
     for path, text in pending:
         path.write_text(text)
     print('Updated', len(pending), 'desktop files. Backups:', backup)
+    if options.configure_colors:
+        from configure_class_colors import main as configure_colors
+        raise SystemExit(configure_colors([]))
 
 
 if __name__ == '__main__':
