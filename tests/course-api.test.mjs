@@ -141,6 +141,25 @@ test('quiz linkage is matched even when Canvas omits the quiz flag', async () =>
   assert.ok(!plain.calls.some(url => url.includes('/quizzes')), 'no extra fetch for plain assignments');
 });
 
+test('tool-backed assignments without a classic quiz resolve New Quizzes, others stay tools', async () => {
+  const {fetcher} = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['external_tool']});
+    if (url.pathname.endsWith('/quizzes')) return json([]);
+    if (url.pathname === '/api/quiz/v1/courses/34/quizzes/12') return json({id: 3, title: 'Taylor Series', instructions: '<p>Watch.</p>'});
+    return json([]);
+  });
+  const data = await read(fetcher, 'assignments', '12');
+  assert.equal(data.quizId, null);
+  assert.equal(data.newQuiz.title, 'Taylor Series');
+  const plain = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['external_tool']});
+    if (url.pathname.endsWith('/quizzes')) return json([]);
+    if (url.pathname.startsWith('/api/quiz/v1')) return new Response('', {status: 404});
+    return json([]);
+  });
+  assert.equal((await read(plain.fetcher, 'assignments', '12')).newQuiz, null);
+});
+
 test('malformed quiz envelopes degrade to attempts and description instead of failing the page', async () => {
   const {fetcher} = fixture(url => {
     if (url.pathname === '/api/v1/courses/34') return json({id: 34, name: 'English', default_view: 'modules'});

@@ -53,7 +53,16 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
         if (match && /^\d+$/.test(String(match.id))) quizId = match.id;
       } catch {quizId = null;}
     }
-    return {...result, item, quizId};
+    // Tool-backed assignments without a classic quiz may still be New Quizzes,
+    // which expose a read API but can only be taken inside the quiz player.
+    let newQuiz = null;
+    if (!quizId && (item.submission_types || []).includes('external_tool')) {
+      try {
+        const fetched = await object(`/api/quiz/v1/courses/${courseId}/quizzes/${id}`, null);
+        if (fetched && (fetched.id != null || typeof fetched.title === 'string')) newQuiz = fetched;
+      } catch {newQuiz = null;}
+    }
+    return {...result, item, quizId, newQuiz};
   }
   if (view === 'quizzes') {
     if (id == null) return {...result, items: await list(base + '/quizzes')};

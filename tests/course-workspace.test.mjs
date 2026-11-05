@@ -64,8 +64,10 @@ async function setup(browser, path = '/courses/34') {
         if (sid === '17') {item.id = 17; item.name = 'Quiz work'; item.is_quiz_assignment = true; item.submission_types = ['online_quiz']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '18') {item.id = 18; item.name = 'Tool quiz'; item.is_quiz_assignment = true; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '19') {item.id = 19; item.name = 'Unflagged quiz'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '20') {item.id = 20; item.name = 'New Quiz'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (id) result.item = item; else result.items = [item];
         if (sid === '17' || sid === '19') result.quizId = 9;
+        if (sid === '20') result.newQuiz = {id: 3, title: 'New Quiz', instructions: '<p>Watch the video first.</p>'};
         result.enrollments = [{grades: {current_score: 87.4}}];
       }
       if (kind === 'quizzes') {
@@ -443,6 +445,18 @@ test('tool-delivered quizzes get a quiz launch instead of a generic tool handoff
     await page.goto('https://canvas.test/courses/34/assignments/19');
     await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
     assert.equal(new URL(page.url()).pathname, '/courses/34/quizzes/9', 'unflagged quiz assignments redirect by linkage');
+    await page.goto('https://canvas.test/courses/34/assignments/20');
+    await page.getByRole('heading', {name: 'New Quiz', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/courses/34/assignments/20', 'New Quizzes stay on the assignment page');
+    assert.equal(await page.getByText('Watch the video first.', {exact: true}).count(), 1, 'New Quiz instructions render inline');
+    assert.equal(await page.getByText('external website', {exact: false}).count(), 0, 'no generic tool copy for New Quizzes');
+    const [newQuizTool] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.getByRole('button', {name: 'Take quiz in new window', exact: true}).click()
+    ]);
+    await newQuizTool.waitForURL('https://tool.test/**');
+    assert.deepEqual(await page.evaluate(() => window.launches.at(-1)), {courseId: '34', launchType: 'assessment', assessmentId: '20'});
+    await newQuizTool.close();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

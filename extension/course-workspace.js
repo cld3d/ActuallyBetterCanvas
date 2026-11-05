@@ -244,6 +244,15 @@
         section.append(element('div', {class: 'course-actions'}, open, nativeButton(path('assignments', item.id), 'Open in Original Canvas')));
         return;
       }
+      if (data.newQuiz) {
+        if (data.newQuiz.instructions) section.append(rich(data.newQuiz.instructions));
+        section.append(element('p', {class: 'course-original-note'}, 'This is a New Quiz. It runs in Canvas\u2019s quiz player, which is the only place answers can be submitted.'));
+        const button = element('button', {class: 'quiet primary'}, 'Take quiz in new window');
+        const setStatus = submitStatus(section);
+        button.addEventListener('click', () => {button.disabled = true; launchTool({courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}, setStatus, data.newQuiz.title || item.title).finally(() => {button.disabled = false;});});
+        section.append(element('div', {class: 'course-actions'}, button, nativeButton(path('assignments', item.id), 'Open in Original Canvas')));
+        return;
+      }
       if (item.is_quiz_assignment) {
         section.append(element('p', {class: 'course-original-note'}, 'This quiz runs in a connected Canvas tool. Your score syncs back to Canvas.'));
         const button = element('button', {class: 'quiet primary'}, 'Take quiz in new window');
