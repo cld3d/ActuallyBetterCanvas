@@ -64,8 +64,8 @@
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
     .icon-button.busy svg{animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    /* One shared tooltip bubble; script clamps it inside the viewport. */
-    .tooltip-bubble{position:fixed;z-index:30;max-width:200px;padding:6px 10px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;box-shadow:0 6px 18px #00000030;pointer-events:none;opacity:0;transition:opacity .15s ease-out}
+    /* One shared tooltip bubble, kept above the workspace overlay and clamped inside the viewport. */
+    .tooltip-bubble{position:fixed;z-index:10002;max-width:200px;padding:6px 10px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;box-shadow:0 6px 18px #00000030;pointer-events:none;opacity:0;transition:opacity .15s ease-out}
     .tooltip-bubble.show{opacity:1}
   `;
   shadow.append(style);

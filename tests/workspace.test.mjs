@@ -173,6 +173,9 @@ test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromi
       const viewport = page.viewportSize();
       assert.ok(box.x >= 0, `${name} tooltip stays on screen`);
       assert.ok(box.x + box.width <= viewport.width, `${name} tooltip never bleeds off the edge`);
+      const zTip = await page.locator('.tooltip-bubble').evaluate(node => parseInt(getComputedStyle(node).zIndex, 10));
+      const zWork = await page.locator('.workspace').evaluate(node => parseInt(getComputedStyle(node).zIndex, 10));
+      assert.ok(zTip > zWork, 'tooltip paints above the workspace overlay, not underneath it');
       await page.evaluate(() => document.querySelector('#canvas-local-root').shadowRoot.querySelector('.workspace').dispatchEvent(new Event('scroll')));
       await page.waitForTimeout(500);
       assert.equal(await bubble.count(), 1, 'scroll momentum does not cancel the tooltip');
