@@ -50,7 +50,8 @@
   const routePages = {'/': 'tasks', '/dashboard': 'tasks', '/courses': 'courses', '/calendar': 'calendar', '/conversations': 'inbox'};
   const pagePaths = {tasks: '/dashboard', courses: '/courses', calendar: '/calendar', inbox: '/conversations'};
   const sourceRoute = location.pathname + location.search;
-  const currentRoutePage = () => routePages[location.pathname.replace(/\/$/, '') || '/'];
+  const readCourseRoute = input => globalThis.CanvasCourseWorkspace && globalThis.CanvasCourseRoutes?.parse(input);
+  const currentRoutePage = () => readCourseRoute(location.href) ? 'course' : routePages[location.pathname.replace(/\/$/, '') || '/'];
   // Tab-scoped and origin-scoped: choosing Original Canvas survives its page navigations.
   // Storage may be blocked by the browser; workspace controls must still work in that case.
   const modeKey = 'actually-better-canvas-mode';
@@ -88,10 +89,18 @@
       selectView(view); tabs.querySelector('[aria-selected="true"]').focus();
     }
   });
-  const syncButton = el('button', {class: 'quiet', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true);}}, 'Sync now');
+  const syncButton = el('button', {class: 'quiet', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, 'Sync now');
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
+  const courseWorkspace = globalThis.CanvasCourseWorkspace?.create({request, assignments: () => state.assignments, taskRow,
+    navigate: url => {
+      const target = new URL(url, location.origin);
+      if (readCourseRoute(target.href)) navigateCourse(target.href);
+      else {const value = routePages[target.pathname.replace(/\/$/, '') || '/']; if (value) navigate(value);}
+    },
+    original: url => {rememberMode('original'); location.assign(url);}
+  });
   const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
   const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
   navigation.append(sidebarIndicator);
@@ -156,9 +165,16 @@
     return reply;
   }
   function navigate(value, updateURL = true) {
+    if (value === 'course') {navigateCourse(location.href, false); return;}
     if (updateURL && currentRoutePage() !== value) history.pushState(null, '', pagePaths[value]);
     page = value; remoteError = ''; toggleCourses(false); render(); main.focus(); loadRemote();
     motion(page === 'tasks' ? taskPanel : pageContent, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'translateY(0)'}]);
+  }
+  function navigateCourse(url, updateURL = true) {
+    const target = readCourseRoute(url);
+    if (!target) return;
+    if (updateURL && target.path !== location.pathname + location.search + location.hash) history.pushState(null, '', target.path);
+    page = 'course'; remoteError = ''; toggleCourses(false); render(); main.focus();
   }
   window.addEventListener('popstate', () => {
     if (!opened) return;
@@ -191,6 +207,11 @@
     }
   });
   shadow.addEventListener('click', event => {if (!courseSelect.contains(event.target)) toggleCourses(false);});
+  shadow.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const anchor = event.target.closest('a');
+    if (anchor && !anchor.hasAttribute('download') && !anchor.target && readCourseRoute(anchor.href)) {event.preventDefault(); navigateCourse(anchor.href);}
+  });
   courseSelect.addEventListener('focusout', event => {if (!courseSelect.contains(event.relatedTarget)) toggleCourses(false);});
   async function loadRemote(force = false) {
     const target = page;
@@ -237,10 +258,11 @@
     return 'Coming up';
   }
   function render() {
-    main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox'}[page]);
+    main.setAttribute('aria-label', {tasks: 'Tasks', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
     for (const button of navigation.querySelectorAll('[data-page]')) {
-      button.classList.toggle('selected', button.dataset.page === page);
-      if (button.dataset.page === page) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+      const selected = button.dataset.page === (page === 'course' ? 'courses' : page);
+      button.classList.toggle('selected', selected);
+      if (selected) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
     }
     positionSidebarIndicator();
     for (const tab of tabs.querySelectorAll('[role="tab"]')) {const selected = tab.id === 'tab-' + view; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;}
@@ -254,6 +276,12 @@
     pageContent.setAttribute('aria-busy', String(remoteLoading && ['courses', 'inbox'].includes(page)));
     positionTabIndicator();
     renderCoursesFilter();
+    if (page === 'course') {
+      const route = readCourseRoute(location.href);
+      if (route) {pageContent.replaceChildren(courseWorkspace.root); courseWorkspace.show(route); courseWorkspace.repaint();}
+      return;
+    }
+    courseWorkspace?.leave();
     if (page === 'courses') {renderCatalog(); return;}
     if (page === 'inbox') {renderInbox(); return;}
     if (page === 'calendar') {renderCalendar(); return;}

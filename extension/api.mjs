@@ -54,13 +54,19 @@ export async function collect(origin, fetcher = fetch) {
 }
 
 // Supplementary workspace data is read on demand, never part of an assignment snapshot.
-export async function workspaceRead(origin, identity, action, id, fetcher = fetch) {
+export async function verifyWorkspaceIdentity(origin, identity, fetcher = fetch) {
   if (!identity) throw new Error('Sync your assignments before opening courses or inbox.');
   const options = {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)};
   const profileResponse = await fetcher(origin + '/api/v1/users/self/profile', options);
   if (!profileResponse.ok || !(profileResponse.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read your workspace.');
   const profile = await profileResponse.json();
   if (!profile.id || identity !== origin + '/' + profile.id) throw new Error('Different Canvas account detected. Your workspace was kept unchanged.');
+  return profile;
+}
+
+export async function workspaceRead(origin, identity, action, id, fetcher = fetch) {
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const options = {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)};
   if (action === 'courses') return {courses: await pages(origin, '/api/v1/courses?enrollment_type=student&enrollment_state=active&per_page=100', fetcher)};
   if (action === 'inbox') return {conversations: await pages(origin, '/api/v1/conversations?per_page=100', fetcher)};
   if (action !== 'conversation' || !/^\d+$/.test(String(id))) throw new Error('Invalid conversation request.');

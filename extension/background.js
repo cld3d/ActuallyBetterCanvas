@@ -1,4 +1,5 @@
 import {collect, workspaceRead} from './api.mjs';
+import {courseRead} from './course-api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
 
@@ -17,8 +18,8 @@ async function register(origin) {
   const ids = existing.filter(script => ['canvas-local', 'canvas-local-preload'].includes(script.id)).map(script => script.id);
   if (ids.length) await chrome.scripting.unregisterContentScripts({ids});
   await chrome.scripting.registerContentScripts([
-    {id: 'canvas-local-preload', matches: [origin + '/*'], js: ['preload.js'], runAt: 'document_start'},
-    {id: 'canvas-local', matches: [origin + '/*'], js: ['content.js'], runAt: 'document_idle'}
+    {id: 'canvas-local-preload', matches: [origin + '/*'], js: ['course-routes.js', 'preload.js'], runAt: 'document_start'},
+    {id: 'canvas-local', matches: [origin + '/*'], js: ['course-workspace.js', 'content.js'], runAt: 'document_idle'}
   ]);
 }
 
@@ -73,6 +74,11 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       return {...result, lastError};
     }
     if (message.action === 'update') return native({action: 'update', uid: message.uid, patch: message.patch});
+    if (message.action === 'course') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await courseRead(origin, state.identity, message.route)};
+    }
     if (['courses', 'inbox', 'conversation'].includes(message.action)) {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
