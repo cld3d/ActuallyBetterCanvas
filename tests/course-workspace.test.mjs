@@ -62,6 +62,7 @@ async function setup(browser, path = '/courses/34') {
         if (sid === '15') {item.id = 15; item.name = 'Homework'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '16') {item.id = 16; item.name = 'Link'; item.submission_types = ['online_url']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '17') {item.id = 17; item.name = 'Quiz work'; item.is_quiz_assignment = true; item.submission_types = ['online_quiz']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '18') {item.id = 18; item.name = 'Tool quiz'; item.is_quiz_assignment = true; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (id) result.item = item; else result.items = [item];
         if (sid === '17') result.quizId = 9;
         result.enrollments = [{grades: {current_score: 87.4}}];
@@ -416,6 +417,29 @@ test('browser tab title follows workspace navigation', {skip}, async () => {
     await page.getByRole('button', {name: 'Tasks', exact: true}).click();
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
     assert.equal(await page.title(), 'Tasks', 'leaving a course page must not keep its title');
+  } finally {await browser.close();}
+});
+
+test('tool-delivered quizzes get a quiz launch instead of a generic tool handoff', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.context().route('https://tool.test/**', route => route.fulfill({contentType: 'text/html', body: 'tool'}));
+    await page.goto('https://canvas.test/courses/34/assignments/18');
+    await page.getByRole('heading', {name: 'Tool quiz', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/courses/34/assignments/18', 'stays put when no workspace quiz matches');
+    assert.equal(await page.getByRole('link', {name: 'Open quiz', exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Launch tool in new window', exact: true}).count(), 0);
+    const [toolPage] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.getByRole('button', {name: 'Take quiz in new window', exact: true}).click()
+    ]);
+    await toolPage.waitForURL('https://tool.test/**');
+    assert.deepEqual(await page.evaluate(() => window.launches[0]), {courseId: '34', launchType: 'assessment', assessmentId: '18'});
+    await toolPage.close();
+    assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
 
