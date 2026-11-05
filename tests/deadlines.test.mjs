@@ -80,13 +80,20 @@ test('11:59 PM deadlines appear in the top strip without changing their true dea
     assert.equal(row.allDay,true);
     assert.equal(row.endOfDay,true);
     assert.equal(row.dueAt,instant);
-    assert.equal(row.taskTime,'11:59 PM');
+    assert.equal(row.taskTime,'');
+    assert.equal(row.label,'Task');
+    assert.equal(Tasks.timeLabel(task,false),'');
+    assert.equal(Tasks.dueLabel(task,'2026-11-04',new Date('2026-11-04T12:00:00-05:00'),false),'Today');
     assert.equal(Tasks.overdue(row,new Date('2026-11-04T23:58:59-05:00')),false);
     assert.equal(Tasks.overdue(row,new Date('2026-11-05T00:00:00-05:00')),true);
     assert.equal(task.allDay,undefined,'the underlying assignment must not be mutated');
   }
   const noon = Tasks.indexByDay({tasks:[timed('noon','2026-11-04T11:59:00-05:00')]})['2026-11-04'][0];
   assert.equal(noon.allDay,false,'11:59 AM is not an end-of-day deadline');
+  assert.equal(noon.taskTime,'11:59 AM');
+  assert.equal(Tasks.isEndOfDay({dueAt:'2026-11-04T23:59:00-05:00'}),true);
+  assert.equal(Tasks.isEndOfDay({dueAt:'2026-11-04T23:58:00-05:00'}),false);
+  assert.equal(Tasks.isEndOfDay({due:'2026-11-04'}),false);
 });
 
 test('installed Datebook places timed markers correctly and excludes end-of-day strip tasks', desktopOptions, () => {

@@ -13,9 +13,16 @@ function dueDay(task) {
   return date ? dateKey(date) : task.due || ""
 }
 
+function isEndOfDay(task) {
+  // Local 11:59 PM means end-of-day work: shown dateless in Datebook, while
+  // dueAt keeps the true instant for editing, syncing, and overdue status.
+  var date = dueInstant(task)
+  return !!date && date.getHours() === 23 && date.getMinutes() === 59
+}
+
 function timeLabel(task, use24h) {
   var date = dueInstant(task)
-  if (!date) return ""
+  if (!date || isEndOfDay(task)) return ""
   var hours = date.getHours(), minutes = ("0" + date.getMinutes()).slice(-2)
   return use24h ? ("0" + hours).slice(-2) + ":" + minutes : (hours % 12 || 12) + ":" + minutes + (hours < 12 ? " AM" : " PM")
 }
@@ -70,11 +77,12 @@ function indexByDay(data, color, use24h) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || task.status === "completed" || task.deleted || task.hidden) return
     // Local 11:59 PM means end-of-day work: display in the top strip only.
     // Preserve dueAt and source timestamps for editing, syncing, and overdue status.
-    var endOfDay = !!date && date.getHours() === 23 && date.getMinutes() === 59
+    var endOfDay = isEndOfDay(task)
+    var time = timeLabel(task, use24h)
     var row = Object.assign({}, task, {
       kind: "task", allDay: !date || endOfDay, deadline: !!date, endOfDay: endOfDay,
       color: /^#[0-9a-f]{6}$/i.test(task.color || "") ? task.color : color || "#9ca3af", calendarName: task.listName || "Tasks", declined: false,
-      taskTime: timeLabel(task, use24h), label: date ? "Due " + timeLabel(task, use24h) : "Task"
+      taskTime: time, label: time ? "Due " + time : "Task"
     })
     // A deadline is a point, not an invented work session. The grid supplies its visual footprint.
     if (date) { row.start = date.toISOString(); row.end = row.start }
@@ -92,4 +100,4 @@ function mergeDays(events, tasks) {
   return days
 }
 
-if (typeof module !== "undefined") module.exports = {dueInstant:dueInstant, dueDay:dueDay, timeLabel:timeLabel, overdue:overdue, compare:compare, forDay:forDay, hasDate:hasDate, dueLabel:dueLabel, indexByDay:indexByDay, mergeDays:mergeDays}
+if (typeof module !== "undefined") module.exports = {dueInstant:dueInstant, dueDay:dueDay, isEndOfDay:isEndOfDay, timeLabel:timeLabel, overdue:overdue, compare:compare, forDay:forDay, hasDate:hasDate, dueLabel:dueLabel, indexByDay:indexByDay, mergeDays:mergeDays}
