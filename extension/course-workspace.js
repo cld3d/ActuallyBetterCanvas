@@ -819,7 +819,7 @@
       root.replaceChildren(style);
       const headingTitle = courseTitle();
       if (headingTitle) document.title = headingTitle;
-      const heading = element('header', {class: 'course-heading'}, element('div', {}, link('/courses', 'All courses'), data?.course.name ? element('h1', {}, data.course.name) : null));
+      const heading = element('header', {class: 'course-heading'}, element('div', {}, data?.course.name ? element('h1', {}, data.course.name) : null));
       root.append(heading);
       if (data) {
         const nav = element('div', {class: 'course-nav', role: 'navigation', 'aria-label': 'Course navigation'});

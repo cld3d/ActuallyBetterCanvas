@@ -144,7 +144,7 @@ test('course browsing covers enabled tabs, content, local overrides, history and
       if (tab === 'Discussions') {await page.getByRole('link', {name: 'Welcome discussion', exact: true}).click(); await page.getByText('Hello class.', {exact: true}).waitFor();}
       if (tab === 'Files') {await page.getByRole('link', {name: 'Reading.pdf', exact: true}).click(); await page.getByRole('link', {name: 'Preview / download in Original Canvas', exact: true}).waitFor();}
     }
-    await page.getByRole('link', {name: 'All courses', exact: true}).click();
+    await page.getByRole('button', {name: 'Courses', exact: true}).click();
     await page.getByRole('main', {name: 'Courses', exact: true}).waitFor();
     await page.getByRole('link', {name: 'Open course', exact: true}).click();
     await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
@@ -220,7 +220,7 @@ test('course loading never shows an ID placeholder, grades read as fractions, ca
     assert.equal(layout.display, 'flex');
     assert.equal(layout.justify, 'space-between');
     assert.notEqual(layout.marginLeft, '0px', 'fraction sits at the right side of the row');
-    await page.getByRole('link', {name: 'All courses', exact: true}).click();
+    await page.getByRole('button', {name: 'Courses', exact: true}).click();
     await page.getByRole('main', {name: 'Courses', exact: true}).waitFor();
     const actions = page.locator('.course-card .actions').first();
     assert.deepEqual(await actions.locator('a,button').allTextContents(), ['Open course', 'View tasks']);
