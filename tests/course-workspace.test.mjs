@@ -150,7 +150,7 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
     await page.getByRole('button', {name: 'Courses', exact: true}).click();
     await page.getByRole('link', {name: 'Open course', exact: true}).click();
     await page.getByRole('alert').filter({hasText: 'restricted access'}).waitFor();
-    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).isVisible(), true);
+    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0, 'no per-page Original Canvas exit anywhere');
     await page.evaluate(() => {window.courseFailure = false;});
     await page.getByRole('button', {name: 'Try again', exact: true}).click();
     await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
@@ -313,7 +313,7 @@ test('assignment pages keep one Original Canvas exit, custom file picker, and su
     assert.match(await page.locator('.course-file-list').textContent(), /essay\.pdf/);
     await page.goto('https://canvas.test/courses/34/quizzes/9');
     await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
-    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 1, 'other course pages keep the header handoff');
+    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0, 'other course pages keep no header handoff either');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
