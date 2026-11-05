@@ -275,13 +275,24 @@
         return;
       }
       if (types.includes('external_tool')) {
-        section.append(element('p', {class: 'course-original-note'}, 'This work happens in a connected tool. Scores sync back to Canvas. If this is a quiz you expected to take here, find it in the Quizzes list.'));
+        section.append(element('p', {class: 'course-original-note'}, 'This work happens in a connected tool, shown below. Scores sync back to Canvas.'));
         const actions = element('div', {class: 'course-actions'});
         const openTool = element('button', {class: 'quiet primary'}, 'Open tool in new window');
         const quizList = link(path('quizzes'), 'Browse all quizzes'); quizList.className = 'quiet';
         actions.append(openTool, quizList, nativeButton(path('assignments', item.id), 'Open in Original Canvas'));
         section.append(actions);
         const setStatus = submitStatus(section);
+        setStatus('Loading tool' + '\u2026');
+        const here = route;
+        request({action: 'toolLaunch', launch: {courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}}).then(reply => {
+          if (route !== here) return;
+          setStatus('');
+          const frame = element('iframe', {src: reply.url, title: item.title + ' tool', class: 'course-quiz-frame', sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups', allow: 'fullscreen'});
+          section.append(frame);
+        }).catch(reason => {
+          if (route !== here) return;
+          setStatus('Could not load the tool here: ' + reason.message);
+        });
         openTool.addEventListener('click', () => {openTool.disabled = true; setStatus('Opening tool\u2026'); launchTool({courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}, setStatus, item.title).then(() => setStatus('')).finally(() => {openTool.disabled = false;});});
         return;
       }
