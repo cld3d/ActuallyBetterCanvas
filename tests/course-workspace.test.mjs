@@ -287,6 +287,37 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
   } finally {await browser.close();}
 });
 
+test('assignment pages keep one Original Canvas exit, custom file picker, and submit-first ordering', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.goto('https://canvas.test/courses/34/assignments/13');
+    await page.getByRole('heading', {name: 'Journal', exact: true}).waitFor();
+    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0);
+    const submitTop = await page.getByRole('heading', {name: 'Submit work', exact: true}).boundingBox();
+    const feedbackTop = await page.getByRole('heading', {name: 'Submission and feedback', exact: true}).boundingBox();
+    assert.ok(submitTop.y < feedbackTop.y, 'Submit work comes before Submission and feedback');
+    await page.goto('https://canvas.test/courses/34/assignments/14');
+    await page.getByRole('heading', {name: 'Report', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Choose files', exact: true}).isVisible(), true);
+    assert.equal(await page.getByLabel('Choose files to submit').isHidden(), true, 'OS file input stays hidden behind the custom button');
+    await page.evaluate(() => {
+      const input = document.querySelector('#canvas-local-root').shadowRoot.querySelector('input[type=file]');
+      const transfer = new DataTransfer();
+      transfer.items.add(new File(['hello'], 'essay.pdf', {type: 'application/pdf'}));
+      input.files = transfer.files;
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+    });
+    assert.match(await page.locator('.course-file-list').textContent(), /essay\.pdf/);
+    await page.goto('https://canvas.test/courses/34/quizzes/9');
+    await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
+    assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 1, 'other course pages keep the header handoff');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('instructor HTML is rebuilt safely while preserving rich text, math and course links', {skip}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
