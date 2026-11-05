@@ -164,6 +164,9 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
     await page.evaluate(() => {window.delayCourse = true;});
     await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Pages', exact: true}).click();
     await page.locator('.course-loading').waitFor();
+    assert.equal(await page.locator('.course-loading .nebula-particle').count(), 13, 'course loads show the nebula orbit');
+    assert.equal(await page.locator('.nebula-loader[aria-label="Loading course content"]').count(), 1);
+    assert.equal(await page.getByText('Loading course content').count(), 0, 'no text spinner alongside the orbit');
     assert.equal(await page.getByRole('heading', {name: 'Week one', exact: true}).count(), 0, 'old course content is not shown under a new URL');
     await page.getByRole('button', {name: 'Tasks', exact: true}).click();
     await page.evaluate(() => {window.delayCourse = false; window.finishCourse({ok: true, course: {name: 'Stale course'}, tabs: [], view: 'pages', items: []});});
@@ -205,6 +208,7 @@ test('course loading never shows an ID placeholder, grades read as fractions, ca
     await page.evaluate(() => {window.delayCourse = true;});
     await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Pages', exact: true}).click();
     await page.locator('.course-loading').waitFor();
+    assert.equal(await page.locator('.course-loading .nebula-particle').count(), 13, 'reloads show the nebula orbit too');
     assert.equal(await page.locator('.course-heading h1').count(), 0, 'no heading placeholder while loading');
     await page.evaluate(() => {window.delayCourse = false; window.finishCourse({ok: true, course: {name: 'English'}, tabs: [{id: 'home', label: 'Home', html_url: '/courses/34'}, {id: 'grades', label: 'Grades', html_url: '/courses/34/grades'}], view: 'pages', items: []});});
     await page.locator('.course-body').getByText('Nothing has been posted here yet.', {exact: true}).waitFor();
