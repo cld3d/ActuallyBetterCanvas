@@ -119,6 +119,34 @@ test('sidebar settings icon opens the extension options page', {skip: !executabl
   } finally {await browser.close();}
 });
 
+test('settings falls back to a new tab when the options API is missing', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {
+        sendMessage: async () => ({ok: true, state: {assignments: []}}),
+        getURL: path => {window.openedUrl = 'chrome-extension://fake/' + path; return window.openedUrl;}
+      }};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    const [optionsPage] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.getByRole('button', {name: 'Extension settings', exact: true}).click()
+    ]);
+    assert.equal(await page.evaluate(() => window.openedUrl), 'chrome-extension://fake/options.html', 'fallback points a new tab at the options page');
+    await optionsPage.close().catch(() => {});
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
@@ -492,7 +520,7 @@ test('announcements page lists course announcements with expandable text', {skip
           if (window.failAnnouncements) return {ok: false, error: 'Announcements unavailable'};
           if (window.emptyAnnouncements) return {ok: true, announcements: []};
           return {ok: true, announcements: [
-            {id: 1, title: 'Exam moved', message: 'The exam moves to Friday.', posted_at: '2026-11-03T12:00:00Z', context_code: 'course_34', html_url: 'https://canvas.test/courses/34/discussion_topics/1', read_state: 'unread'},
+            {id: 1, title: 'Exam moved', message: 'The exam moves to <strong>Friday</strong>.&nbsp;Bring a <em>pencil</em>! <img src=x onerror=alert(1)>', posted_at: '2026-11-03T12:00:00Z', context_code: 'course_34', html_url: 'https://canvas.test/courses/34/discussion_topics/1', read_state: 'unread'},
             {id: 2, title: 'Reading week', message: '', posted_at: null, context_code: 'course_35', html_url: 'https://canvas.test/courses/35/discussion_topics/2', read_state: 'read'}
           ]};
         }
@@ -505,17 +533,27 @@ test('announcements page lists course announcements with expandable text', {skip
     await page.getByRole('button', {name: 'Announcements', exact: true}).click();
     await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
     assert.equal(new URL(page.url()).pathname, '/announcements', 'announcements updates the browser URL');
+    await page.reload();
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
     assert.deepEqual(await page.locator('.announcement .announcement-title').allTextContents(), ['Exam moved', 'Reading week']);
     assert.equal(await page.locator('.announcement.unread').count(), 1, 'unread announcements stand out');
     assert.match(await page.locator('.announcement .meta').first().textContent(), /English/);
     assert.match(await page.locator('.announcement .meta').nth(1).textContent(), /Math/);
     assert.deepEqual(await page.evaluate(() => window.requests.find(request => request.action === 'announcements').courseIds), ['34', '35']);
     assert.equal(await page.getByText('The exam moves to Friday.', {exact: true}).count(), 0, 'bodies stay collapsed until opened');
+    await page.getByRole('button', {name: 'Tasks', exact: true}).click();
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').textContent(), '1', 'unread count shows on the sidebar tab');
+    await page.getByRole('button', {name: 'Announcements', exact: true}).click();
+    await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
     await page.getByRole('button', {name: 'Exam moved', exact: true}).click();
-    await page.getByText('The exam moves to Friday.', {exact: true}).waitFor();
+    await page.getByText('The exam moves to Friday. Bring a pencil!', {exact: true}).waitFor();
+    assert.equal(await page.getByText('<strong>', {exact: false}).count(), 0, 'announcement markup never renders as HTML');
+    assert.equal(await page.locator('#canvas-local-root img').count(), 0, 'announcement HTML cannot inject elements');
     assert.equal(await page.getByRole('link', {name: 'Open in Original Canvas', exact: true}).first().getAttribute('href'), 'https://canvas.test/courses/34/discussion_topics/1');
     await page.getByRole('button', {name: 'Exam moved', exact: true}).click();
-    assert.equal(await page.getByText('The exam moves to Friday.', {exact: true}).count(), 0, 'clicking again collapses the body');
+    assert.equal(await page.getByText('The exam moves to Friday. Bring a pencil!', {exact: true}).count(), 0, 'clicking again collapses the body');
     await page.evaluate(() => {window.emptyAnnouncements = true;});
     await page.getByRole('button', {name: 'Sync now', exact: true}).click();
     await page.getByText('No announcements.', {exact: true}).waitFor();

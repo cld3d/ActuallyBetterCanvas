@@ -45,8 +45,11 @@
     .announcement-title{background:none;border:0;padding:0;color:var(--ink);font-weight:550;font-size:16px;text-align:left;cursor:pointer}
     .announcement-title:hover{color:var(--accent)}
     .announcement.unread .announcement-title{font-weight:700}
+    .announcement.unread .announcement-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px}
     .announcement p{margin:8px 0}
     .announcement .message-body{line-height:1.7;max-width:78ch;white-space:pre-wrap}
+    nav button .nav-badge{display:inline-block;min-width:18px;text-align:center;font-size:11px;font-weight:700;background:var(--accent);color:var(--on-accent);border-radius:9px;padding:1px 5px;margin-left:6px;vertical-align:baseline}
+    .sidebar-actions{display:flex;justify-content:space-between;flex:1;min-width:0}
     .theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
     .theme-card{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);background:none;color:var(--ink);padding:12px 6px 10px;border-radius:10px;font-size:12px;font-weight:550;min-width:min(88px,22vw)}
     .theme-card[aria-selected=true]{border-color:var(--accent);background:var(--tint);color:var(--accent);font-weight:700}
@@ -133,7 +136,27 @@
   const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox' || page === 'announcements') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
   const originalButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', 'data-tip': 'Original Canvas', onclick: close}, externalIcon);
   const settingsIcon = icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
-  const settingsButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Extension settings', 'data-tip': 'Extension settings', onclick: () => {try {chrome.runtime.openOptionsPage();} catch {}}}, settingsIcon);
+  const settingsButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Extension settings', 'data-tip': 'Extension settings', onclick: () => {
+    try {
+      if (chrome.runtime.openOptionsPage) {
+        const opened = chrome.runtime.openOptionsPage();
+        if (opened && typeof opened.then === 'function') opened.catch(() => openOptionsPageFallback());
+        return;
+      }
+    } catch {}
+    openOptionsPageFallback();
+  }}, settingsIcon);
+  function openOptionsPageFallback() {
+    try {
+      const anchor = document.createElement('a');
+      anchor.href = chrome.runtime.getURL('options.html');
+      anchor.target = '_blank';
+      anchor.rel = 'noopener';
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+    } catch {}
+  }
   const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton, settingsButton);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
@@ -409,6 +432,15 @@
     courseOptions.hidden = !show; courseButton.setAttribute('aria-expanded', String(show));
     if (show) courseOptions.querySelector('[aria-selected="true"]')?.focus();
   }
+  function updateAnnouncementBadge() {
+    const button = navigation.querySelector('[data-page="announcements"]');
+    if (!button) return;
+    const count = (announcements || []).filter(item => item.read_state === 'unread').length;
+    let badge = button.querySelector('.nav-badge');
+    if (!count) {badge?.remove(); return;}
+    if (!badge) {badge = el('span', {class: 'nav-badge', 'aria-hidden': 'true'}); button.append(badge);}
+    badge.textContent = count > 99 ? '99+' : String(count);
+  }
   function renderCoursesFilter() {
     courseButton.textContent = course || 'All courses';
     courseOptions.replaceChildren(...['', ...new Set(state.assignments.map(a => a.course))].sort().map(name => {
@@ -483,6 +515,15 @@
     finally {loading = false; syncButton.disabled = false; syncButton.classList.remove('busy');}
   }
   const formatDate = value => value ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : 'No deadline';
+  // Announcement bodies are instructor HTML. Render them as plain text so no
+  // markup, entities, or active content ever reach the page.
+  function htmlToText(html) {
+    const blocked = String(html || '').replace(/<(br|p|div|li|tr|blockquote|h[1-6])[^>]*>/gi, '\n').replace(/<\/(p|div|ul|ol|li|table|tr|blockquote|h[1-6])[^>]*>/gi, '\n');
+    const stripped = blocked.replace(/<[^>]*>/g, '');
+    const decoder = document.createElement('textarea');
+    decoder.innerHTML = stripped;
+    return decoder.value.replace(/[ \t\u00a0]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  }
   function bucket(item, today = new Date()) {
     if (item.completed) return 'Completed';
     if (!item.effectiveDue) return 'No deadline';
@@ -505,6 +546,7 @@
       if (selected) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
     }
     positionSidebarIndicator();
+    updateAnnouncementBadge();
     for (const tab of tabs.querySelectorAll('[role="tab"]')) {const selected = tab.id === 'tab-' + view; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;}
     taskPanel.setAttribute('aria-labelledby', 'tab-' + view);
     for (const tab of tabs.querySelectorAll('[role="tab"]')) tab.setAttribute('aria-controls', page === 'calendar' ? 'calendar-panel' : 'task-panel');
@@ -690,7 +732,8 @@
           item.title || 'Untitled announcement'),
         el('div', {class: 'meta'}, [announcementCourse(item), item.posted_at ? formatDate(item.posted_at) : ''].filter(Boolean).join(' · ')));
       if (open) {
-        card.append(item.message ? el('p', {class: 'message-body'}, item.message) : el('p', {class: 'meta'}, 'No text.'));
+        const text = htmlToText(item.message);
+        card.append(text ? el('p', {class: 'message-body'}, text) : el('p', {class: 'meta'}, 'No text.'));
         if (item.html_url) card.append(el('p', {}, el('a', {class: 'quiet', href: item.html_url}, 'Open in Original Canvas')));
       }
       pageContent.append(card);
