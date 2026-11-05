@@ -63,8 +63,9 @@ async function setup(browser, path = '/courses/34') {
         if (sid === '16') {item.id = 16; item.name = 'Link'; item.submission_types = ['online_url']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '17') {item.id = 17; item.name = 'Quiz work'; item.is_quiz_assignment = true; item.submission_types = ['online_quiz']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '18') {item.id = 18; item.name = 'Tool quiz'; item.is_quiz_assignment = true; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '19') {item.id = 19; item.name = 'Unflagged quiz'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (id) result.item = item; else result.items = [item];
-        if (sid === '17') result.quizId = 9;
+        if (sid === '17' || sid === '19') result.quizId = 9;
         result.enrollments = [{grades: {current_score: 87.4}}];
       }
       if (kind === 'quizzes') {
@@ -439,6 +440,9 @@ test('tool-delivered quizzes get a quiz launch instead of a generic tool handoff
     await toolPage.waitForURL('https://tool.test/**');
     assert.deepEqual(await page.evaluate(() => window.launches[0]), {courseId: '34', launchType: 'assessment', assessmentId: '18'});
     await toolPage.close();
+    await page.goto('https://canvas.test/courses/34/assignments/19');
+    await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/courses/34/quizzes/9', 'unflagged quiz assignments redirect by linkage');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

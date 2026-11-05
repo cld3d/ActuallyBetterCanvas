@@ -124,6 +124,23 @@ test('unavailable quiz review still renders the quiz description', async () => {
   }
 });
 
+test('quiz linkage is matched even when Canvas omits the quiz flag', async () => {
+  const {fetcher, calls} = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['external_tool']});
+    if (url.pathname.endsWith('/quizzes')) return json([{id: 9, title: 'Linked quiz', assignment_id: 12}]);
+    return json([]);
+  });
+  const data = await read(fetcher, 'assignments', '12');
+  assert.equal(data.quizId, 9);
+  assert.ok(calls.some(url => url === '/api/v1/courses/34/quizzes?per_page=100'), 'linkage lookup runs for tool-backed assignments');
+  const plain = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['online_text_entry']});
+    return json([]);
+  });
+  assert.equal((await read(plain.fetcher, 'assignments', '12')).quizId, null, 'plain assignments skip the lookup');
+  assert.ok(!plain.calls.some(url => url.includes('/quizzes')), 'no extra fetch for plain assignments');
+});
+
 test('malformed quiz envelopes degrade to attempts and description instead of failing the page', async () => {
   const {fetcher} = fixture(url => {
     if (url.pathname === '/api/v1/courses/34') return json({id: 34, name: 'English', default_view: 'modules'});

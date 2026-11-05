@@ -239,7 +239,7 @@
       const section = element('section', {class: 'course-submit'}, element('h3', {}, 'Submit work'));
       body.append(section);
       if (item.group_category_id) section.append(element('p', {class: 'course-original-note'}, 'Group work: this submission counts for your whole group.'));
-      if (item.is_quiz_assignment && data.quizId) {
+      if (data.quizId) {
         const open = link(path('quizzes', data.quizId), 'Open quiz'); open.className = 'quiet primary';
         section.append(element('div', {class: 'course-actions'}, open, nativeButton(path('assignments', item.id), 'Open in Original Canvas')));
         return;
@@ -785,7 +785,7 @@
         if (token !== version) return;
         loading = false;
         // A quiz-linked assignment page adds nothing over the quiz page itself.
-        if (!error && data?.view === 'assignments' && data.item?.is_quiz_assignment && data.quizId) {navigate(path('quizzes', data.quizId), {replace: true}); return;}
+        if (!error && data?.view === 'assignments' && data.item && data.quizId) {navigate(path('quizzes', data.quizId), {replace: true}); return;}
         paint();
       }
     }

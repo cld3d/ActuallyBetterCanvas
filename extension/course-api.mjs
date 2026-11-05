@@ -45,8 +45,9 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
     if (id == null) return {...result, items: await list(base + '/assignments?include[]=submission&override_assignment_dates=true')};
     const item = await object(`${base}/assignments/${id}?include[]=submission&override_assignment_dates=true`, id);
     // Link quiz assignments to their workspace quiz when the pairing is visible.
+    // Match by linkage, not by flag: Canvas does not always set is_quiz_assignment.
     let quizId = null;
-    if (item.is_quiz_assignment) {
+    if (item.is_quiz_assignment || (item.submission_types || []).some(type => ['online_quiz', 'external_tool'].includes(type))) {
       try {
         const match = (await list(base + '/quizzes')).find(quiz => String(quiz.assignment_id) === String(id));
         if (match && /^\d+$/.test(String(match.id))) quizId = match.id;
