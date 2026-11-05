@@ -153,9 +153,10 @@ test('course loading never shows an ID placeholder, grades read as fractions, ca
     await page.evaluate(() => {window.delayCourse = true;});
     await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Pages', exact: true}).click();
     await page.locator('.course-loading').waitFor();
-    assert.equal(await page.locator('.course-heading h1').textContent(), 'Course', 'no course ID placeholder while loading');
+    assert.equal(await page.locator('.course-heading h1').count(), 0, 'no heading placeholder while loading');
     await page.evaluate(() => {window.delayCourse = false; window.finishCourse({ok: true, course: {name: 'English'}, tabs: [{id: 'home', label: 'Home', html_url: '/courses/34'}, {id: 'grades', label: 'Grades', html_url: '/courses/34/grades'}], view: 'pages', items: []});});
     await page.locator('.course-body').getByText('Nothing has been posted here yet.', {exact: true}).waitFor();
+    assert.equal(await page.locator('.course-heading h1').textContent(), 'English', 'real course name appears once data arrives');
     await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Grades', exact: true}).click();
     const fraction = page.locator('.course-grade-fraction');
     await fraction.waitFor();

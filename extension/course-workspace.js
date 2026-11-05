@@ -171,7 +171,7 @@
     function paint() {
       const style = element('style', {}, css);
       root.replaceChildren(style);
-      const heading = element('header', {class: 'course-heading'}, element('div', {}, link('/courses', 'All courses'), element('h1', {}, data?.course.name || 'Course')), nativeButton(route.path, 'Open this page in Original Canvas'));
+      const heading = element('header', {class: 'course-heading'}, element('div', {}, link('/courses', 'All courses'), data?.course.name ? element('h1', {}, data.course.name) : null), nativeButton(route.path, 'Open this page in Original Canvas'));
       root.append(heading);
       if (data) {
         const nav = element('div', {class: 'course-nav', role: 'navigation', 'aria-label': 'Course navigation'});
