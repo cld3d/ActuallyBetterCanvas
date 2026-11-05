@@ -26,9 +26,9 @@
     /* Tab hover feedback belongs to the label, not a filled button surface. */
     .tabs button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}.tabs button:focus-visible{background:transparent;text-decoration:underline;text-underline-offset:4px}
     /* One shared underline moves between tabs instead of remounting on each selection. */
-    .tabs{position:relative;border-bottom:0}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:0;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    .tabs{position:relative;border-bottom:0}.tabs button[aria-selected=true]:after{display:none}.tab-indicator{position:absolute;bottom:-1px;left:0;width:1px;height:2px;background:var(--accent);border-radius:1px;transform-origin:left;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     /* Sidebar selection uses one moving rule, without a filled active surface. */
-    nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:0;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+    nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:1.5px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
     /* Sidebar theme picker sits below navigation and opens upward. */
     .theme-picker{position:relative;margin-top:auto}
@@ -94,7 +94,11 @@
   function positionTabIndicator() {
     const selected = tabs.querySelector('[aria-selected="true"]');
     if (tabs.hidden || !selected || !selected.offsetWidth) return;
-    tabIndicator.style.transform = `translateX(${selected.offsetLeft + 12}px) scaleX(${Math.max(0, selected.offsetWidth - 24)})`;
+    const length = Math.max(0, selected.offsetWidth - 24);
+    tabIndicator.style.transform = `translateX(${selected.offsetLeft + 12}px) scaleX(${length})`;
+    // The scaleX stretch also magnifies the horizontal corner radius, so shrink
+    // the specified radius to keep the rendered ends a clean 1px semicircle.
+    tabIndicator.style.borderRadius = length > 0 ? `${(1 / length).toFixed(4)}px / 1px` : '0';
   }
   new ResizeObserver(positionTabIndicator).observe(tabs);
   tabs.addEventListener('keydown', event => {
@@ -216,11 +220,9 @@
     modeOptions.append(option);
   }
   for (const candidate of themeFamilies) {
-    const lightDot = el('span', {class: 'dot', title: 'Light', 'aria-hidden': 'true'});
-    lightDot.style.background = dotBackground(candidate.light);
-    const darkDot = el('span', {class: 'dot', title: 'Dark', 'aria-hidden': 'true'});
+    const darkDot = el('span', {class: 'dot', title: 'Dark variant', 'aria-hidden': 'true'});
     darkDot.style.background = dotBackground(candidate.dark);
-    const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, lightDot, darkDot);
+    const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, darkDot);
     const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); themeButton.focus();}}, dots, el('span', {}, candidate.label));
     familyButtons.set(candidate.id, option);
     familyGrid.append(option);
@@ -244,7 +246,11 @@
   function positionSidebarIndicator() {
     const selected = navigation.querySelector('[aria-current="page"]');
     if (!selected?.offsetHeight) return;
-    sidebarIndicator.style.transform = `translate(${selected.offsetLeft}px, ${selected.offsetTop + 12}px) scaleY(${Math.max(0, selected.offsetHeight - 24)})`;
+    const length = Math.max(0, selected.offsetHeight - 24);
+    sidebarIndicator.style.transform = `translate(${selected.offsetLeft}px, ${selected.offsetTop + 12}px) scaleY(${length})`;
+    // The scaleY stretch magnifies the vertical corner radius, so shrink the
+    // specified radius to keep the rendered ends a clean 1.5px semicircle.
+    sidebarIndicator.style.borderRadius = length > 0 ? `1.5px / ${(1.5 / length).toFixed(4)}px` : '0';
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
   const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, syncLabel, el('div', {}, syncButton, el('button', {class: 'quiet', onclick: close}, 'Original Canvas'))),
