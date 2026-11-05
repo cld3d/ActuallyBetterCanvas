@@ -30,6 +30,14 @@
     /* Sidebar selection uses one moving rule, without a filled active surface. */
     nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:3px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
+    /* Sidebar theme picker sits below navigation and opens upward. */
+    .theme-picker{position:relative;margin-top:auto}
+    .theme-button{width:100%;display:flex;align-items:center;gap:8px}
+    .theme-button .swatch{width:14px;height:14px;border-radius:50%;background:var(--accent);flex:none}
+    .theme-options{position:absolute;bottom:calc(100% + 8px);left:0;min-width:100%;width:max-content;max-width:min(300px,80vw);max-height:min(320px,60dvh);overflow:auto;z-index:2;border:1px solid var(--line);border-radius:10px;padding:5px;background:var(--surface);box-shadow:0 12px 32px #17241a24}
+    .theme-options button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:10px 12px;border-radius:6px;white-space:normal}
+    .theme-options button[aria-selected=true]{background:var(--tint);color:var(--accent);font-weight:650}
+    .theme-options .swatch{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid var(--line)}
     /* Keep keyboard location visible without the browser's large focus rectangles. */
     *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -104,6 +112,56 @@
   const navigation = el('nav', {'aria-label': 'Canvas navigation'}, ...[['tasks', 'Tasks'], ['courses', 'Courses'], ['calendar', 'Calendar'], ['inbox', 'Inbox']].map(([value, label]) => el('button', {'data-page': value, onclick: () => navigate(value)}, label)));
   const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
   navigation.append(sidebarIndicator);
+  const themeVars = ['--bg', '--surface', '--ink', '--muted', '--line', '--accent', '--on-accent', '--tint'];
+  const themes = [
+    {id: 'system', label: 'System'},
+    {id: 'matcha', label: 'Matcha', scheme: 'light', vars: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'}},
+    {id: 'matcha-dark', label: 'Matcha dark', scheme: 'dark', vars: {'--bg': '#171e1a', '--surface': '#1e2821', '--ink': '#e2eae4', '--muted': '#a7b9ad', '--line': '#394a3e', '--accent': '#acd1b7', '--on-accent': '#16291d', '--tint': '#2c3c31'}},
+    {id: 'ocean', label: 'Ocean', scheme: 'light', vars: {'--bg': '#edf3f5', '--surface': '#f7fafb', '--ink': '#20313a', '--muted': '#57707d', '--line': '#cfdde3', '--accent': '#2a6b8a', '--on-accent': '#f2f9fb', '--tint': '#dfebef'}},
+    {id: 'abyss', label: 'Abyss', scheme: 'dark', vars: {'--bg': '#0f1720', '--surface': '#16222c', '--ink': '#d9e7ee', '--muted': '#8fa6b3', '--line': '#2b3e49', '--accent': '#82c7de', '--on-accent': '#0c1a21', '--tint': '#1e303b'}},
+    {id: 'plum', label: 'Plum', scheme: 'light', vars: {'--bg': '#f5f1f4', '--surface': '#faf7f9', '--ink': '#32262e', '--muted': '#77636f', '--line': '#e0d2da', '--accent': '#8e4470', '--on-accent': '#fdf7fa', '--tint': '#efe0e8'}},
+    {id: 'fig', label: 'Fig', scheme: 'dark', vars: {'--bg': '#1c141a', '--surface': '#251c23', '--ink': '#eadde5', '--muted': '#b49aa6', '--line': '#453543', '--accent': '#d99ab9', '--on-accent': '#221419', '--tint': '#372731'}},
+    {id: 'dune', label: 'Dune', scheme: 'light', vars: {'--bg': '#f5f1e8', '--surface': '#faf7ef', '--ink': '#33302a', '--muted': '#7c7362', '--line': '#e2d8c2', '--accent': '#8a5f16', '--on-accent': '#fdf9ee', '--tint': '#eee0c3'}},
+    {id: 'lavender', label: 'Lavender', scheme: 'light', vars: {'--bg': '#f0eff6', '--surface': '#f6f5fb', '--ink': '#2a2936', '--muted': '#6e6c80', '--line': '#d8d5e5', '--accent': '#5a53a6', '--on-accent': '#f4f3fb', '--tint': '#e2e0f1'}}
+  ];
+  const themeSwatch = el('span', {class: 'swatch', 'aria-hidden': 'true'});
+  const themeButton = el('button', {class: 'quiet theme-button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Color theme', onclick: () => toggleThemePicker()}, themeSwatch, el('span', {}, 'System'));
+  const themeOptions = el('div', {class: 'theme-options', role: 'listbox', 'aria-label': 'Color theme', hidden: ''});
+  const themePicker = el('div', {class: 'theme-picker'}, themeButton, themeOptions);
+  function themeLabel() {return themeButton.querySelector('span:last-child');}
+  function applyTheme(id, persist = true) {
+    const theme = themes.find(candidate => candidate.id === id) || themes[0];
+    for (const key of themeVars) host.style.removeProperty(key);
+    host.style.removeProperty('color-scheme');
+    if (theme.vars) for (const [key, value] of Object.entries(theme.vars)) host.style.setProperty(key, value);
+    if (theme.scheme) host.style.setProperty('color-scheme', theme.scheme);
+    themeLabel().textContent = theme.label;
+    if (theme.vars) themeSwatch.style.background = theme.vars['--accent'];
+    else themeSwatch.style.removeProperty('background');
+    for (const [index, candidate] of themes.entries()) {
+      const option = themeOptions.children[index];
+      if (option) option.setAttribute('aria-selected', String(candidate.id === theme.id));
+    }
+    themeButton.setAttribute('aria-label', 'Color theme: ' + theme.label);
+    if (persist) {try {localStorage.setItem('canvas-local-theme', theme.id);} catch {}}
+  }
+  function toggleThemePicker(show = themeOptions.hidden) {
+    themeOptions.hidden = !show; themeButton.setAttribute('aria-expanded', String(show));
+    if (show) themeOptions.querySelector('[aria-selected="true"]')?.focus();
+  }
+  for (const candidate of themes) {
+    const dot = el('span', {class: 'swatch', 'aria-hidden': 'true'});
+    dot.style.background = candidate.vars ? candidate.vars['--accent'] : 'linear-gradient(135deg, var(--accent) 50%, var(--surface) 50%)';
+    const option = el('button', {role: 'option', 'aria-selected': 'false', onclick: () => {applyTheme(candidate.id); toggleThemePicker(false); themeButton.focus();}}, dot, candidate.label);
+    themeOptions.append(option);
+  }
+  function loadTheme() {
+    try {
+      const saved = localStorage.getItem('canvas-local-theme');
+      if (themes.some(candidate => candidate.id === saved)) return saved;
+    } catch {}
+    return 'system';
+  }
   function positionSidebarIndicator() {
     const selected = navigation.querySelector('[aria-current="page"]');
     if (!selected?.offsetHeight) return;
@@ -117,9 +175,10 @@
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault(); navigate('tasks');
     }},
-      el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation),
+      el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation, themePicker),
     main);
   shadow.append(launcher, workspace);
+  applyTheme(loadTheme(), false);
   let inertElements = [];
   let priorOverflow = '', priorTitle = '';
   function close(remember = true) {
@@ -213,6 +272,7 @@
     }
   });
   shadow.addEventListener('click', event => {if (!courseSelect.contains(event.target)) toggleCourses(false);});
+  shadow.addEventListener('click', event => {if (!themePicker.contains(event.target)) toggleThemePicker(false);});
   shadow.addEventListener('click', event => {
     if (event.defaultPrevented || event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     const anchor = event.target.closest('a');
@@ -478,7 +538,10 @@
   // Local cache refresh, not a network poll. Background alarms own Canvas fetching.
   setInterval(() => {if (opened && !document.hidden && ['tasks', 'calendar'].includes(page) && !pending.size && courseOptions.hidden && !shadow.querySelector('dialog')) refresh();}, 30000);
   shadow.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {event.preventDefault(); close(false);}
+    if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {
+      if (!themeOptions.hidden) {event.preventDefault(); event.stopPropagation(); toggleThemePicker(false); themeButton.focus(); return;}
+      event.preventDefault(); close(false);
+    }
     if (event.key === 'Tab' && opened && !shadow.querySelector('dialog')) {
       const focusable = [...workspace.querySelectorAll('button,input,a,textarea,[tabindex="0"]')].filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
       const first = focusable[0], last = focusable.at(-1);

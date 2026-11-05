@@ -33,6 +33,51 @@ test('task and calendar completion tabs sit below filters without a divider', {s
   } finally {await browser.close();}
 });
 
+test('sidebar theme picker recolors the workspace and persists across reloads', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}})}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    const themeButton = page.getByRole('button', {name: 'Color theme: System', exact: true});
+    assert.equal(await themeButton.count(), 1, 'System is the default theme');
+    const inlineVar = () => page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--bg'));
+    assert.equal(await inlineVar(), '', 'System leaves host variables alone for the OS color scheme');
+    await themeButton.click();
+    assert.equal(await page.getByRole('option').count(), 9);
+    assert.equal(await page.locator('.theme-options').isVisible(), true);
+    await page.getByRole('option', {name: 'Abyss', exact: true}).click();
+    assert.equal(await page.getByRole('button', {name: 'Color theme: Abyss', exact: true}).count(), 1);
+    assert.equal(await inlineVar(), '#0f1720');
+    assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#0f1720');
+    await page.reload();
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Color theme: Abyss', exact: true}).count(), 1, 'theme survives reload');
+    assert.equal(await inlineVar(), '#0f1720');
+    await page.getByRole('button', {name: 'Color theme: Abyss', exact: true}).click();
+    await page.getByRole('option', {name: 'System', exact: true}).click();
+    assert.equal(await inlineVar(), '', 'System clears overrides');
+    await page.getByRole('button', {name: 'Color theme: System', exact: true}).click();
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.theme-options').isHidden(), true, 'Escape closes the picker, not the workspace');
+    assert.equal(await page.locator('.workspace').isVisible(), true);
+    await page.setViewportSize({width: 390, height: 844});
+    await page.getByRole('button', {name: 'Color theme: System', exact: true}).click();
+    assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, 'picker fits mobile widths');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('task sections render tomorrow and this week in chronological group order', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
