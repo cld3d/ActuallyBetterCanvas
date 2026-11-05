@@ -1,5 +1,10 @@
 # Canvas Local: agent instructions
 
+## Terminology
+
+- **ABC (Actually Better Canvas)**: the extension's custom workspace overlay — the launcher button, sidebar navigation, Tasks/Courses/Calendar/Inbox pages, and in-workspace course pages.
+- **OC (Original Canvas)**: the untouched Canvas page underneath. Choosing OC (the "Original Canvas" button, handoffs to unsupported routes, or same-tab external links) sets a per-tab mode that survives reloads until the workspace is reopened; merely closing the workspace with Escape does not set it.
+
 ## Architecture and scope
 
 This is a Chromium Manifest V3 extension, a Python-standard-library native messaging host, and adapters for one user's customized Omarchy desktop. It is not a hosted web app. No build step is needed for the extension.
