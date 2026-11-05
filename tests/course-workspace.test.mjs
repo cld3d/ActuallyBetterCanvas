@@ -297,13 +297,20 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_url', url: 'example.com/work'}], 'scheme normalization happens in the API layer, covered by unit tests');
     await page.goto('https://canvas.test/courses/34/assignments/15');
     await page.getByRole('heading', {name: 'Homework', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Load tool here', exact: true}).click();
+    const toolFrame = page.locator('iframe.course-quiz-frame');
+    await toolFrame.waitFor();
+    assert.ok((await toolFrame.getAttribute('src') || '').startsWith('https://tool.test/'), 'the tool loads inside the workspace');
     const [assessmentTool] = await Promise.all([
       page.context().waitForEvent('page'),
-      page.getByRole('button', {name: 'Launch tool in new window', exact: true}).click()
+      page.getByRole('link', {name: 'Open in new window', exact: true}).click()
     ]);
     await assessmentTool.waitForURL('https://tool.test/**');
     assert.deepEqual(await page.evaluate(() => window.launches[0]), {courseId: '34', launchType: 'assessment', assessmentId: '15'});
     await assessmentTool.close();
+    await page.getByRole('link', {name: 'Browse all quizzes', exact: true}).click();
+    await page.locator('.course-body').getByRole('heading', {name: 'Quizzes', exact: true}).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/courses/34/quizzes');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
