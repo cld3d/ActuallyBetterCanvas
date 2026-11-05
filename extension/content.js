@@ -34,10 +34,16 @@
     .theme-picker{position:relative;margin-top:auto}
     .theme-button{width:100%;display:flex;align-items:center;gap:8px}
     .theme-button .swatch{width:14px;height:14px;border-radius:50%;background:var(--accent);flex:none}
-    .theme-options{position:absolute;bottom:calc(100% + 8px);left:0;min-width:100%;width:max-content;max-width:min(300px,80vw);max-height:min(320px,60dvh);overflow:auto;z-index:2;border:1px solid var(--line);border-radius:10px;padding:5px;background:var(--surface);box-shadow:0 12px 32px #17241a24}
-    .theme-options button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;color:var(--ink);padding:10px 12px;border-radius:6px;white-space:normal}
-    .theme-options button[aria-selected=true]{background:var(--tint);color:var(--accent);font-weight:650}
-    .theme-options .swatch{width:14px;height:14px;border-radius:50%;flex:none;border:1px solid var(--line)}
+    .theme-options{position:absolute;bottom:calc(100% + 8px);left:0;min-width:230px;width:max-content;max-width:min(340px,80vw);max-height:min(380px,60dvh);overflow:auto;z-index:2;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);box-shadow:0 12px 32px #17241a24}
+    .theme-section-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:2px 4px 8px}
+    .mode-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:12px}
+    .mode-row button{border:1px solid var(--line);background:none;color:var(--ink);padding:8px 4px;border-radius:8px;font-size:13px;font-weight:550}
+    .mode-row button[aria-selected=true]{background:var(--tint);color:var(--accent);border-color:var(--accent);font-weight:700}
+    .theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .theme-card{display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--line);background:none;color:var(--ink);padding:12px 6px 10px;border-radius:10px;font-size:12px;font-weight:550}
+    .theme-card[aria-selected=true]{border-color:var(--accent);background:var(--tint);color:var(--accent);font-weight:700}
+    .theme-card .dots{display:flex;gap:8px}
+    .theme-card .dot{width:26px;height:26px;border-radius:50%;flex:none;border:1px solid var(--line);box-shadow:inset 0 0 6px #00000022}
     /* Keep keyboard location visible without the browser's large focus rectangles. */
     *:focus,*:focus-visible{outline:none}button:focus-visible{background:var(--tint);color:var(--accent)}button.primary:focus-visible,.launcher:focus-visible{background:var(--accent);color:var(--on-accent);text-decoration:underline;text-underline-offset:4px}a:focus-visible{text-decoration:underline;text-underline-offset:4px}.check:focus-visible{border-color:var(--accent);background:var(--tint)}.check:checked:focus-visible{background:var(--accent)}input:focus-visible,textarea:focus-visible{border-color:var(--accent)}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
@@ -113,54 +119,117 @@
   const sidebarIndicator = el('span', {class: 'sidebar-indicator', 'aria-hidden': 'true'});
   navigation.append(sidebarIndicator);
   const themeVars = ['--bg', '--surface', '--ink', '--muted', '--line', '--accent', '--on-accent', '--tint'];
-  const themes = [
-    {id: 'system', label: 'System'},
-    {id: 'matcha', label: 'Matcha', scheme: 'light', vars: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'}},
-    {id: 'matcha-dark', label: 'Matcha dark', scheme: 'dark', vars: {'--bg': '#171e1a', '--surface': '#1e2821', '--ink': '#e2eae4', '--muted': '#a7b9ad', '--line': '#394a3e', '--accent': '#acd1b7', '--on-accent': '#16291d', '--tint': '#2c3c31'}},
-    {id: 'ocean', label: 'Ocean', scheme: 'light', vars: {'--bg': '#edf3f5', '--surface': '#f7fafb', '--ink': '#20313a', '--muted': '#57707d', '--line': '#cfdde3', '--accent': '#2a6b8a', '--on-accent': '#f2f9fb', '--tint': '#dfebef'}},
-    {id: 'abyss', label: 'Abyss', scheme: 'dark', vars: {'--bg': '#0f1720', '--surface': '#16222c', '--ink': '#d9e7ee', '--muted': '#8fa6b3', '--line': '#2b3e49', '--accent': '#82c7de', '--on-accent': '#0c1a21', '--tint': '#1e303b'}},
-    {id: 'plum', label: 'Plum', scheme: 'light', vars: {'--bg': '#f5f1f4', '--surface': '#faf7f9', '--ink': '#32262e', '--muted': '#77636f', '--line': '#e0d2da', '--accent': '#8e4470', '--on-accent': '#fdf7fa', '--tint': '#efe0e8'}},
-    {id: 'fig', label: 'Fig', scheme: 'dark', vars: {'--bg': '#1c141a', '--surface': '#251c23', '--ink': '#eadde5', '--muted': '#b49aa6', '--line': '#453543', '--accent': '#d99ab9', '--on-accent': '#221419', '--tint': '#372731'}},
-    {id: 'dune', label: 'Dune', scheme: 'light', vars: {'--bg': '#f5f1e8', '--surface': '#faf7ef', '--ink': '#33302a', '--muted': '#7c7362', '--line': '#e2d8c2', '--accent': '#8a5f16', '--on-accent': '#fdf9ee', '--tint': '#eee0c3'}},
-    {id: 'lavender', label: 'Lavender', scheme: 'light', vars: {'--bg': '#f0eff6', '--surface': '#f6f5fb', '--ink': '#2a2936', '--muted': '#6e6c80', '--line': '#d8d5e5', '--accent': '#5a53a6', '--on-accent': '#f4f3fb', '--tint': '#e2e0f1'}}
+  // Theme families: each ships an explicit light + dark pair so the mode row
+  // (System / Light / Dark) works the same way for every theme. Matcha keeps
+  // its original light and dark values; Ocean/Rose reuse the earlier
+  // Ocean/Abyss and Plum/Fig pairs, Ember reuses the Dune light with a new
+  // dark companion, and Iris reuses the Lavender light with a new dark.
+  const themeFamilies = [
+    {id: 'matcha', label: 'Matcha',
+      light: {'--bg': '#f3f5f3', '--surface': '#fafcfb', '--ink': '#202b24', '--muted': '#526357', '--line': '#d4ded7', '--accent': '#305c42', '--on-accent': '#f5faf6', '--tint': '#e6eee8'},
+      dark: {'--bg': '#171e1a', '--surface': '#1e2821', '--ink': '#e2eae4', '--muted': '#a7b9ad', '--line': '#394a3e', '--accent': '#acd1b7', '--on-accent': '#16291d', '--tint': '#2c3c31'}},
+    {id: 'ocean', label: 'Ocean',
+      light: {'--bg': '#edf3f5', '--surface': '#f7fafb', '--ink': '#20313a', '--muted': '#57707d', '--line': '#cfdde3', '--accent': '#2a6b8a', '--on-accent': '#f2f9fb', '--tint': '#dfebef'},
+      dark: {'--bg': '#0f1720', '--surface': '#16222c', '--ink': '#d9e7ee', '--muted': '#8fa6b3', '--line': '#2b3e49', '--accent': '#82c7de', '--on-accent': '#0c1a21', '--tint': '#1e303b'}},
+    {id: 'rose', label: 'Rose',
+      light: {'--bg': '#f5f1f4', '--surface': '#faf7f9', '--ink': '#32262e', '--muted': '#77636f', '--line': '#e0d2da', '--accent': '#8e4470', '--on-accent': '#fdf7fa', '--tint': '#efe0e8'},
+      dark: {'--bg': '#1c141a', '--surface': '#251c23', '--ink': '#eadde5', '--muted': '#b49aa6', '--line': '#453543', '--accent': '#d99ab9', '--on-accent': '#221419', '--tint': '#372731'}},
+    {id: 'ember', label: 'Ember',
+      light: {'--bg': '#f5f1e8', '--surface': '#faf7ef', '--ink': '#33302a', '--muted': '#7c7362', '--line': '#e2d8c2', '--accent': '#8a5f16', '--on-accent': '#fdf9ee', '--tint': '#eee0c3'},
+      dark: {'--bg': '#1f1510', '--surface': '#2a1e16', '--ink': '#f0e3d3', '--muted': '#bfa48c', '--line': '#4e382a', '--accent': '#e0a061', '--on-accent': '#271307', '--tint': '#3d2c1f'}},
+    {id: 'iris', label: 'Iris',
+      light: {'--bg': '#f0eff6', '--surface': '#f6f5fb', '--ink': '#2a2936', '--muted': '#6e6c80', '--line': '#d8d5e5', '--accent': '#5a53a6', '--on-accent': '#f4f3fb', '--tint': '#e2e0f1'},
+      dark: {'--bg': '#17131f', '--surface': '#201a2c', '--ink': '#e7e1f2', '--muted': '#ab9dc4', '--line': '#3e3454', '--accent': '#b7a3ec', '--on-accent': '#1e1433', '--tint': '#2f2745'}},
+    {id: 'graphite', label: 'Graphite',
+      light: {'--bg': '#f3f3f4', '--surface': '#fafafa', '--ink': '#1e1e21', '--muted': '#65656c', '--line': '#d9d9de', '--accent': '#3f3f46', '--on-accent': '#fafafa', '--tint': '#e6e6ea'},
+      dark: {'--bg': '#101013', '--surface': '#18181c', '--ink': '#e9e9ec', '--muted': '#a3a3ad', '--line': '#2f2f36', '--accent': '#c9c9d2', '--on-accent': '#141417', '--tint': '#26262d'}}
   ];
+  const themeModes = [
+    {id: 'system', label: 'System'},
+    {id: 'light', label: 'Light'},
+    {id: 'dark', label: 'Dark'}
+  ];
+  // Migrate pre-split theme ids to a family + mode pair.
+  const legacyThemeMap = {
+    system: ['matcha', 'system'],
+    matcha: ['matcha', 'light'],
+    'matcha-dark': ['matcha', 'dark'],
+    ocean: ['ocean', 'light'],
+    abyss: ['ocean', 'dark'],
+    plum: ['rose', 'light'],
+    fig: ['rose', 'dark'],
+    dune: ['ember', 'light'],
+    lavender: ['iris', 'light']
+  };
+  let themeFamilyId = 'matcha', themeMode = 'system';
+  const mediaQuery = matchMedia('(prefers-color-scheme: dark)');
+  function resolvedScheme() {
+    if (themeMode === 'light') return 'light';
+    if (themeMode === 'dark') return 'dark';
+    return mediaQuery.matches ? 'dark' : 'light';
+  }
+  function themeFamily() {return themeFamilies.find(candidate => candidate.id === themeFamilyId) || themeFamilies[0];}
+  function themeModeLabel() {return themeModes.find(candidate => candidate.id === themeMode)?.label || 'System';}
   const themeSwatch = el('span', {class: 'swatch', 'aria-hidden': 'true'});
-  const themeButton = el('button', {class: 'quiet theme-button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Color theme', onclick: () => toggleThemePicker()}, themeSwatch, el('span', {}, 'System'));
+  const themeButton = el('button', {class: 'quiet theme-button', 'aria-haspopup': 'listbox', 'aria-expanded': 'false', 'aria-label': 'Color theme', onclick: () => toggleThemePicker()}, themeSwatch, el('span', {}, 'Matcha · System'));
   const themeOptions = el('div', {class: 'theme-options', role: 'listbox', 'aria-label': 'Color theme', hidden: ''});
   const themePicker = el('div', {class: 'theme-picker'}, themeButton, themeOptions);
+  const modeOptions = el('div', {class: 'mode-row', role: 'group', 'aria-label': 'Color scheme'});
+  const familyGrid = el('div', {class: 'theme-grid'});
+  themeOptions.append(el('div', {class: 'theme-section-label'}, 'Color scheme'), modeOptions, el('div', {class: 'theme-section-label'}, 'Themes'), familyGrid);
+  const modeButtons = new Map(), familyButtons = new Map();
   function themeLabel() {return themeButton.querySelector('span:last-child');}
-  function applyTheme(id, persist = true) {
-    const theme = themes.find(candidate => candidate.id === id) || themes[0];
-    for (const key of themeVars) host.style.removeProperty(key);
-    host.style.removeProperty('color-scheme');
-    if (theme.vars) for (const [key, value] of Object.entries(theme.vars)) host.style.setProperty(key, value);
-    if (theme.scheme) host.style.setProperty('color-scheme', theme.scheme);
-    themeLabel().textContent = theme.label;
-    if (theme.vars) themeSwatch.style.background = theme.vars['--accent'];
-    else themeSwatch.style.removeProperty('background');
-    for (const [index, candidate] of themes.entries()) {
-      const option = themeOptions.children[index];
-      if (option) option.setAttribute('aria-selected', String(candidate.id === theme.id));
-    }
-    themeButton.setAttribute('aria-label', 'Color theme: ' + theme.label);
-    if (persist) {try {localStorage.setItem('canvas-local-theme', theme.id);} catch {}}
+  function dotBackground(vars) {return `linear-gradient(135deg, ${vars['--accent']} 0%, ${vars['--accent']} 38%, ${vars['--surface']} 100%)`;}
+  function applyTheme(familyId = themeFamilyId, mode = themeMode, persist = true) {
+    const family = themeFamilies.find(candidate => candidate.id === familyId) || themeFamilies[0];
+    themeFamilyId = family.id;
+    themeMode = themeModes.some(candidate => candidate.id === mode) ? mode : 'system';
+    const scheme = resolvedScheme();
+    const vars = themeFamily()[scheme];
+    for (const key of themeVars) host.style.setProperty(key, vars[key]);
+    host.style.setProperty('color-scheme', scheme);
+    const label = `${themeFamily().label} · ${themeModeLabel()}`;
+    themeLabel().textContent = label;
+    themeSwatch.style.background = dotBackground(vars);
+    for (const candidate of themeModes) modeButtons.get(candidate.id)?.setAttribute('aria-selected', String(candidate.id === themeMode));
+    for (const candidate of themeFamilies) familyButtons.get(candidate.id)?.setAttribute('aria-selected', String(candidate.id === themeFamilyId));
+    themeButton.setAttribute('aria-label', 'Color theme: ' + label);
+    if (persist) {try {localStorage.setItem('canvas-local-theme', themeFamilyId); localStorage.setItem('canvas-local-mode', themeMode);} catch {}}
   }
   function toggleThemePicker(show = themeOptions.hidden) {
     themeOptions.hidden = !show; themeButton.setAttribute('aria-expanded', String(show));
-    if (show) themeOptions.querySelector('[aria-selected="true"]')?.focus();
+    if (show) (themeOptions.querySelector('[aria-selected="true"]') || themeOptions.querySelector('button'))?.focus();
   }
-  for (const candidate of themes) {
-    const dot = el('span', {class: 'swatch', 'aria-hidden': 'true'});
-    dot.style.background = candidate.vars ? candidate.vars['--accent'] : 'linear-gradient(135deg, var(--accent) 50%, var(--surface) 50%)';
-    const option = el('button', {role: 'option', 'aria-selected': 'false', onclick: () => {applyTheme(candidate.id); toggleThemePicker(false); themeButton.focus();}}, dot, candidate.label);
-    themeOptions.append(option);
+  for (const candidate of themeModes) {
+    const option = el('button', {role: 'option', 'aria-selected': 'false', 'aria-label': 'Color scheme: ' + candidate.label, onclick: () => {applyTheme(themeFamilyId, candidate.id); themeButton.focus();}}, candidate.label);
+    modeButtons.set(candidate.id, option);
+    modeOptions.append(option);
   }
+  for (const candidate of themeFamilies) {
+    const lightDot = el('span', {class: 'dot', title: 'Light', 'aria-hidden': 'true'});
+    lightDot.style.background = dotBackground(candidate.light);
+    const darkDot = el('span', {class: 'dot', title: 'Dark', 'aria-hidden': 'true'});
+    darkDot.style.background = dotBackground(candidate.dark);
+    const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, lightDot, darkDot);
+    const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); themeButton.focus();}}, dots, el('span', {}, candidate.label));
+    familyButtons.set(candidate.id, option);
+    familyGrid.append(option);
+  }
+  mediaQuery.addEventListener?.('change', () => {if (themeMode === 'system') applyTheme(themeFamilyId, themeMode);});
   function loadTheme() {
+    let family = 'matcha', mode = 'system';
     try {
-      const saved = localStorage.getItem('canvas-local-theme');
-      if (themes.some(candidate => candidate.id === saved)) return saved;
+      const savedFamily = localStorage.getItem('canvas-local-theme');
+      const savedMode = localStorage.getItem('canvas-local-mode');
+      if (savedFamily && themeFamilies.some(candidate => candidate.id === savedFamily)) {
+        family = savedFamily;
+        if (themeModes.some(candidate => candidate.id === savedMode)) mode = savedMode;
+        return [family, mode];
+      }
+      // Single-key values predate the family + mode split.
+      if (savedFamily && legacyThemeMap[savedFamily]) return legacyThemeMap[savedFamily];
     } catch {}
-    return 'system';
+    return [family, mode];
   }
   function positionSidebarIndicator() {
     const selected = navigation.querySelector('[aria-current="page"]');
@@ -178,7 +247,7 @@
       el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation, themePicker),
     main);
   shadow.append(launcher, workspace);
-  applyTheme(loadTheme(), false);
+  applyTheme(...loadTheme(), false);
   let inertElements = [];
   let priorOverflow = '', priorTitle = '';
   function close(remember = true) {
