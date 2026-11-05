@@ -145,7 +145,7 @@
       try {
         await refresh(true);
         status.textContent = `${state.assignments.length} assignments cached.` + (state.lastSync ? ' Last synced ' + new Date(state.lastSync).toLocaleString() + '.' : ' Not synced yet.');
-      } catch (error) {status.textContent = error.message;}
+      } catch (error) {status.textContent = friendlyError(error);}
       finally {event.target.disabled = false;}
     }}, 'Sync now');
     const dialog = el('dialog', {'aria-labelledby': 'connection-heading'},
@@ -164,7 +164,7 @@
         siteName.textContent = origin || 'Not connected yet';
         const reply = await request({action: 'list'});
         status.textContent = `${reply.state.assignments.length} assignments cached.` + (reply.state.lastSync ? ' Last synced ' + new Date(reply.state.lastSync).toLocaleString() + '.' : ' Not synced yet.');
-      } catch (error) {status.textContent = error.message;}
+      } catch (error) {status.textContent = friendlyError(error);}
     })();
   }
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
@@ -425,9 +425,11 @@
   // Raw browser fetch failures read as gibberish in the UI. Name the moment
   // instead: a dropped connection with saved work still on screen.
   function friendlyError(reason) {
-    const message = String(reason?.message || reason || '');
-    if (/^failed to fetch$/i.test(message.trim())) return "Couldn't reach Canvas just now. Showing saved work.";
-    return message;
+    const message = String(reason?.message || reason || '').trim();
+    if (!/failed to fetch/i.test(message)) return message;
+    const prefix = message.replace(/failed to fetch/gi, '').replace(/[:\-.\u2013\u2014\s]+$/g, '').trim();
+    if (!prefix) return "Couldn't reach Canvas just now. Showing saved work.";
+    return prefix + ": couldn't reach Canvas just now.";
   }
   function navigate(value, updateURL = true) {
     if (value === 'course') {navigateCourse(location.href, false); return;}
@@ -556,7 +558,7 @@
     appliedFeedVersion = reply.feedVersion;
     state = reply.state;
     syncButton.dataset.tip = state.lastSync ? 'Last synced ' + new Date(state.lastSync).toLocaleString() : 'Not synced yet';
-    notice.textContent = reply.warning || reply.lastError || state.syncError || '';
+    notice.textContent = friendlyError(reply.warning || reply.lastError || state.syncError || '');
     if (course && !state.assignments.some(a => a.course === course)) course = '';
     renderCoursesFilter();
     render();
@@ -668,7 +670,7 @@
         }
         const next = [...shadow.querySelectorAll('.row .check')].find(node => !node.disabled);
         if (shadow.activeElement === null || shadow.activeElement === document.body) (next || tabs.querySelector('[aria-selected="true"]')).focus();
-      } catch (error) {checkbox.checked = item.completed; notice.textContent = error.message; checkbox.disabled = false; row.classList.remove('completing');}
+      } catch (error) {checkbox.checked = item.completed; notice.textContent = friendlyError(error); checkbox.disabled = false; row.classList.remove('completing');}
       finally {pending.delete(item.uid);}
     });
     return row;
@@ -741,7 +743,7 @@
       const reply = await request({action: 'conversation', id});
       if (version !== conversationVersion) return;
       selectedConversation = reply.conversation;
-    } catch (error) {if (version === conversationVersion) remoteError = error.message;}
+    } catch (error) {if (version === conversationVersion) remoteError = friendlyError(error);}
     finally {if (version === conversationVersion) {conversationLoading = false; if (page === 'inbox') {renderInbox(); motion(pageContent.querySelector('.reader'), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}]);}}}
   }
   function renderInbox() {
@@ -816,7 +818,7 @@
       el('button', {class: 'reset', type: 'button', onclick: async e => {
         e.target.disabled = true;
         try { ingest(await request({action: 'update', uid: item.uid, patch: {completion: null}})); dialog.close(); }
-        catch (err) {error.textContent = err.message; e.target.disabled = false;}
+        catch (err) {error.textContent = friendlyError(err); e.target.disabled = false;}
       }}, 'Follow Canvas submission status'), error,
       el('div', {class: 'actions'}, save, el('button', {class: 'quiet', type: 'button', onclick: () => dialog.close()}, 'Cancel')));
     form.addEventListener('submit', async event => {
@@ -826,7 +828,7 @@
         if (follow) patch.followCanvasDue = true;
         else if (dirtyDue) patch.personalDue = due.value ? new Date(due.value).toISOString() : null;
         ingest(await request({action: 'update', uid: item.uid, patch})); dialog.close();
-      } catch (err) {error.textContent = err.message; save.disabled = false;}
+      } catch (err) {error.textContent = friendlyError(err); save.disabled = false;}
     });
     dialog.append(form); shadow.append(dialog);
     dialog.addEventListener('close', () => dialog.remove());

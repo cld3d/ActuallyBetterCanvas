@@ -45,6 +45,7 @@ async function setup(browser, path = '/courses/34') {
       if (message.action !== 'course') return {ok: true, state: structuredClone(window.testState), conversations: []};
       window.courseRequests.push(message.route);
       if (window.delayCourse) return new Promise(resolve => {window.finishCourse = resolve;});
+      if (window.courseError) return {ok: false, error: window.courseError};
       if (window.courseFailure) return {ok: false, error: 'Canvas has restricted access to this content.'};
       const {kind, id, courseId} = message.route;
       const result = {ok: true, course: {id: courseId, name: courseId === '34' ? 'English' : 'History', syllabus_body: '<p>Read the course syllabus.</p>'}, tabs, view: kind === 'home' ? 'modules' : kind};
@@ -173,6 +174,14 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
     await page.getByRole('alert').filter({hasText: 'restricted access'}).waitFor();
     assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0, 'no per-page Original Canvas exit anywhere');
     await page.evaluate(() => {window.courseFailure = false;});
+    await page.getByRole('button', {name: 'Try again', exact: true}).click();
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.evaluate(() => {window.courseError = 'Failed to fetch';});
+    await page.getByRole('button', {name: 'Courses', exact: true}).click();
+    await page.getByRole('link', {name: 'Open course', exact: true}).click();
+    await page.getByRole('alert').filter({hasText: "Couldn't reach Canvas"}).waitFor();
+    assert.equal(await page.getByRole('alert').filter({hasText: 'Failed to fetch'}).count(), 0, 'raw fetch errors never reach the UI');
+    await page.evaluate(() => {window.courseError = null;});
     await page.getByRole('button', {name: 'Try again', exact: true}).click();
     await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
     for (const colorScheme of ['light', 'dark']) {
@@ -351,6 +360,9 @@ test('assignment pages keep one Original Canvas exit, custom file picker, and su
       input.dispatchEvent(new Event('change', {bubbles: true}));
     });
     assert.match(await page.locator('.course-file-list').textContent(), /essay\.pdf/);
+    const chooseBox = await page.getByRole('button', {name: 'Choose files', exact: true}).boundingBox();
+    const submitBox = await page.getByRole('button', {name: 'Submit files', exact: true}).boundingBox();
+    assert.ok(submitBox.x - (chooseBox.x + chooseBox.width) >= 8, 'Choose files and Submit files sit apart in a button row');
     await page.goto('https://canvas.test/courses/34/quizzes/9');
     await page.getByRole('heading', {name: 'Practice quiz', exact: true}).waitFor();
     assert.equal(await page.getByRole('link', {name: 'Open this page in Original Canvas', exact: true}).count(), 0, 'other course pages keep no header handoff either');

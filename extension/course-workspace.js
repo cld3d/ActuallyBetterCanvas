@@ -72,9 +72,11 @@
     // Raw browser fetch failures read as gibberish in the UI. Name the moment
     // instead: a dropped connection with saved content still on screen.
     function friendlyError(reason) {
-      const message = String(reason?.message || reason || '');
-      if (/^failed to fetch$/i.test(message.trim())) return "Couldn't reach Canvas just now. Showing saved work.";
-      return message;
+      const message = String(reason?.message || reason || '').trim();
+      if (!/failed to fetch/i.test(message)) return message;
+      const prefix = message.replace(/failed to fetch/gi, '').replace(/[:\-.\u2013\u2014\s]+$/g, '').trim();
+      if (!prefix) return "Couldn't reach Canvas just now. Showing saved work.";
+      return prefix + ": couldn't reach Canvas just now.";
     }
     let scoreTimer = null, stopScoreFocus = null;
     function clearScorePoll() {if (scoreTimer) {clearInterval(scoreTimer); scoreTimer = null;} if (stopScoreFocus) {stopScoreFocus(); stopScoreFocus = null;}}
@@ -287,7 +289,7 @@
         else status(element('span', {}, 'Open ', link(reply.url, label || reply.name, true), ' in a new tab.'));
       }).catch(reason => {
         try {pending?.close();} catch {}
-        status('Could not launch the tool: ' + reason.message);
+        status('Could not launch the tool: ' + friendlyError(reason));
       });
     }
     function submitSection(body, item, feedback) {
@@ -319,7 +321,7 @@
           if (feedback) watchToolScore({item, frame, actions, feedback, setStatus});
         }).catch(reason => {
           if (route !== here) return;
-          setStatus('Could not load the quiz player here: ' + reason.message);
+          setStatus('Could not load the quiz player here: ' + friendlyError(reason));
         });
         return;
       }
@@ -349,7 +351,7 @@
           if (feedback) watchToolScore({item, frame, actions, feedback, setStatus});
         }).catch(reason => {
           if (route !== here) return;
-          setStatus('Could not load the tool here: ' + reason.message);
+          setStatus('Could not load the tool here: ' + friendlyError(reason));
         });
         openTool.addEventListener('click', () => {openTool.disabled = true; setStatus('Opening tool\u2026'); launchTool({courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}, setStatus, item.title).then(() => setStatus('')).finally(() => {openTool.disabled = false;});});
         return;
@@ -378,7 +380,7 @@
           const paragraphs = text.split(/\n{2,}/).map(paragraph => '<p>' + paragraph.split(/\n/).map(escapeHtml).join('<br/>') + '</p>');
           const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_text_entry', body: paragraphs.join('')}});
           await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
-        }, reason => setStatus('Could not submit: ' + reason.message)));
+        }, reason => setStatus('Could not submit: ' + friendlyError(reason))));
       }
       if (supported.includes('online_upload')) {
         section.append(element('h4', {}, 'File upload'));
@@ -393,8 +395,8 @@
         picker.addEventListener('change', () => {
           fileList.textContent = [...picker.files || []].map(file => file.name).join(', ');
         });
-        section.append(chooseButton, picker, fileList);
-        section.append(confirmButton('Submit files', async () => {
+        const uploadActions = element('div', {class: 'course-actions'});
+        const submitFiles = confirmButton('Submit files', async () => {
           const files = [...picker.files || []].slice(0, 10);
           if (!files.length) {setStatus('Choose at least one file first.'); return;}
           const ids = [];
@@ -409,7 +411,9 @@
           setStatus('Submitting…');
           const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_upload', file_ids: ids}});
           await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
-        }, reason => setStatus('Could not submit: ' + reason.message)));
+        }, reason => setStatus('Could not submit: ' + friendlyError(reason)));
+        uploadActions.append(chooseButton, submitFiles);
+        section.append(picker, fileList, uploadActions);
       }
       if (supported.includes('online_url')) {
         section.append(element('h4', {}, 'Website URL'));
@@ -420,7 +424,7 @@
           setStatus('Submitting URL…');
           const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_url', url: field.value.trim()}});
           await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
-        }, reason => setStatus('Could not submit: ' + reason.message)));
+        }, reason => setStatus('Could not submit: ' + friendlyError(reason))));
       }
       section.append(element('p', {class: 'course-original-note'}, 'Submitting here sends work to Canvas. It appears in Tasks after the next sync.'));
     }
@@ -618,7 +622,7 @@
         if (takeTimer) clearInterval(takeTimer);
         takeTimer = setInterval(tickTakeTimer, 1000);
       } catch (reason) {
-        takeNotice = 'Could not load questions: ' + reason.message;
+        takeNotice = 'Could not load questions: ' + friendlyError(reason);
       }
       paint();
     }
@@ -630,7 +634,7 @@
       } catch (reason) {
         if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.';}
         else if (/already exists|in progress|conflict|409/i.test(reason.message)) {takeNotice = 'An attempt is already in progress. Trying to resume it…'; paint(); await resumeTake(item); return;}
-        else takeNotice = 'Could not start: ' + reason.message;
+        else takeNotice = 'Could not start: ' + friendlyError(reason);
         paint();
       }
     }
@@ -640,7 +644,7 @@
         const resumed = await request({action: 'quizResume', route: {courseId: route.courseId, id: String(item.id)}});
         await openTake(item, {qsId: resumed.qsId, attempt: resumed.attempt, validationToken: resumed.validationToken, endAt: resumed.endAt});
       } catch (reason) {
-        takeNotice = reason.message; paint();
+        takeNotice = friendlyError(reason); paint();
       }
     }
     function takeSection(body, item) {
@@ -718,7 +722,7 @@
           const reply = await request({action: 'quizAnswer', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token, answers}});
           showNotice(`Answers saved (${reply.answered} recorded).`);
           paint();
-        } catch (reason) {showNotice('Could not save: ' + reason.message);}
+        } catch (reason) {showNotice('Could not save: ' + friendlyError(reason));}
         finally {save.disabled = false;}
       });
       const submit = confirmButton('Submit quiz', async () => {
@@ -726,7 +730,7 @@
         const answers = collectTakeAnswers();
         if (answers.length) {
           try {await request({action: 'quizAnswer', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token, answers}});}
-          catch (reason) {throw new Error('Could not save answers: ' + reason.message);}
+          catch (reason) {throw new Error('Could not save answers: ' + friendlyError(reason));}
         }
         const done = await request({action: 'quizComplete', take: {courseId: route.courseId, quizId: String(item.id), qsId: take.qsId, attempt: take.attempt, validationToken: take.token}});
         const finished = {done: true, score: done.score, keptScore: done.keptScore, finishedAt: done.finishedAt, itemId: String(item.id)};
@@ -735,7 +739,7 @@
         paint();
         try {await request({action: 'sync'});} catch {}
         load(true);
-      }, reason => {takeNotice = 'Could not submit: ' + reason.message; paint();});
+      }, reason => {takeNotice = 'Could not submit: ' + friendlyError(reason); paint();});
       section.append(element('div', {class: 'course-actions'}, save, submit));
       if (takeNotice) status.textContent = takeNotice;
       section.append(status);
@@ -793,7 +797,7 @@
           preview.removeAttribute('role');
         }).catch(reason => {
           if (route !== here || !preview.isConnected) return;
-          preview.textContent = 'Preview unavailable here: ' + reason.message;
+          preview.textContent = 'Preview unavailable here: ' + friendlyError(reason);
         });
       }
       const actions = element('div', {class: 'course-actions'});
