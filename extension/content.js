@@ -31,7 +31,7 @@
     nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:1.5px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
     /* Sidebar bottom: theme dot, then sync / Original Canvas / settings spread edge to edge. */
-    .sidebar-bottom{margin-top:auto;display:flex;gap:8px;align-items:center}
+    .sidebar-bottom{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
     .theme-picker{position:relative;flex:none}
     .theme-button{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .theme-button .swatch{width:14px;height:14px;border-radius:50%;background:var(--accent);flex:none}
@@ -60,7 +60,7 @@
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
     @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:11px}nav .selected:before{display:none}main{padding:22px}.row{grid-template-columns:26px minmax(0,1fr) 46px;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:300px}.reader{padding:20px}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:auto;bottom:8px;right:auto;left:5px}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
     @media(max-width:850px){.brand{display:flex;align-items:baseline;gap:8px;padding:0}.brand-prefix{margin:0}.brand-name{font-size:24px}}
-    .sidebar-actions .quiet.icon-button{padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+    .sidebar-bottom .quiet.icon-button{padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
     .icon-button.busy svg{animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
@@ -167,7 +167,6 @@
       } catch (error) {status.textContent = error.message;}
     })();
   }
-  const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton, settingsButton);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
@@ -323,7 +322,7 @@
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault(); navigate('tasks');
     }},
-      el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation, el('div', {class: 'sidebar-bottom'}, themePicker, sidebarActions)),
+      el('span', {class: 'brand-name', 'aria-hidden': 'true'}, 'canvas')), navigation, el('div', {class: 'sidebar-bottom'}, themePicker, syncButton, originalButton, settingsButton)),
     main);
   shadow.append(launcher, workspace);
   applyTheme(...loadTheme(), false);
@@ -482,6 +481,20 @@
     if (anchor && !anchor.hasAttribute('download') && !anchor.target && readCourseRoute(anchor.href)) {event.preventDefault(); navigateCourse(anchor.href);}
   });
   courseSelect.addEventListener('focusout', event => {if (!courseSelect.contains(event.relatedTarget)) toggleCourses(false);});
+  let announcementsLoading = false;
+  async function refreshAnnouncementsBadge() {
+    if (page === 'announcements' || announcements !== null || announcementsLoading) return;
+    // Best effort only: reuse known courses, never start a catalog fetch here.
+    const ids = announcementCourseIds();
+    if (!ids.length) return;
+    announcementsLoading = true;
+    try {
+      const reply = await request({action: 'announcements', courseIds: ids});
+      announcements = reply.announcements || [];
+      updateAnnouncementBadge();
+    } catch {}
+    finally {announcementsLoading = false;}
+  }
   async function loadRemote(force = false) {
     const target = page;
     if (!['courses', 'inbox', 'announcements'].includes(target) || remoteLoading || (!force && (target === 'courses' ? catalog : target === 'inbox' ? conversations : announcements))) return;
@@ -518,6 +531,7 @@
     if (course && !state.assignments.some(a => a.course === course)) course = '';
     renderCoursesFilter();
     render();
+    refreshAnnouncementsBadge();
   }
   async function refresh(force = false) {
     if (loading) return;
@@ -741,7 +755,7 @@
     for (const item of items) {
       const open = expandedAnnouncement != null && String(expandedAnnouncement) === String(item.id);
       const card = el('article', {class: 'announcement' + (item.read_state === 'unread' ? ' unread' : '')},
-        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {expandedAnnouncement = open ? null : item.id; render();}},
+        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {if (!open && item.read_state !== 'read') item.read_state = 'read'; expandedAnnouncement = open ? null : item.id; render();}},
           item.title || 'Untitled announcement'),
         el('div', {class: 'meta'}, [announcementCourse(item), item.posted_at ? formatDate(item.posted_at) : ''].filter(Boolean).join(' · ')));
       if (open) {

@@ -497,12 +497,14 @@ test('announcements page lists course announcements with expandable text', {skip
             {id: 2, title: 'Reading week', message: '', posted_at: null, context_code: 'course_35', html_url: 'https://canvas.test/courses/35/discussion_topics/2', read_state: 'read'}
           ]};
         }
-        return {ok: true, state: {assignments: []}};
+        return {ok: true, state: {assignments: [{uid: 'x1', title: 'Essay', course: 'English', courseId: '34', completed: false, completionOverride: null, dueOverride: false, effectiveDue: null, canvasDue: null, notes: '', url: 'https://canvas.test/courses/34/assignments/1'}, {uid: 'x2', title: 'Problem set', course: 'Math', courseId: '35', completed: false, completionOverride: null, dueOverride: false, effectiveDue: null, canvasDue: null, notes: '', url: 'https://canvas.test/courses/35/assignments/2'}]}};
       }}};
     });
     await page.goto('https://canvas.test/dashboard');
     await page.addScriptTag({content});
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').textContent(), '1', 'badge appears without visiting the page');
     await page.getByRole('button', {name: 'Announcements', exact: true}).click();
     await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
     assert.equal(new URL(page.url()).pathname, '/announcements', 'announcements updates the browser URL');
@@ -527,6 +529,11 @@ test('announcements page lists course announcements with expandable text', {skip
     assert.equal(await page.getByRole('link', {name: 'Open in Original Canvas', exact: true}).first().getAttribute('href'), 'https://canvas.test/courses/34/discussion_topics/1');
     await page.getByRole('button', {name: 'Exam moved', exact: true}).click();
     assert.equal(await page.getByText('The exam moves to Friday. Bring a pencil!', {exact: true}).count(), 0, 'clicking again collapses the body');
+    await page.getByRole('button', {name: 'Tasks', exact: true}).click();
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Announcements', exact: true}).locator('.nav-badge').count(), 0, 'reading clears the badge');
+    await page.getByRole('button', {name: 'Announcements', exact: true}).click();
+    await page.getByRole('main', {name: 'Announcements', exact: true}).waitFor();
     await page.evaluate(() => {window.emptyAnnouncements = true;});
     await page.getByRole('button', {name: 'Sync now', exact: true}).click();
     await page.getByText('No announcements.', {exact: true}).waitFor();
