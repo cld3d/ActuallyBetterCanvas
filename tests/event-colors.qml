@@ -30,12 +30,22 @@ ShellRoot {
       check(picker && picker.visible && picker.value === "color:9","Editable Google events expose their current provider color")
       var original = editor.collect()
       check(!original.eventColorChanged,"Opening an event must not rewrite its color")
+      picker.value = "label:pistachio" // Reproduce the real Dropdown's binding-breaking selection.
       picker.changed("label:pistachio")
       var draft = editor.collect()
       var args = EventColors.args(draft,Model.draftArgs(draft)).args
       check(args.length === 4 && args[0] === "update" && args[2] === "--event-color" && args[3] === "label:pistachio","Color-only saves must reach the Google event writer without rescheduling")
       picker.changed("")
       check(editor.collect().eventColorChanged && editor.collect().eventColor === "","Calendar default must explicitly clear a color override")
+      var original = editor.event
+      editor.event = Object.assign({},original,{colorId:"",eventLabelId:"pistachio"})
+      check(picker.value === "label:pistachio" && picker.currentLabel() === "Pistachio","Reopening a labelled event must preselect its saved label")
+      check(!editor.collect().eventColorChanged,"Reopening must not cause an automatic provider write")
+      editor.event = Object.assign({},original,{colorId:"",eventLabelId:"",eventColorKnown:false,color:"#3f51b5"})
+      check(picker.value === "color:9","Legacy cached colors must be recognized for display")
+      check(!editor.collect().eventColorChanged,"Inferring an old cache color must not write to Google")
+      editor.event = Object.assign({},original,{colorId:"",eventLabelId:"",eventColorKnown:true,color:"#3f51b5"})
+      check(picker.value === "","Known inherited colors must select Calendar default, not an override")
       editor.event = Object.assign({},editor.event,{editable:false})
       check(!picker.visible,"Read-only events must not expose color editing")
       editor.event = Object.assign({},editor.event,{editable:true})

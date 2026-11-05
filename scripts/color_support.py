@@ -1,5 +1,6 @@
 """Backed-up class-color controls and local-only task-update routing."""
 from pathlib import Path
+import hashlib
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -7,9 +8,9 @@ def plan(plugins, pending):
     result = dict(pending)
     module = plugins / 'blacksheep.calendar/CourseColors.js'
     desired = (ROOT / 'integrations/desktop/CourseColors.js').read_text()
-    if module.exists() and module.read_text() != desired:
+    if module.exists() and module.read_text() != desired and hashlib.sha256(module.read_bytes()).hexdigest() != '1d8030015c16dd4a9bb3bbd63b94f6058f783e59a7734aac4268a84718ae24b2':
         raise RuntimeError('Refusing to overwrite unfamiliar CourseColors.js')
-    if not module.exists():
+    if not module.exists() or module.read_text() != desired:
         result[module] = desired
     replacements = {
       'blacksheep.calendar/scripts/calendar-ctl': [
@@ -79,6 +80,8 @@ def plan(plugins, pending):
     for relative, edits in replacements.items():
         path = plugins / relative
         text = result.get(path, path.read_text())
+        if relative == 'blacksheep.calendar/TaskEditor.qml' and 'Canvas Local picker state v2' in text:
+            continue
         for before, after in edits:
             if after in text:
                 continue

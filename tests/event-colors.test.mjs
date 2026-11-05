@@ -12,6 +12,14 @@ test('event picker preserves current labels and supports provider palettes', () 
   const calendar={eventColors:[{value:'label:avocado',label:'Avocado',color:'#c0ca33'}]};
   assert.equal(Colors.options(calendar,null)[0].label,'Avocado');
 });
+test('current color selection distinguishes provider IDs, legacy cache colors and calendar defaults', () => {
+  assert.equal(Colors.initial({eventColor:'label:custom',eventColorHint:'#7986cb'},null),'label:custom');
+  assert.equal(Colors.initial({eventColor:'',eventColorKnown:true,eventColorHint:'#039be5'},null),'');
+  assert.equal(Colors.initial({eventColor:'',eventColorKnown:false,eventColorHint:'#039BE5'},null),'color:7');
+  assert.equal(Colors.initial({eventColor:'',eventColorKnown:false,eventColorHint:'#039be5'},{color:'#039be5'}),'');
+  const calendar={eventColors:[{value:'label:pistachio',label:'Pistachio',color:'#7cb342'}]};
+  assert.equal(Colors.initial({eventColorKnown:false,eventColorHint:'#7cb342'},calendar),'label:pistachio');
+});
 test('color-only event writes, default resets, and series flags reach calendar CLI', () => {
   const draft={uid:'Test/calendar/event',eventColorChanged:true,eventColor:'label:pistachio'};
   assert.deepEqual(Colors.args(draft,{args:[]}),{args:['update',draft.uid,'--event-color','label:pistachio']});

@@ -48,6 +48,11 @@ function forDay(data, day, today, all, now) {
   }).slice().sort(compare)
 }
 
+function hasDate(task) {
+  // Sidebar visibility only: do not remove undated work from the shared feed.
+  return /^\d{4}-\d{2}-\d{2}$/.test(dueDay(task))
+}
+
 function dueLabel(task, today, now, use24h) {
   var day = dueDay(task)
   if (!day) return "No date"
@@ -87,4 +92,4 @@ function mergeDays(events, tasks) {
   return days
 }
 
-if (typeof module !== "undefined") module.exports = {dueInstant:dueInstant, dueDay:dueDay, timeLabel:timeLabel, overdue:overdue, compare:compare, forDay:forDay, dueLabel:dueLabel, indexByDay:indexByDay, mergeDays:mergeDays}
+if (typeof module !== "undefined") module.exports = {dueInstant:dueInstant, dueDay:dueDay, timeLabel:timeLabel, overdue:overdue, compare:compare, forDay:forDay, hasDate:hasDate, dueLabel:dueLabel, indexByDay:indexByDay, mergeDays:mergeDays}

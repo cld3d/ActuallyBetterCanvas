@@ -1,5 +1,6 @@
 """Provider-synced Google event colors, with exact matched and backed-up integration."""
 from pathlib import Path
+import hashlib
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -89,13 +90,16 @@ def plan(plugins, pending):
     for relative, source in modules.items():
         target = plugins / relative
         desired = (ROOT / source).read_text()
-        if target.exists() and target.read_text() != desired:
+        accepted = {'3fa7e14ce395c6e4ff26b863a7871d6ff7da5bcf2923a53a9481f09e32001f22'} if relative.endswith('/EventColors.js') else set()
+        if target.exists() and target.read_text() != desired and hashlib.sha256(target.read_bytes()).hexdigest() not in accepted:
             raise RuntimeError('Refusing unfamiliar event-color module: ' + relative)
-        if not target.exists():
+        if not target.exists() or target.read_text() != desired:
             result[target] = desired
     for relative, edits in replacements().items():
         path = plugins / relative
         text = result.get(path, path.read_text())
+        if relative == 'blacksheep.calendar/EventEditor.qml' and 'Canvas Local picker state v2' in text:
+            continue
         for before, after in edits:
             if after in text:
                 continue

@@ -23,6 +23,8 @@ Read `README.md` and relevant tests before changing behavior. Keep production de
 - Local 11:59 PM tasks belong in Datebook's top/all-day strip **for display only**. Preserve their true timestamps and overdue behavior.
 - A failed/partial Canvas fetch must not replace the last good snapshot. Keep identity isolation and archived assignment overrides.
 - Preserve existing calendars, Google tasks, and authenticated lock-screen edit gates.
+- Datebook's sidebar hides undated tasks without deleting them from the shared feed. Task-color presets use class names, with Other for gray.
+- Both editors must preselect current colors even after previous dropdown interactions; opening an editor must not silently rewrite provider colors.
 
 ## Data and security boundaries
 

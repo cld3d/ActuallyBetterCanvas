@@ -94,6 +94,8 @@ def main():
     pending = plan_colors(PLUGINS, dict(pending))
     from event_color_support import plan as plan_event_colors
     pending = plan_event_colors(PLUGINS, dict(pending))
+    from editor_state_support import plan as plan_editor_state
+    pending = plan_editor_state(PLUGINS, dict(pending))
     backup = Path.home() / '.local/state/canvas-local/backups' / datetime.now().strftime('%Y%m%d-%H%M%S-%f')
     # Backups stay outside watched plugin directories (which trigger shell reloads).
     for path, text in pending:

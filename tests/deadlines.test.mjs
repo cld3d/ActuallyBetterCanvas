@@ -15,6 +15,19 @@ process.env.TZ = 'America/Toronto';
 const now = new Date('2026-11-04T15:00:00-05:00');
 const timed = (uid, at, extra = {}) => ({uid, title:uid, account:'Canvas Local', taskList:'assignments', listName:'Course', due:'2026-11-04', dueAt:at, status:'needsAction', ...extra});
 
+test('Datebook sidebar excludes undated tasks in Day and All modes without removing them elsewhere', () => {
+  const data = {tasks:[{title:'Undated',due:''},{title:'Bad date',due:'invalid'},
+    {title:'Today',due:'2026-11-04'},{title:'Tomorrow',due:'2026-11-05'},
+    timed('Timed','2026-11-04T15:00:00-05:00',{due:''})]};
+  for (const all of [false,true]) {
+    const rows = Tasks.forDay(data,'2026-11-04','2026-11-04',all,now).filter(Tasks.hasDate);
+    assert.equal(rows.some(t=>t.title==='Undated' || t.title==='Bad date'),false);
+    assert.equal(rows.some(t=>t.title==='Timed'),true,'an exact dueAt counts as a date');
+  }
+  assert.equal(data.tasks.length,5);
+  assert.equal(Agenda.remainingTasks(data,now,true).some(t=>t.title==='Undated'),true,'lock screen behavior is unchanged');
+});
+
 test('class colors survive indexing for both timed and end-of-day deadline markers', () => {
   for (const time of ['16:30', '23:59']) {
     const task = timed('colored', `2026-11-04T${time}:00-05:00`, {color:'#7cb342'});
