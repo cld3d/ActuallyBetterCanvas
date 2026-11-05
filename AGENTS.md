@@ -4,7 +4,7 @@
 
 This is a Chromium Manifest V3 extension, a Python-standard-library native messaging host, and adapters for one user's customized Omarchy desktop. It is not a hosted web app. No build step is needed for the extension.
 
-- `extension/`: Canvas GET-only API sync, background alarms, settings, and an isolated Shadow DOM workspace.
+- `extension/`: Canvas API sync and reads, background alarms, settings, and an isolated Shadow DOM workspace. Writes happen only through explicit student-initiated actions (assignment submissions, quiz attempts, external tool launches), validated to fixed endpoints and shapes.
 - `native/canvas_feed.py`: native-message protocol, SQLite persistence, personal overrides, atomic shared feed publication.
 - `integrations/canvas_local.py`: Datebook's adapter for reading and updating the local feed.
 - `integrations/desktop/`: maintained desktop JavaScript sources.
@@ -17,7 +17,7 @@ Read `README.md` and relevant tests before changing behavior. Keep production de
 - Canvas submission evidence can complete work. Grades, scores (even zero), attempts, and excused status must **never** complete it by themselves.
 - Manual complete/reopen choices persist across syncs until the user clears the override.
 - Personal deadlines survive Canvas changes. An explicitly empty override means no personal deadline; clearing the override means follow Canvas again.
-- Never submit/unsubmit assignments, change grades, or change Canvas deadlines from local actions.
+- Only submit through the explicit in-workspace Submit work flow, which always requires a confirm click; never auto-submit, un-submit, change grades, or change Canvas deadlines from local actions.
 - Store exact timezone-aware instants, display local times, and keep date-only Google tasks date-only.
 - Datebook uses 12-hour AM/PM display and editing. Internal write formats remain canonical.
 - Local 11:59 PM tasks belong in Datebook's top/all-day strip **for display only**. Preserve their true timestamps and overdue behavior.

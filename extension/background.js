@@ -1,5 +1,5 @@
 import {collect, workspaceRead} from './api.mjs';
-import {courseFileRead, courseRead} from './course-api.mjs';
+import {courseFileRead, courseRead, submissionUploadInit, submitAssignment, toolLaunch} from './course-api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
 
@@ -78,6 +78,21 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
       return {ok: true, ...await courseRead(origin, state.identity, message.route)};
+    }
+    if (message.action === 'submitAssignment') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await submitAssignment(origin, state.identity, message.route, message.submission)};
+    }
+    if (message.action === 'submissionUploadInit') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await submissionUploadInit(origin, state.identity, message.route, message.file)};
+    }
+    if (message.action === 'toolLaunch') {
+      if (!origin) throw new Error('Connect your Canvas website first.');
+      const {state} = await native({action: 'list'});
+      return {ok: true, ...await toolLaunch(origin, state.identity, message.launch)};
     }
     if (message.action === 'courseFile') {
       if (!origin) throw new Error('Connect your Canvas website first.');

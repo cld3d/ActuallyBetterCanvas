@@ -26,6 +26,10 @@ async function setup(browser, path = '/courses/34') {
       if (message.action === 'update') {window.testState.assignments[0].completed = message.patch.completion; return {ok: true, state: structuredClone(window.testState)};}
       if (message.action === 'courses') return {ok: true, courses: [{id: 34, name: 'English'}]};
       if (message.action === 'courseFile') return {ok: true, text: 'Hello file contents', truncated: false, contentType: 'text/plain'};
+      if (window.submissions === undefined) {window.submissions = []; window.launches = [];}
+      if (message.action === 'submitAssignment') {window.submissions.push(message.submission); return {ok: true, submission: {id: 1, assignment_id: Number(message.route.id), submitted_at: '2026-11-05T00:00:00Z', workflow_state: 'submitted'}};}
+      if (message.action === 'submissionUploadInit') return {ok: true, uploadUrl: 'https://uploads.test/put', uploadParams: {key: 'abc'}};
+      if (message.action === 'toolLaunch') {window.launches.push(message.launch); return {ok: true, url: 'https://tool.test/launch?x=1', name: 'Example tool'};}
       if (message.action !== 'course') return {ok: true, state: structuredClone(window.testState), conversations: []};
       window.courseRequests.push(message.route);
       if (window.delayCourse) return new Promise(resolve => {window.finishCourse = resolve;});
@@ -40,6 +44,11 @@ async function setup(browser, path = '/courses/34') {
       ]}, {id: 8, name: 'Week two', state: 'locked', items: []}];
       if (kind === 'assignments' || kind === 'grades') {
         const item = {id: 12, name: 'Essay', description: '<p>Write an <strong>essay</strong>.</p>', points_possible: 20, due_at: '2026-11-09T17:00:00Z', submission: {workflow_state: 'graded', grade: '0', score: 0, submission_comments: [{author_name: 'Teacher', comment: 'Please revise.'}]}, rubric: [{description: 'Clarity', points: 20, ratings: [{points: 20, description: 'Clear'}]}]};
+        const sid = String(id);
+        if (sid === '13') {item.id = 13; item.name = 'Journal'; item.submission_types = ['online_text_entry']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '14') {item.id = 14; item.name = 'Report'; item.submission_types = ['online_upload']; item.allowed_extensions = ['pdf']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '15') {item.id = 15; item.name = 'Homework'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '16') {item.id = 16; item.name = 'Link'; item.submission_types = ['online_url']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (id) result.item = item; else result.items = [item];
         result.enrollments = [{grades: {current_score: 87.4}}];
       }
@@ -224,6 +233,56 @@ test('quiz review shows own answers without leaking options, assignments use fra
     assert.equal(await page.locator('img.course-file-image').count(), 0);
     assert.equal(await page.locator('.course-file-text').count(), 0);
     assert.equal(await page.getByRole('link', {name: 'Preview / download in Original Canvas', exact: true}).count(), 1);
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('text, file and URL submissions send work to Canvas and tools launch in a new tab', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.context().route('https://tool.test/**', route => route.fulfill({contentType: 'text/html', body: 'tool'}));
+    await page.route('https://uploads.test/**', route => route.fulfill({status: 201, contentType: 'application/json', body: '{"id":77,"display_name":"essay.pdf"}'}));
+    const [moduleTool] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.getByRole('button', {name: 'Launch tool in new window'}).first().click()
+    ]);
+    await moduleTool.waitForURL('https://tool.test/**');
+    assert.deepEqual(await page.evaluate(() => window.launches), [{courseId: '34', launchType: 'module_item', moduleItemId: '4'}]);
+    await moduleTool.close();
+    await page.goto('https://canvas.test/courses/34/assignments/13');
+    await page.getByRole('heading', {name: 'Journal', exact: true}).waitFor();
+    await page.getByLabel('Submission text').fill('Hello <world> & class');
+    await page.getByRole('button', {name: 'Submit text entry', exact: true}).click();
+    assert.equal(await page.evaluate(() => window.submissions.length), 0, 'first click only arms the button');
+    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.waitForFunction(() => window.submissions.length === 1);
+    assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_text_entry', body: '<p>Hello &lt;world&gt; &amp; class</p>'}]);
+    await page.goto('https://canvas.test/courses/34/assignments/14');
+    await page.getByRole('heading', {name: 'Report', exact: true}).waitFor();
+    await page.getByLabel('Choose files to submit').setInputFiles({name: 'essay.pdf', mimeType: 'application/pdf', buffer: Buffer.from('hello')});
+    await page.getByRole('button', {name: 'Submit files', exact: true}).click();
+    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.waitForFunction(() => window.submissions.length === 1);
+    assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_upload', file_ids: ['77']}]);
+    await page.goto('https://canvas.test/courses/34/assignments/16');
+    await page.getByRole('heading', {name: 'Link', exact: true}).waitFor();
+    await page.getByLabel('Website URL to submit').fill('example.com/work');
+    await page.getByRole('button', {name: 'Submit URL', exact: true}).click();
+    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.waitForFunction(() => window.submissions.length === 1);
+    assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_url', url: 'example.com/work'}], 'scheme normalization happens in the API layer, covered by unit tests');
+    await page.goto('https://canvas.test/courses/34/assignments/15');
+    await page.getByRole('heading', {name: 'Homework', exact: true}).waitFor();
+    const [assessmentTool] = await Promise.all([
+      page.context().waitForEvent('page'),
+      page.getByRole('button', {name: 'Launch tool in new window', exact: true}).click()
+    ]);
+    await assessmentTool.waitForURL('https://tool.test/**');
+    assert.deepEqual(await page.evaluate(() => window.launches[0]), {courseId: '34', launchType: 'assessment', assessmentId: '15'});
+    await assessmentTool.close();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {courseFileRead, courseRead} from '../extension/course-api.mjs';
+import {courseFileRead, courseRead, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
 
 const origin = 'https://canvas.test', identity = origin + '/42';
 const json = (value, headers = {}) => new Response(JSON.stringify(value), {headers: {'content-type': 'application/json', ...headers}});
@@ -139,6 +139,81 @@ test('malformed quiz envelopes degrade to attempts and description instead of fa
 const fileRoute = {courseId: '34', kind: 'files', id: '5'};
 const fileURL = origin + '/courses/34/files/5/download?verifier=abc';
 const fileFetcher = (body, contentType = 'text/plain', status = 200) => fixture(() => new Response(body, {status, headers: {'content-type': contentType}})).fetcher;
+
+function writeFixture(handler) {
+  const calls = [];
+  const fetcher = async (input, options) => {
+    const url = new URL(input); calls.push({url: url.pathname + url.search, method: options.method, body: options.body});
+    assert.equal(url.origin, origin);
+    assert.equal(options.credentials, 'include');
+    assert.equal(options.redirect, 'error');
+    if (url.pathname.endsWith('/profile')) return json({id: 42});
+    return handler(url, options);
+  };
+  return {fetcher, calls};
+}
+const assignmentRoute = {courseId: '34', kind: 'assignments', id: '12'};
+
+test('text and URL submissions send only the allowed submission fields', async () => {
+  const seen = [];
+  const {fetcher} = writeFixture((url, options) => {
+    assert.equal(url.pathname, '/api/v1/courses/34/assignments/12/submissions');
+    assert.equal(options.method, 'POST');
+    assert.equal(options.headers['content-type'], 'application/json');
+    const body = JSON.parse(options.body);
+    seen.push(body);
+    return json({id: 1, assignment_id: 12, submitted_at: '2026-11-05T00:00:00Z'});
+  });
+  const text = await submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_text_entry', body: '<p>Hello</p>', user_id: 99, submitted_at: '2020-01-01'}, fetcher);
+  assert.deepEqual(seen[0], {submission: {submission_type: 'online_text_entry', body: '<p>Hello</p>'}});
+  assert.equal(text.submission.submitted_at, '2026-11-05T00:00:00Z');
+  await submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_url', url: 'example.com/work'}, fetcher);
+  assert.equal(seen[1].submission.url, 'http://example.com/work');
+  await submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_upload', file_ids: [77, '78']}, fetcher);
+  assert.deepEqual(seen[2], {submission: {submission_type: 'online_upload', file_ids: ['77', '78']}});
+  await assert.rejects(submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_text_entry', body: ''}, fetcher), /Invalid submission/);
+  await assert.rejects(submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_url', url: 'javascript:alert(1)'}, fetcher), /valid http/);
+  await assert.rejects(submitAssignment(origin, identity, assignmentRoute, {submission_type: 'external_tool'}, fetcher), /Invalid submission/);
+  await assert.rejects(submitAssignment(origin, identity, {courseId: '34', kind: 'assignments', id: '../12'}, {submission_type: 'online_text_entry', body: 'x'}, fetcher), /Invalid course request/);
+  const wrong = writeFixture(() => json({id: 1, assignment_id: 99}));
+  await assert.rejects(submitAssignment(origin, identity, assignmentRoute, {submission_type: 'online_text_entry', body: 'x'}, wrong.fetcher), /Unexpected/);
+});
+
+test('submission file uploads initialize only safe shell requests', async () => {
+  const {fetcher, calls} = writeFixture((url, options) => {
+    assert.equal(url.pathname, '/api/v1/courses/34/assignments/12/submissions/self/files');
+    assert.equal(options.method, 'POST');
+    assert.deepEqual(JSON.parse(options.body), {name: 'essay.pdf', size: 100, content_type: 'application/pdf'});
+    return json({upload_url: 'https://uploads.test/put', upload_params: {key: 'abc'}});
+  });
+  const init = await submissionUploadInit(origin, identity, assignmentRoute, {name: 'essay.pdf', size: 100, content_type: 'application/pdf'}, fetcher);
+  assert.equal(init.uploadUrl, 'https://uploads.test/put');
+  assert.deepEqual(init.uploadParams, {key: 'abc'});
+  assert.ok(calls.filter(call => !call.url.endsWith('/profile')).every(call => call.method === 'POST' && call.url.includes('/submissions/self/files')));
+  for (const file of [{name: '../evil', size: 1, content_type: 'text/plain'}, {name: '', size: 1, content_type: 'text/plain'}, {name: 'a', size: 0, content_type: 'text/plain'}, {name: 'a', size: 1, content_type: 'nope'}]) {
+    await assert.rejects(submissionUploadInit(origin, identity, assignmentRoute, file, fetcher), /Invalid file/);
+  }
+  const evil = writeFixture(() => json({upload_url: 'javascript:alert(1)', upload_params: {}}));
+  await assert.rejects(submissionUploadInit(origin, identity, assignmentRoute, {name: 'a', size: 1, content_type: 'text/plain'}, evil.fetcher), /Unexpected/);
+});
+
+test('tool launches use fixed sessionless endpoints with validated targets', async () => {
+  const {fetcher, calls} = writeFixture(url => {
+    assert.equal(url.pathname, '/api/v1/courses/34/external_tools/sessionless_launch');
+    return json({id: 7, name: 'Pearson', url: 'https://tool.test/launch?x=1'});
+  });
+  const assessment = await toolLaunch(origin, identity, {courseId: '34', launchType: 'assessment', assessmentId: '12'}, fetcher);
+  assert.equal(assessment.url, 'https://tool.test/launch?x=1');
+  assert.ok(calls.some(call => call.url.includes('launch_type=assessment&assignment_id=12')));
+  const moduleItem = await toolLaunch(origin, identity, {courseId: '34', launchType: 'module_item', moduleItemId: '7'}, fetcher);
+  assert.equal(moduleItem.name, 'Pearson');
+  assert.ok(calls.some(call => call.url.includes('launch_type=module_item&module_item_id=7')));
+  assert.ok(!calls.some(call => call.method !== undefined), 'launch lookups stay GET-only');
+  const evil = writeFixture(() => json({url: 'javascript:alert(1)'}));
+  await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'assessment', assessmentId: '12'}, evil.fetcher), /Unexpected/);
+  await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'assessment', assessmentId: '../12'}, fetcher), /Invalid tool launch/);
+  await assert.rejects(toolLaunch(origin, identity, {courseId: '34', launchType: 'take'}, fetcher), /Invalid tool launch/);
+});
 
 test('course file previews accept only the matching same-origin download URL and small text files', async () => {
   const reply = await courseFileRead(origin, identity, fileRoute, fileURL, fileFetcher('Hello file'));

@@ -58,7 +58,19 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
     }
     return {...result, items: modules};
   }
-  if (view === 'assignments') return id != null ? {...result, item: await object(`${base}/assignments/${id}?include[]=submission&override_assignment_dates=true`, id)} : {...result, items: await list(base + '/assignments?include[]=submission&override_assignment_dates=true')};
+  if (view === 'assignments') {
+    if (id == null) return {...result, items: await list(base + '/assignments?include[]=submission&override_assignment_dates=true')};
+    const item = await object(`${base}/assignments/${id}?include[]=submission&override_assignment_dates=true`, id);
+    // Link quiz assignments to their workspace quiz when the pairing is visible.
+    let quizId = null;
+    if (item.is_quiz_assignment) {
+      try {
+        const match = (await list(base + '/quizzes')).find(quiz => String(quiz.assignment_id) === String(id));
+        if (match && /^\d+$/.test(String(match.id))) quizId = match.id;
+      } catch {quizId = null;}
+    }
+    return {...result, item, quizId};
+  }
   if (view === 'quizzes') {
     if (id == null) return {...result, items: await list(base + '/quizzes')};
     const item = await object(`${base}/quizzes/${id}`, id);
@@ -90,6 +102,88 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
   if (view === 'people') return {...result, items: await list(base + '/users?include[]=enrollments')};
   if (view === 'grades') return {...result, enrollments: await list(base + '/enrollments?user_id=' + encodeURIComponent(profile.id)), items: await list(base + '/assignments?include[]=submission&override_assignment_dates=true')};
   throw new Error('Unsupported course page.');
+}
+
+// Explicit student-initiated writes. Every entry point validates fixed shapes
+// against the route; nothing page-supplied is ever used as a URL or echoed
+// into parameters beyond these allowlists.
+function checkWriteIds(courseId, id) {
+  if (!/^\d+$/.test(String(courseId)) || !/^\d+$/.test(String(id))) throw new Error('Invalid course request.');
+}
+
+function failStatus(response) {
+  throw new Error(response.status === 401 ? 'Sign in to Canvas to read this course.' : response.status === 403 ? 'Canvas has restricted access to this content.' : response.status === 404 ? 'This content is unavailable or has been removed.' : `Canvas returned ${response.status}. Try again.`);
+}
+
+async function postJSON(origin, path, body, fetcher) {
+  const payload = JSON.stringify(body);
+  if (payload.length > 500000) throw new Error('Submission is too large.');
+  const response = await fetcher(origin + path, {method: 'POST', headers: {'content-type': 'application/json'}, credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000), body: payload});
+  if (!response.ok) failStatus(response);
+  if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
+  const data = await response.json();
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Unexpected Canvas course response.');
+  return data;
+}
+
+async function getObject(origin, path, fetcher) {
+  const response = await fetcher(origin + path, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
+  if (!response.ok) failStatus(response);
+  if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
+  const data = await response.json();
+  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Unexpected Canvas course response.');
+  return data;
+}
+
+export async function submitAssignment(origin, identity, route, submission, fetcher = fetch) {
+  const {courseId, id} = route || {};
+  checkWriteIds(courseId, id);
+  const clean = {};
+  if (submission?.submission_type === 'online_text_entry' && typeof submission.body === 'string' && submission.body.length >= 1 && submission.body.length <= 200000) {
+    clean.submission_type = 'online_text_entry'; clean.body = submission.body;
+  } else if (submission?.submission_type === 'online_url' && typeof submission.url === 'string' && submission.url.length <= 2048) {
+    // Canvas assumes http when the scheme is omitted; match that documented behavior.
+    const raw = /^[a-z][a-z0-9+.-]*:/i.test(submission.url.trim()) ? submission.url.trim() : 'http://' + submission.url.trim();
+    let parsed;
+    try {parsed = new URL(raw);} catch {throw new Error('Enter a valid http or https URL.');}
+    if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Enter a valid http or https URL.');
+    clean.submission_type = 'online_url'; clean.url = parsed.href;
+  } else if (submission?.submission_type === 'online_upload' && Array.isArray(submission.file_ids) && submission.file_ids.length >= 1 && submission.file_ids.length <= 20 && submission.file_ids.every(fileId => /^\d+$/.test(String(fileId)))) {
+    clean.submission_type = 'online_upload'; clean.file_ids = submission.file_ids.map(String);
+  } else throw new Error('Invalid submission.');
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await postJSON(origin, `/api/v1/courses/${courseId}/assignments/${id}/submissions`, {submission: clean}, fetcher);
+  if (String(data.assignment_id) !== String(id)) throw new Error('Unexpected Canvas course response.');
+  return {submission: data};
+}
+
+export async function submissionUploadInit(origin, identity, route, file, fetcher = fetch) {
+  const {courseId, id} = route || {};
+  checkWriteIds(courseId, id);
+  if (!file || typeof file.name !== 'string' || file.name.length < 1 || file.name.length > 255 || /[/\\\0]/.test(file.name)) throw new Error('Invalid file name.');
+  if (!Number.isInteger(file.size) || file.size < 1 || file.size > 1073741824) throw new Error('Invalid file size.');
+  if (typeof file.content_type !== 'string' || !/^[\w.+-]+\/[\w.+-]+$/.test(file.content_type) || file.content_type.length > 128) throw new Error('Invalid file type.');
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await postJSON(origin, `/api/v1/courses/${courseId}/assignments/${id}/submissions/self/files`, {name: file.name, size: file.size, content_type: file.content_type}, fetcher);
+  let uploadURL;
+  try {uploadURL = new URL(data.upload_url);} catch {throw new Error('Unexpected Canvas course response.');}
+  if (!['https:', 'http:'].includes(uploadURL.protocol) || uploadURL.username || uploadURL.password || typeof data.upload_params !== 'object' || !data.upload_params || Array.isArray(data.upload_params) || Object.keys(data.upload_params).length > 50) throw new Error('Unexpected Canvas course response.');
+  return {uploadUrl: uploadURL.href, uploadParams: data.upload_params};
+}
+
+export async function toolLaunch(origin, identity, launch, fetcher = fetch) {
+  const {courseId, launchType, assessmentId, moduleItemId} = launch || {};
+  if (!/^\d+$/.test(String(courseId))) throw new Error('Invalid course request.');
+  let query;
+  if (launchType === 'assessment' && /^\d+$/.test(String(assessmentId))) query = `launch_type=assessment&assignment_id=${encodeURIComponent(assessmentId)}`;
+  else if (launchType === 'module_item' && /^\d+$/.test(String(moduleItemId))) query = `launch_type=module_item&module_item_id=${encodeURIComponent(moduleItemId)}`;
+  else throw new Error('Invalid tool launch request.');
+  await verifyWorkspaceIdentity(origin, identity, fetcher);
+  const data = await getObject(origin, `/api/v1/courses/${courseId}/external_tools/sessionless_launch?${query}`, fetcher);
+  let parsed;
+  try {parsed = new URL(data.url);} catch {throw new Error('Unexpected Canvas course response.');}
+  if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Unexpected Canvas course response.');
+  return {url: parsed.href, name: typeof data.name === 'string' ? data.name : 'External tool'};
 }
 
 // Fetches a small text preview of a course file. The URL must be a

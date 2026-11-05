@@ -62,7 +62,7 @@
     return container;
   }
   const css = `
-    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:8px}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:8px}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:8px;font-size:13px;line-height:1.6}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
+    .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0 0 16px;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:underline;text-underline-offset:9px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid var(--line)}.course-replies{margin-left:20px}.course-fallback{padding:24px 0}.course-loading{color:var(--muted);padding:24px 0}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:8px}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:8px}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:8px;font-size:13px;line-height:1.6}.course-submit{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-submit h4{font-size:15px;font-weight:600;margin:22px 0 10px}.course-submit-text{width:100%;min-height:160px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font:inherit;margin-bottom:12px}.course-submit-url{width:100%;max-width:46ch;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px}.course-submit input[type=file]{margin-bottom:12px}.course-status{margin:12px 0 0;font-size:13px;color:var(--muted)}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:2px solid var(--accent);outline-offset:4px}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
     @media(max-width:850px){.course-heading{flex-direction:column;gap:12px}.course-nav{gap:4px 16px}.course-heading h1{font-size:26px}.course-meta{gap:8px 16px}.course-replies{margin-left:12px}}
   `;
 
@@ -164,10 +164,157 @@
           const locked = item.content_details?.locked_for_user;
           const requirement = item.completion_requirement;
           const meta = [item.type, locked ? 'Locked' : '', requirement ? (requirement.completed ? 'Requirement met' : 'Requirement: ' + requirement.type.replaceAll('_', ' ')) : '', item.content_details?.due_at ? date(item.content_details.due_at) : ''].filter(Boolean).join(' · ');
+          if (item.type === 'ExternalTool' && !locked) {
+            const row = record(section, item.title, null, meta);
+            const launch = element('button', {class: 'quiet', type: 'button'}, 'Launch tool in new window');
+            const toolStatus = element('span', {class: 'meta', role: 'status'});
+            launch.addEventListener('click', () => {
+              launch.disabled = true; toolStatus.textContent = 'Launching…';
+              launchTool({courseId: route.courseId, launchType: 'module_item', moduleItemId: String(item.id)}, message => {toolStatus.textContent = ''; if (typeof message === 'string') toolStatus.textContent = message; else toolStatus.append(message);}, item.title).finally(() => {launch.disabled = false;});
+            });
+            row.append(launch, toolStatus);
+            continue;
+          }
           record(section, item.title, locked || item.type === 'SubHeader' ? null : itemHref(item), meta);
         }
       }
       body.append(element('p', {class: 'course-original-note'}, 'Reading here does not mark module requirements done. Use Original Canvas for view/participation requirements and mastery paths.'));
+    }
+    function confirmButton(label, action, onError) {
+      const button = element('button', {class: 'quiet primary'}, label);
+      let armed = false, busy = false;
+      button.addEventListener('click', async () => {
+        if (busy) return;
+        if (!armed) {armed = true; button.textContent = 'Click again to confirm'; return;}
+        busy = true; button.disabled = true;
+        try {await action();}
+        catch (reason) {try {onError(reason);} catch {}}
+        finally {busy = false; button.disabled = false; armed = false; button.textContent = label;}
+      });
+      return button;
+    }
+    function submitStatus(section) {
+      const status = element('p', {class: 'course-status', role: 'status'});
+      section.append(status);
+      return message => {status.replaceChildren(); if (message) status.append(message);};
+    }
+    // The second leg of a submission file upload runs here, next to the file:
+    // Canvas signs the destination, so the bytes go straight there.
+    async function uploadSubmissionFile(uploadUrl, uploadParams, file) {
+      const form = new FormData();
+      for (const [key, value] of Object.entries(uploadParams)) form.append(key, String(value));
+      form.append('file', file, file.name);
+      const post = await fetch(uploadUrl, {method: 'POST', body: form, redirect: 'follow', signal: AbortSignal.timeout(120000)});
+      if (!post.ok) throw new Error(`Upload failed (status ${post.status}). Try Original Canvas.`);
+      let data = null;
+      try {data = await post.json();} catch {}
+      if (!data || !/^\d+$/.test(String(data.id))) {
+        const location = post.headers.get('location');
+        if (!location) throw new Error('Upload did not complete. Try Original Canvas.');
+        const done = await fetch(location, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
+        if (!done.ok) throw new Error('Upload did not complete. Try Original Canvas.');
+        data = await done.json();
+      }
+      if (!data || !/^\d+$/.test(String(data.id))) throw new Error('Upload did not complete. Try Original Canvas.');
+      return String(data.id);
+    }
+    function openLaunchedTab() {
+      // Popup blockers only allow tabs opened inside the click handler, so open
+      // the tab first and navigate it once Canvas returns the launch URL.
+      try {return window.open('about:blank', '_blank');} catch {return null;}
+    }
+    function launchTool(launch, status, label) {
+      const pending = openLaunchedTab();
+      if (!pending) status('Popup blocked. Fetching a link you can click instead…');
+      return request({action: 'toolLaunch', launch}).then(reply => {
+        if (pending && !pending.closed) pending.location.href = reply.url;
+        else status(element('span', {}, 'Open ', link(reply.url, label || reply.name, true), ' in a new tab.'));
+      }).catch(reason => {
+        try {pending?.close();} catch {}
+        status('Could not launch the tool: ' + reason.message);
+      });
+    }
+    function submitSection(body, item) {
+      const types = item.submission_types || [];
+      const section = element('section', {class: 'course-submit'}, element('h3', {}, 'Submit work'));
+      body.append(section);
+      if (item.group_category_id) section.append(element('p', {class: 'course-original-note'}, 'Group work: this submission counts for your whole group.'));
+      if (item.is_quiz_assignment && data.quizId) {
+        const open = link(path('quizzes', data.quizId), 'Open quiz'); open.className = 'quiet primary';
+        section.append(element('div', {class: 'course-actions'}, open, nativeButton(path('assignments', item.id), 'Open in Original Canvas')));
+        return;
+      }
+      if (types.includes('external_tool')) {
+        section.append(element('p', {class: 'course-original-note'}, 'This work happens on an external website. Your score syncs back to Canvas.'));
+        const button = element('button', {class: 'quiet primary'}, 'Launch tool in new window');
+        const setStatus = submitStatus(section);
+        button.addEventListener('click', () => {button.disabled = true; launchTool({courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}, setStatus, item.title).finally(() => {button.disabled = false;});});
+        section.append(element('div', {class: 'course-actions'}, button, nativeButton(path('assignments', item.id), 'Open in Original Canvas')));
+        return;
+      }
+      const supported = types.filter(type => ['online_text_entry', 'online_upload', 'online_url'].includes(type));
+      if (!supported.length) {
+        section.append(element('div', {class: 'course-actions'}, nativeButton(path('assignments', item.id), 'Submit / view submission in Original Canvas')));
+        return;
+      }
+      const setStatus = submitStatus(section);
+      async function submitted(message) {
+        setStatus(message + ' Refreshing…');
+        try {await request({action: 'sync'});} catch {}
+        load(true);
+      }
+      if (supported.includes('online_text_entry')) {
+        section.append(element('h4', {}, 'Text entry'));
+        const area = element('textarea', {class: 'course-submit-text', 'aria-label': 'Submission text'});
+        if (item.submission?.body && !item.submission?.submitted_at) area.value = plainText(item.submission.body);
+        section.append(area);
+        section.append(confirmButton('Submit text entry', async () => {
+          const text = area.value.trim();
+          if (!text) {setStatus('Write something first.'); return;}
+          setStatus('Submitting text entry…');
+          const escapeHtml = line => line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          const paragraphs = text.split(/\n{2,}/).map(paragraph => '<p>' + paragraph.split(/\n/).map(escapeHtml).join('<br/>') + '</p>');
+          const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_text_entry', body: paragraphs.join('')}});
+          await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
+        }, reason => setStatus('Could not submit: ' + reason.message)));
+      }
+      if (supported.includes('online_upload')) {
+        section.append(element('h4', {}, 'File upload'));
+        const picker = element('input', {type: 'file', multiple: '', 'aria-label': 'Choose files to submit'});
+        if (item.allowed_extensions?.length) {
+          picker.setAttribute('accept', item.allowed_extensions.map(extension => '.' + extension).join(','));
+          section.append(element('p', {class: 'meta'}, 'File permitted: ' + item.allowed_extensions.join(', ').toUpperCase()));
+        }
+        section.append(picker);
+        section.append(confirmButton('Submit files', async () => {
+          const files = [...picker.files || []].slice(0, 10);
+          if (!files.length) {setStatus('Choose at least one file first.'); return;}
+          const ids = [];
+          let count = 0;
+          for (const file of files) {
+            count++;
+            setStatus(`Uploading ${count} of ${files.length}…`);
+            if (item.allowed_extensions?.length && !item.allowed_extensions.some(extension => file.name.toLowerCase().endsWith('.' + extension.toLowerCase()))) throw new Error(`${file.name} is not an accepted file type.`);
+            const init = await request({action: 'submissionUploadInit', route: {courseId: route.courseId, id: String(item.id)}, file: {name: file.name, size: file.size, content_type: file.type || 'application/octet-stream'}});
+            ids.push(await uploadSubmissionFile(init.uploadUrl, init.uploadParams, file));
+          }
+          setStatus('Submitting…');
+          const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_upload', file_ids: ids}});
+          await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
+        }, reason => setStatus('Could not submit: ' + reason.message)));
+      }
+      if (supported.includes('online_url')) {
+        section.append(element('h4', {}, 'Website URL'));
+        const field = element('input', {type: 'url', class: 'course-submit-url', placeholder: 'https://…', 'aria-label': 'Website URL to submit'});
+        section.append(field);
+        section.append(confirmButton('Submit URL', async () => {
+          if (!field.value.trim()) {setStatus('Enter a URL first.'); return;}
+          setStatus('Submitting URL…');
+          const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_url', url: field.value.trim()}});
+          await submitted('Submitted ' + date(reply.submission.submitted_at) + '.');
+        }, reason => setStatus('Could not submit: ' + reason.message)));
+      }
+      section.append(element('p', {class: 'course-original-note'}, 'Submitting here sends work to Canvas. It appears in Tasks after the next sync.'));
     }
     function assignmentDetail(body, item) {
       body.append(element('div', {class: 'course-meta'}, element('span', {}, 'Canvas deadline: ' + date(item.due_at)), element('span', {}, item.points_possible != null ? item.points_possible + ' points' : 'Not graded')));
@@ -191,8 +338,8 @@
         }
         body.append(section);
       }
-      let action = item.is_quiz_assignment || item.submission_types?.includes('external_tool') ? 'Open activity in Original Canvas' : 'Submit / view submission in Original Canvas';
-      body.append(element('div', {class: 'course-actions'}, nativeButton(path('assignments', item.id), action)), element('p', {class: 'course-original-note'}, 'Local completion and personal deadlines never submit work or change Canvas grades.'));
+      submitSection(body, item);
+      body.append(element('p', {class: 'course-original-note'}, 'The local task checkbox only tracks your own list. It never submits work or changes Canvas grades.'));
     }
     function discussionDetail(body, item) {
       if (lock(body, item)) return;
