@@ -61,10 +61,9 @@
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
     .icon-button.busy svg{animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    /* Custom tooltips replace native title popups everywhere in the workspace. */
-    [data-tip]{position:relative}
-    [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(3px);background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;max-width:200px;padding:6px 10px;border-radius:8px;box-shadow:0 6px 18px #00000030;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease-out,transform .15s ease-out,visibility 0s linear .15s;z-index:20}
-    [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);transition-delay:.35s}
+    /* One shared tooltip bubble; script clamps it inside the viewport. */
+    .tooltip-bubble{position:fixed;z-index:30;max-width:200px;padding:6px 10px;border-radius:8px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;box-shadow:0 6px 18px #00000030;pointer-events:none;opacity:0;transition:opacity .15s ease-out}
+    .tooltip-bubble.show{opacity:1}
   `;
   shadow.append(style);
   function el(tag, attrs = {}, ...children) {
@@ -133,7 +132,9 @@
   });
   const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox' || page === 'announcements') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
   const originalButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', 'data-tip': 'Original Canvas', onclick: close}, externalIcon);
-  const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton);
+  const settingsIcon = icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
+  const settingsButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Extension settings', 'data-tip': 'Extension settings', onclick: () => {try {chrome.runtime.openOptionsPage();} catch {}}}, settingsIcon);
+  const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton, settingsButton);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
@@ -286,6 +287,49 @@
     main);
   shadow.append(launcher, workspace);
   applyTheme(...loadTheme(), false);
+  const tooltipBubble = el('div', {class: 'tooltip-bubble', role: 'status', hidden: ''});
+  shadow.append(tooltipBubble);
+  let tooltipTimer = 0;
+  function placeTooltip(anchor) {
+    // Measure first, then clamp the bubble inside the viewport.
+    tooltipBubble.style.left = '0px'; tooltipBubble.style.top = '0px';
+    const width = tooltipBubble.offsetWidth, height = tooltipBubble.offsetHeight;
+    const box = anchor.getBoundingClientRect();
+    const padding = 8, gap = 10;
+    const left = Math.max(padding, Math.min(box.left + box.width / 2 - width / 2, window.innerWidth - width - padding));
+    let top = box.top - height - gap;
+    if (top < padding) top = Math.min(box.bottom + gap, window.innerHeight - height - padding);
+    tooltipBubble.style.left = Math.round(Math.max(padding, left)) + 'px';
+    tooltipBubble.style.top = Math.round(Math.max(padding, top)) + 'px';
+  }
+  function showTooltip(anchor) {
+    clearTimeout(tooltipTimer);
+    tooltipTimer = setTimeout(() => {
+      if (!anchor.isConnected) return;
+      const text = anchor.getAttribute('data-tip');
+      if (!text) return;
+      tooltipBubble.textContent = text;
+      tooltipBubble.hidden = false;
+      tooltipBubble.classList.remove('show');
+      void tooltipBubble.offsetWidth;
+      placeTooltip(anchor);
+      tooltipBubble.classList.add('show');
+    }, 350);
+  }
+  function hideTooltip() {clearTimeout(tooltipTimer); tooltipBubble.classList.remove('show'); tooltipBubble.hidden = true;}
+  shadow.addEventListener('mouseover', event => {
+    const anchor = event.target.closest?.('[data-tip]');
+    if (anchor && shadow.contains(anchor)) showTooltip(anchor);
+  });
+  shadow.addEventListener('mouseout', event => {
+    const left = event.target.closest?.('[data-tip]');
+    if (left && !left.contains(event.relatedTarget)) hideTooltip();
+  });
+  shadow.addEventListener('focusin', event => {const anchor = event.target.closest?.('[data-tip]'); if (anchor) showTooltip(anchor);});
+  shadow.addEventListener('focusout', () => hideTooltip());
+  shadow.addEventListener('click', () => hideTooltip(), true);
+  workspace.addEventListener('scroll', hideTooltip, true);
+  window.addEventListener('resize', hideTooltip);
   let inertElements = [];
   let priorOverflow = '', priorTitle = '';
   function close(remember = true) {
@@ -686,6 +730,7 @@
   setInterval(() => {if (opened && !document.hidden && ['tasks', 'calendar'].includes(page) && !pending.size && courseOptions.hidden && !shadow.querySelector('dialog')) refresh();}, 30000);
   shadow.addEventListener('keydown', event => {
     if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {
+      hideTooltip();
       if (!themeOptions.hidden) {event.preventDefault(); event.stopPropagation(); toggleThemePicker(false); themeButton.focus(); return;}
       event.preventDefault(); close(false);
     }

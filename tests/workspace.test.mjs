@@ -92,6 +92,63 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
   } finally {await browser.close();}
 });
 
+test('sidebar settings icon opens the extension options page', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.openedOptions = false;
+      window.chrome = {runtime: {
+        sendMessage: async () => ({ok: true, state: {assignments: []}}),
+        openOptionsPage: async () => {window.openedOptions = true;}
+      }};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Extension settings', exact: true}).click();
+    assert.equal(await page.evaluate(() => window.openedOptions), true, 'settings opens the extension options');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
+test('icon tooltips stay inside the viewport', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({viewport: {width: 1366, height: 900}});
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}})}};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    const bubble = page.locator('.tooltip-bubble:not([hidden])');
+    for (const [name, text] of [['Sync now', null], ['Original Canvas', 'Original Canvas'], ['Extension settings', 'Extension settings']]) {
+      await page.getByRole('button', {name, exact: true}).hover();
+      await bubble.waitFor({timeout: 5000});
+      if (text) assert.equal(await bubble.textContent(), text);
+      else assert.match(await bubble.textContent(), /.+/, 'sync tip shows live status text');
+      const box = await bubble.boundingBox();
+      const viewport = page.viewportSize();
+      assert.ok(box.x >= 0, `${name} tooltip stays on screen`);
+      assert.ok(box.x + box.width <= viewport.width, `${name} tooltip never bleeds off the edge`);
+      await page.mouse.move(viewport.width - 5, 5);
+      await page.locator('.tooltip-bubble').waitFor({state: 'hidden', timeout: 5000});
+    }
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('task sections render tomorrow and this week in chronological group order', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
