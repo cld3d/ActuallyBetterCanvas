@@ -59,7 +59,7 @@ async function setup(browser, path = '/courses/34') {
         const sid = String(id);
         if (sid === '13') {item.id = 13; item.name = 'Journal'; item.submission_types = ['online_text_entry']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '14') {item.id = 14; item.name = 'Report'; item.submission_types = ['online_upload']; item.allowed_extensions = ['pdf']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
-        if (sid === '15') {item.id = 15; item.name = 'Homework'; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
+        if (sid === '15') {item.id = 15; item.name = 'Homework'; item.submission_types = ['external_tool']; item.submission = window.toolScore || {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '16') {item.id = 16; item.name = 'Link'; item.submission_types = ['online_url']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '17') {item.id = 17; item.name = 'Quiz work'; item.is_quiz_assignment = true; item.submission_types = ['online_quiz']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
         if (sid === '18') {item.id = 18; item.name = 'Tool quiz'; item.is_quiz_assignment = true; item.submission_types = ['external_tool']; item.submission = {workflow_state: 'unsubmitted'}; delete item.rubric;}
@@ -309,6 +309,11 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     await assessmentTool.waitForURL('https://tool.test/**');
     assert.deepEqual(await page.evaluate(() => window.launches[1]), {courseId: '34', launchType: 'assessment', assessmentId: '15'});
     await assessmentTool.close();
+    assert.match(await page.locator('.course-feedback .course-grade-fraction').textContent(), /–\/20/, 'ungraded tool work shows a blank score');
+    await page.evaluate(() => {window.toolScore = {workflow_state: 'submitted', submitted_at: '2026-11-05T01:00:00Z', score: 9, grade: '9'};});
+    await page.getByRole('button', {name: 'Check for new score', exact: true}).click();
+    await page.waitForFunction(() => document.querySelector('#canvas-local-root').shadowRoot.querySelector('.course-feedback .course-grade-fraction')?.textContent.includes('9/20'));
+    assert.ok((await page.locator('iframe.course-quiz-frame').getAttribute('src') || '').startsWith('https://tool.test/'), 'the score refresh leaves the embedded tool alone');
     await page.getByRole('link', {name: 'Browse all quizzes', exact: true}).click();
     await page.locator('.course-body').getByRole('heading', {name: 'Quizzes', exact: true}).waitFor();
     assert.equal(new URL(page.url()).pathname, '/courses/34/quizzes');

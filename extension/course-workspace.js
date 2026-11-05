@@ -69,6 +69,55 @@
   function create({request, navigate, original, assignments, taskRow}) {
     const root = element('section', {class: 'course-workspace', 'aria-label': 'Course workspace'});
     let route = null, data = null, error = '', loading = false, version = 0;
+    let scoreTimer = null, stopScoreFocus = null;
+    function clearScorePoll() {if (scoreTimer) {clearInterval(scoreTimer); scoreTimer = null;} if (stopScoreFocus) {stopScoreFocus(); stopScoreFocus = null;}}
+    function submissionSignature(submission) {
+      if (!submission) return 'none';
+      return JSON.stringify({score: submission.score ?? null, grade: submission.grade ?? null, submitted_at: submission.submitted_at ?? null, workflow_state: submission.workflow_state ?? null, comments: (submission.submission_comments || []).map(comment => (comment.author_name || '') + ': ' + (comment.comment || ''))});
+    }
+    function renderFeedback(container, item, submission) {
+      container.replaceChildren(element('h3', {}, 'Submission and feedback'));
+      gradedRow(container, submission.submitted_at ? 'Submitted ' + date(submission.submitted_at) : String(submission.workflow_state || 'unsubmitted').replaceAll('_', ' '), null, `${submission.score ?? '\u2013'}/${item.points_possible ?? '\u2013'}`, submission.grade != null && String(submission.grade) !== String(submission.score ?? '') ? 'Grade: ' + submission.grade : '');
+      for (const comment of submission.submission_comments || []) container.append(element('article', {class: 'course-record'}, element('strong', {}, comment.author_name || 'Canvas user'), element('p', {}, comment.comment || '')));
+    }
+    // Tool quizzes submit inside a cross-origin frame that never signals completion,
+    // so poll the submission and patch just the feedback section in place.
+    // A full reload here would reset the tool mid-quiz.
+    function watchToolScore({item, frame, actions, feedback, setStatus}) {
+      clearScorePoll();
+      const here = route;
+      let last = submissionSignature(item.submission);
+      let busy = false;
+      async function check(manual) {
+        if (route !== here || busy) return;
+        busy = true;
+        try {
+          if (manual) setStatus('Checking for a new score' + '\u2026');
+          const reply = await request({action: 'course', route: {courseId: here.courseId, kind: 'assignments', id: String(item.id)}});
+          if (route !== here) return;
+          const fresh = reply?.item?.submission || null;
+          if (!fresh) {if (manual) setStatus('No new score yet.'); return;}
+          if (data?.item && String(data.item.id) === String(item.id)) data.item.submission = fresh;
+          if (submissionSignature(fresh) === last) {if (manual) setStatus('No new score yet.'); return;}
+          last = submissionSignature(fresh);
+          if (feedback.isConnected) renderFeedback(feedback, item, fresh);
+          setStatus('Score updated.');
+        } catch (reason) {if (manual && route === here) setStatus('Could not check the score: ' + reason.message);}
+        finally {busy = false;}
+      }
+      const refresh = element('button', {class: 'quiet', type: 'button'}, 'Check for new score');
+      refresh.addEventListener('click', () => check(true));
+      actions.append(refresh);
+      let firstLoad = true;
+      frame.addEventListener('load', () => {
+        if (firstLoad) {firstLoad = false; return;}
+        setTimeout(() => {check(false);}, 5000);
+      });
+      const onFocus = () => {check(false);};
+      window.addEventListener('focus', onFocus);
+      stopScoreFocus = () => window.removeEventListener('focus', onFocus);
+      scoreTimer = setInterval(() => {check(false);}, 20000);
+    }
     const date = value => value ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : 'No deadline';
     function link(href, label, native = false) {
       const url = webURL(href);
@@ -234,7 +283,7 @@
         status('Could not launch the tool: ' + reason.message);
       });
     }
-    function submitSection(body, item) {
+    function submitSection(body, item, feedback) {
       const types = item.submission_types || [];
       const section = element('section', {class: 'course-submit'}, element('h3', {}, 'Submit work'));
       body.append(section);
@@ -260,6 +309,7 @@
           section.append(frame);
           const popout = element('a', {href: reply.url, target: '_blank', rel: 'noopener noreferrer', class: 'quiet'}, 'Open quiz in new window');
           actions.append(popout);
+          if (feedback) watchToolScore({item, frame, actions, feedback, setStatus});
         }).catch(reason => {
           if (route !== here) return;
           setStatus('Could not load the quiz player here: ' + reason.message);
@@ -289,6 +339,7 @@
           setStatus('');
           const frame = element('iframe', {src: reply.url, title: item.title + ' tool', class: 'course-quiz-frame', sandbox: 'allow-scripts allow-same-origin allow-forms allow-popups', allow: 'fullscreen'});
           section.append(frame);
+          if (feedback) watchToolScore({item, frame, actions, feedback, setStatus});
         }).catch(reason => {
           if (route !== here) return;
           setStatus('Could not load the tool here: ' + reason.message);
@@ -372,11 +423,11 @@
       body.append(rich(item.description));
       const local = assignments().find(a => String(a.courseId) === route.courseId && String(a.url?.match(/\/assignments\/(\d+)/)?.[1]) === String(item.id));
       const submission = item.submission;
-      submitSection(body, item);
-      if (submission) {
-        body.append(element('h3', {}, 'Submission and feedback'));
-        gradedRow(body, submission.submitted_at ? 'Submitted ' + date(submission.submitted_at) : String(submission.workflow_state || 'unsubmitted').replaceAll('_', ' '), null, `${submission.score ?? '–'}/${item.points_possible ?? '–'}`, submission.grade != null && String(submission.grade) !== String(submission.score ?? '') ? 'Grade: ' + submission.grade : '');
-        for (const comment of submission.submission_comments || []) body.append(element('article', {class: 'course-record'}, element('strong', {}, comment.author_name || 'Canvas user'), element('p', {}, comment.comment || '')));
+      const feedback = submission ? element('div', {class: 'course-feedback'}) : null;
+      submitSection(body, item, feedback);
+      if (feedback) {
+        renderFeedback(feedback, item, submission);
+        body.append(feedback);
       }
       if (local) {
         body.append(element('h3', {}, 'Local task'), taskRow(local));
@@ -752,6 +803,7 @@
       return 'Course';
     }
     function paint() {
+      clearScorePoll();
       const style = element('style', {}, css);
       root.replaceChildren(style);
       const headingTitle = courseTitle();
@@ -827,9 +879,9 @@
     }
     return {
       root,
-      show(next) {if (route?.path === next.path) return; clearTake(); route = next; data = null; load();},
+      show(next) {if (route?.path === next.path) return; clearTake(); clearScorePoll(); route = next; data = null; load();},
       refresh() {if (route) load(true);},
-      leave() {++version; route = null; data = null; clearTake(); root.replaceChildren();},
+      leave() {++version; route = null; data = null; clearTake(); clearScorePoll(); root.replaceChildren();},
       repaint() {if (route) paint();},
       title: courseTitle
     };
