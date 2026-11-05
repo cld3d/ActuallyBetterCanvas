@@ -828,10 +828,10 @@
   // Local cache refresh, not a network poll. Background alarms own Canvas fetching.
   setInterval(() => {if (opened && !document.hidden && ['tasks', 'calendar'].includes(page) && !pending.size && courseOptions.hidden && !shadow.querySelector('dialog')) refresh();}, 30000);
   shadow.addEventListener('keydown', event => {
+    // Escape only dismisses open menus; it never closes the workspace itself.
     if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {
       hideTooltip();
-      if (!themeOptions.hidden) {event.preventDefault(); event.stopPropagation(); toggleThemePicker(false); themeButton.focus(); return;}
-      event.preventDefault(); close(false);
+      if (!themeOptions.hidden) {event.preventDefault(); event.stopPropagation(); toggleThemePicker(false); themeButton.focus();}
     }
     if (event.key === 'Tab' && opened && !shadow.querySelector('dialog')) {
       const focusable = [...workspace.querySelectorAll('button,input,a,textarea,[tabindex="0"]')].filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
