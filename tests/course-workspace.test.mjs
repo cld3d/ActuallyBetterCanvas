@@ -483,6 +483,15 @@ test('reload reopens the workspace after Escape, which no longer opts out', {ski
   } finally {await browser.close();}
 });
 
+test('tool launch and taking URLs open the workspace assignment page on reload', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser, '/courses/34/assignments/12/launch');
+    await page.getByRole('heading', {name: 'Essay', exact: true}).waitFor();
+    assert.equal(await page.locator('.workspace').isVisible(), true, 'launch URLs boot the workspace, not Original Canvas');
+  } finally {await browser.close();}
+});
+
 test('instructor HTML is rebuilt safely while preserving rich text, math and course links', {skip}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
