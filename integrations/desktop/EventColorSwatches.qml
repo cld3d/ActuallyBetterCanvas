@@ -89,7 +89,7 @@ Item {
               // The check glyph's ink sits high and left in its em box, so
               // geometric centering reads off-center: nudge it optically.
               anchors.verticalCenterOffset: 1
-              anchors.horizontalCenterOffset: 1
+              anchors.horizontalCenterOffset: -1
               textFormat: Text.PlainText
               text: "✓"
               visible: modelData.value === root.value
