@@ -275,29 +275,23 @@
         return;
       }
       if (types.includes('external_tool')) {
-        section.append(element('p', {class: 'course-original-note'}, 'This work happens in a connected tool. Scores sync back to Canvas. If this is a quiz you expected to take here, find it in the Quizzes list.'));
+        section.append(element('p', {class: 'course-original-note'}, 'This work happens in a connected tool, shown below. Scores sync back to Canvas. If this is a quiz you expected to take here, find it in the Quizzes list.'));
         const actions = element('div', {class: 'course-actions'});
-        const loadHere = element('button', {class: 'quiet primary'}, 'Load tool here');
-        const popout = element('a', {href: '', target: '_blank', rel: 'noopener noreferrer', class: 'quiet', hidden: ''}, 'Open in new window');
         const quizList = link(path('quizzes'), 'Browse all quizzes'); quizList.className = 'quiet';
-        actions.append(loadHere, popout, quizList, nativeButton(path('assignments', item.id), 'Open in Original Canvas'));
+        actions.append(quizList, nativeButton(path('assignments', item.id), 'Open in Original Canvas'));
         section.append(actions);
         const setStatus = submitStatus(section);
-        loadHere.addEventListener('click', async () => {
-          loadHere.disabled = true; setStatus('Loading tool\u2026');
-          const here = route;
-          try {
-            const reply = await request({action: 'toolLaunch', launch: {courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}});
-            if (route !== here) return;
-            popout.href = reply.url; popout.removeAttribute('hidden');
-            section.append(element('iframe', {src: reply.url, title: item.title + ' tool', class: 'course-quiz-frame', allow: 'fullscreen'}));
-            setStatus('');
-            loadHere.remove();
-          } catch (reason) {
-            if (route !== here) return;
-            setStatus('Could not load the tool here: ' + reason.message);
-            loadHere.disabled = false;
-          }
+        setStatus('Loading tool\u2026');
+        const here = route;
+        request({action: 'toolLaunch', launch: {courseId: route.courseId, launchType: 'assessment', assessmentId: String(item.id)}}).then(reply => {
+          if (route !== here) return;
+          setStatus('');
+          section.append(element('iframe', {src: reply.url, title: item.title + ' tool', class: 'course-quiz-frame', allow: 'fullscreen'}));
+          const popout = element('a', {href: reply.url, target: '_blank', rel: 'noopener noreferrer', class: 'quiet'}, 'Open in new window');
+          actions.append(popout);
+        }).catch(reason => {
+          if (route !== here) return;
+          setStatus('Could not load the tool here: ' + reason.message);
         });
         return;
       }

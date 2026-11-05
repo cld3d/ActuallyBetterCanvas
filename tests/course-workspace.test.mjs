@@ -297,7 +297,7 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_url', url: 'example.com/work'}], 'scheme normalization happens in the API layer, covered by unit tests');
     await page.goto('https://canvas.test/courses/34/assignments/15');
     await page.getByRole('heading', {name: 'Homework', exact: true}).waitFor();
-    await page.getByRole('button', {name: 'Load tool here', exact: true}).click();
+    assert.equal(await page.getByRole('button', {name: 'Load tool here', exact: true}).count(), 0, 'tools load by default');
     const toolFrame = page.locator('iframe.course-quiz-frame');
     await toolFrame.waitFor();
     assert.ok((await toolFrame.getAttribute('src') || '').startsWith('https://tool.test/'), 'the tool loads inside the workspace');
