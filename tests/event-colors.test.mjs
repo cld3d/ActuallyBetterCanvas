@@ -12,6 +12,20 @@ test('event picker preserves current labels and supports provider palettes', () 
   const calendar={eventColors:[{value:'label:avocado',label:'Avocado',color:'#c0ca33'}]};
   assert.equal(Colors.options(calendar,null)[0].label,'Avocado');
 });
+test('all 24 Google colors display names, never cached hex labels or duplicate entries', () => {
+  assert.equal(Object.keys(Colors.colorNames).length,24);
+  const palette = [{value:'',label:'Calendar default',color:''}, ...Object.entries(Colors.colorNames).map(([color])=>({value:'label:' + color.slice(1),label:color,color}))];
+  palette.push({value:'color:7',label:'Peacock',color:'#039be5'});
+  for (const current of [{eventLabelId:'039be5',color:'#039be5'},{colorId:'7',color:'#039be5'}]) {
+    const options=Colors.options({eventColors:palette},current);
+    assert.equal(options.length,25);
+    assert.equal(new Set(options.map(o=>o.label)).size,25);
+    assert.ok(options.every(o=>!o.label.includes('#')));
+    assert.equal(options.find(o=>o.value===Colors.selection(current)).label,'Peacock');
+    assert.ok(options.some(o=>o.label==='Pistachio'));
+    assert.ok(options.some(o=>o.label==='Avocado'));
+  }
+});
 test('current color selection distinguishes provider IDs, legacy cache colors and calendar defaults', () => {
   assert.equal(Colors.initial({eventColor:'label:custom',eventColorHint:'#7986cb'},null),'label:custom');
   assert.equal(Colors.initial({eventColor:'',eventColorKnown:true,eventColorHint:'#039be5'},null),'');

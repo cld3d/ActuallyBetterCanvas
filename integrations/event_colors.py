@@ -12,6 +12,14 @@ STANDARD = [
     ('10', 'Basil', '#0b8043'), ('11', 'Tomato', '#d50000'),
 ]
 
+COLOR_NAMES = {color: name for _, name, color in STANDARD}
+COLOR_NAMES.update({
+    '#795548': 'Cocoa', '#ef6c00': 'Pumpkin', '#f09300': 'Mango',
+    '#009688': 'Eucalyptus', '#7cb342': 'Pistachio', '#c0ca33': 'Avocado',
+    '#e4c441': 'Citron', '#4285f4': 'Cobalt', '#b39ddb': 'Wisteria',
+    '#a79b8e': 'Birch', '#ad1457': 'Beetroot', '#d81b60': 'Cherry Blossom', '#9e69af': 'Amethyst',
+})
+
 
 def palette(labels=()):
     options = [dict(value='', label='Calendar default', color='')]
@@ -19,7 +27,7 @@ def palette(labels=()):
     for label in labels:
         key, color = label.get('id'), label.get('backgroundColor', '')
         if key and isinstance(color, str) and re.fullmatch(r'#[0-9a-fA-F]{6}', color):
-            options.append(dict(value='label:' + str(key), label=str(label.get('name') or color), color=color))
+            options.append(dict(value='label:' + str(key), label=COLOR_NAMES.get(color.lower(), 'Custom color'), color=color.lower()))
     return options
 
 

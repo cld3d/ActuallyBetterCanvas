@@ -90,7 +90,9 @@ def plan(plugins, pending):
     for relative, source in modules.items():
         target = plugins / relative
         desired = (ROOT / source).read_text()
-        accepted = {'3fa7e14ce395c6e4ff26b863a7871d6ff7da5bcf2923a53a9481f09e32001f22'} if relative.endswith('/EventColors.js') else set()
+        accepted = {'3fa7e14ce395c6e4ff26b863a7871d6ff7da5bcf2923a53a9481f09e32001f22',
+                    'be34cb297414d313a68ff4c23a951f1e422fa783b50001a95758dace14fa0526'} if relative.endswith('/EventColors.js') else {
+                    'bd12d77b25c40c9b42a006c440596dd595cb1c646d348d66448244bdda8dbd77'}
         if target.exists() and target.read_text() != desired and hashlib.sha256(target.read_bytes()).hexdigest() not in accepted:
             raise RuntimeError('Refusing unfamiliar event-color module: ' + relative)
         if not target.exists() or target.read_text() != desired:

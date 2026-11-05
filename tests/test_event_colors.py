@@ -17,6 +17,15 @@ spec.loader.exec_module(colors)
 
 
 class EventColorTests(unittest.TestCase):
+    def test_unnamed_or_hex_named_google_labels_use_all_24_google_names(self):
+        self.assertEqual(len(colors.COLOR_NAMES),24)
+        labels = [dict(id='label-' + color[1:],name=color,backgroundColor=color.upper()) for color in colors.COLOR_NAMES]
+        options = colors.palette(labels)[12:]
+        self.assertEqual(len(options),24)
+        for option in options:
+            self.assertEqual(option['label'],colors.COLOR_NAMES[option['color']])
+            self.assertNotIn('#',option['label'])
+
     def test_palette_includes_legacy_colors_and_calendar_specific_labels(self):
         options = colors.palette([dict(id='label-pistachio',name='Pistachio',backgroundColor='#7cb342'),
                                   dict(id='invalid',name='Bad',backgroundColor='not a color')])

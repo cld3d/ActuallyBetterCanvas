@@ -1,4 +1,12 @@
 // Provider-owned choices only: custom Google labels come from the calendar cache.
+var colorNames = {
+  "#7986cb":"Lavender","#33b679":"Sage","#8e24aa":"Grape","#e67c73":"Flamingo",
+  "#f6bf26":"Banana","#f4511e":"Tangerine","#039be5":"Peacock","#616161":"Graphite",
+  "#3f51b5":"Blueberry","#0b8043":"Basil","#d50000":"Tomato","#795548":"Cocoa",
+  "#ef6c00":"Pumpkin","#f09300":"Mango","#009688":"Eucalyptus","#7cb342":"Pistachio",
+  "#c0ca33":"Avocado","#e4c441":"Citron","#4285f4":"Cobalt","#b39ddb":"Wisteria",
+  "#a79b8e":"Birch","#ad1457":"Beetroot","#d81b60":"Cherry Blossom","#9e69af":"Amethyst"
+}
 function baseOptions(calendar) {
   var list = calendar && calendar.eventColors || []
   if (!list.length) list = [{value:"",label:"Calendar default",color:""}].concat([
@@ -7,7 +15,11 @@ function baseOptions(calendar) {
     ["7","Peacock","#039be5"],["8","Graphite","#616161"],["9","Blueberry","#3f51b5"],
     ["10","Basil","#0b8043"],["11","Tomato","#d50000"]
   ].map(function(o) {return {value:"color:" + o[0],label:o[1],color:o[2]}}))
-  return list.slice()
+  // Sanitize old cached labels too: Google may leave label names empty or hex-only.
+  return list.filter(function(o) {return o.value === "" || !!colorNames[String(o.color || "").toLowerCase()]}).map(function(o) {
+    var color = String(o.color || "").toLowerCase()
+    return {value:o.value,label:o.value === "" ? "Calendar default" : colorNames[color],color:color}
+  })
 }
 function selection(event, calendar) {
   if (event && event.eventLabelId) return "label:" + event.eventLabelId
@@ -27,10 +39,19 @@ function initial(draft, calendar) {
   return selection({eventColorKnown:false,color:draft.eventColorHint},calendar)
 }
 function options(calendar, event) {
-  var list = baseOptions(calendar)
   var current = selection(event, calendar)
-  if (current && !list.some(function(o) {return o.value === current}))
-    list.push({value:current,label:"Current event color",color:event.color || ""})
+  var list = [], byColor = {}
+  baseOptions(calendar).forEach(function(option) {
+    var key = option.color || "default"
+    if (byColor[key] === undefined) {byColor[key] = list.length; list.push(option)}
+    else if (option.value === current) list[byColor[key]] = option
+  })
+  if (current && !list.some(function(o) {return o.value === current})) {
+    var color = String(event.color || "").toLowerCase()
+    var option = {value:current,label:colorNames[color] || "Current event color",color:color}
+    if (color && byColor[color] !== undefined) list[byColor[color]] = option
+    else list.push(option)
+  }
   return list
 }
 function args(draft, result) {
@@ -41,4 +62,4 @@ function args(draft, result) {
   if (draft.series && args.indexOf("--series") < 0) args.push("--series")
   return {args:args}
 }
-if (typeof module !== "undefined") module.exports = {selection:selection,initial:initial,options:options,args:args}
+if (typeof module !== "undefined") module.exports = {selection:selection,initial:initial,options:options,args:args,colorNames:colorNames}

@@ -13,7 +13,7 @@ ShellRoot {
     calendars: [{value:"Test/calendar",label:"Calendar",provider:"google",eventColors:[
       {value:"",label:"Calendar default",color:""},
       {value:"color:9",label:"Blueberry",color:"#3f51b5"},
-      {value:"label:pistachio",label:"Pistachio",color:"#7cb342"}]}]
+      {value:"label:pistachio",label:"#7cb342",color:"#7cb342"}]}]
   }
   Timer {
     interval: 100
