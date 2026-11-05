@@ -471,6 +471,21 @@ test('tool-delivered quizzes get a quiz launch instead of a generic tool handoff
   } finally {await browser.close();}
 });
 
+test('reload reopens the workspace after Escape, which no longer opts out', {skip}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await setup(browser);
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', {name: 'Actually Better Canvas', exact: true}).waitFor();
+    assert.equal(await page.locator('.workspace').isVisible(), false);
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('actually-better-canvas-mode')), 'workspace', 'Escape closes without choosing Original Canvas');
+    await page.goto('https://canvas.test/courses/34');
+    await page.getByRole('heading', {name: 'Week one', exact: true}).waitFor();
+    assert.equal(await page.locator('.workspace').isVisible(), true, 'reload restores the workspace');
+  } finally {await browser.close();}
+});
+
 test('instructor HTML is rebuilt safely while preserving rich text, math and course links', {skip}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {

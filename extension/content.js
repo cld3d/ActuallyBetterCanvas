@@ -122,8 +122,8 @@
   shadow.append(launcher, workspace);
   let inertElements = [];
   let priorOverflow = '', priorTitle = '';
-  function close() {
-    rememberMode('original');
+  function close(remember = true) {
+    if (remember) rememberMode('original');
     // Workspace routing leaves the Canvas document underneath on its original route.
     // Keep the overlay visible until the matching Original Canvas document loads.
     if (location.pathname + location.search !== sourceRoute) {location.reload(); return;}
@@ -478,7 +478,7 @@
   // Local cache refresh, not a network poll. Background alarms own Canvas fetching.
   setInterval(() => {if (opened && !document.hidden && ['tasks', 'calendar'].includes(page) && !pending.size && courseOptions.hidden && !shadow.querySelector('dialog')) refresh();}, 30000);
   shadow.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {event.preventDefault(); close();}
+    if (event.key === 'Escape' && opened && !shadow.querySelector('dialog')) {event.preventDefault(); close(false);}
     if (event.key === 'Tab' && opened && !shadow.querySelector('dialog')) {
       const focusable = [...workspace.querySelectorAll('button,input,a,textarea,[tabindex="0"]')].filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
       const first = focusable[0], last = focusable.at(-1);
