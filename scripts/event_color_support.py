@@ -57,11 +57,11 @@ def replacements():
         ('    d.calendar = editor.calendarRef', '    d.calendar = editor.calendarRef\n    d.eventColor = editor.eventColorChoice\n    d.eventColorChanged = editor.googleCalendar && editor.eventColorChanged'),
         ('onChanged: function(v) { editor.calendarRef = v }', 'onChanged: function(v) { editor.calendarRef = v; editor.eventColorChoice = ""; editor.eventColorChanged = false }'),
         ('    // Starts and ends. All-day events', '''    Caption { visible: editor.googleCalendar && editor.editable; text: "EVENT COLOR" }
-    Dropdown {
+    EventColorSwatches {
+      id: eventColorPicker
       objectName: "eventColorPicker"
       visible: editor.googleCalendar && editor.editable
       width: parent.width
-      showLabel: false
       options: editor.colorOptions
       value: editor.eventColorChoice
       enabled: !editor.saving
@@ -86,13 +86,24 @@ def plan(plugins, pending):
     modules = {
         'blacksheep.calendar/scripts/omcal/event_colors.py': 'integrations/event_colors.py',
         'blacksheep.calendar/EventColors.js': 'integrations/desktop/EventColors.js',
+        'blacksheep.calendar/EventColorSwatches.qml': 'integrations/desktop/EventColorSwatches.qml',
     }
     for relative, source in modules.items():
         target = plugins / relative
         desired = (ROOT / source).read_text()
+        if relative.endswith('/EventColorSwatches.qml'):
+            # Our own generated component: safe to refresh when it carries our
+            # marker; refuse anything else rather than overwriting by surprise.
+            if target.exists() and target.read_text() != desired and 'Event color swatch grid' not in target.read_text():
+                raise RuntimeError('Refusing unfamiliar event-color module: ' + relative)
+            if not target.exists() or target.read_text() != desired:
+                result[target] = desired
+            continue
         accepted = {'3fa7e14ce395c6e4ff26b863a7871d6ff7da5bcf2923a53a9481f09e32001f22',
-                    'be34cb297414d313a68ff4c23a951f1e422fa783b50001a95758dace14fa0526'} if relative.endswith('/EventColors.js') else {
-                    'bd12d77b25c40c9b42a006c440596dd595cb1c646d348d66448244bdda8dbd77'}
+                    'be34cb297414d313a68ff4c23a951f1e422fa783b50001a95758dace14fa0526',
+                    '72030e0cdd20c72715feaf7797a760cfd1323972570c050263ad8403f2c58b22'} if relative.endswith('/EventColors.js') else {
+                    'bd12d77b25c40c9b42a006c440596dd595cb1c646d348d66448244bdda8dbd77',
+                    '5e118cb37150a6252ae77fa2a474de6f2a0da90ac8e1d6dfc7eb37d7966863a6'}
         if target.exists() and target.read_text() != desired and hashlib.sha256(target.read_bytes()).hexdigest() not in accepted:
             raise RuntimeError('Refusing unfamiliar event-color module: ' + relative)
         if not target.exists() or target.read_text() != desired:
@@ -100,10 +111,12 @@ def plan(plugins, pending):
     for relative, edits in replacements().items():
         path = plugins / relative
         text = result.get(path, path.read_text())
-        if relative == 'blacksheep.calendar/EventEditor.qml' and 'Canvas Local picker state v2' in text:
-            continue
         for before, after in edits:
             if after in text:
+                continue
+            if relative == 'blacksheep.calendar/EventEditor.qml' and before == '    editor.calendarRef = draft.calendar' and ('picker state v2' in text or 'picker state v3' in text):
+                # Load-block migration is owned by editor_state_support; applying
+                # the fresh-install variant here would corrupt it.
                 continue
             if text.count(before) != 1:
                 raise RuntimeError('Event color integration stopped before changes: ' + relative + '\n' + before)

@@ -26,16 +26,32 @@ ShellRoot {
         for(var i=0;i<children.length;i++) {var match=find(children[i],name);if(match)return match}
         return null
       }
+      function swatches() {
+        var out = []
+        function walk(item) {
+          if(item.objectName && item.objectName.indexOf("eventSwatch:") === 0) out.push(item)
+          var children = item.children || []
+          for(var i=0;i<children.length;i++) walk(children[i])
+        }
+        walk(editor)
+        return out
+      }
       var picker = find(editor,"eventColorPicker")
-      check(picker && picker.visible && picker.value === "color:9","Editable Google events expose their current provider color")
+      check(picker && picker.visible && picker.value === "color:9","Editable Google events preselect their current provider color")
+      check(picker.currentLabel() === "Blueberry","Preselected swatch must show the color name, not a hex code")
       var original = editor.collect()
       check(!original.eventColorChanged,"Opening an event must not rewrite its color")
-      picker.value = "label:pistachio" // Reproduce the real Dropdown's binding-breaking selection.
-      picker.changed("label:pistachio")
+      var cells = swatches()
+      check(cells.length === 2,"Swatch grid shows one circle per color (Calendar default is a separate button)")
+      for(var i=0;i<cells.length;i++) {
+        check(cells[i].tipText && cells[i].tipText.indexOf("#") < 0,"Hovering a swatch must name its color, never a hex code: " + cells[i].tipText)
+      }
+      picker.choose("label:pistachio")
       var draft = editor.collect()
       var args = EventColors.args(draft,Model.draftArgs(draft)).args
       check(args.length === 4 && args[0] === "update" && args[2] === "--event-color" && args[3] === "label:pistachio","Color-only saves must reach the Google event writer without rescheduling")
-      picker.changed("")
+      check(picker.value === "label:pistachio" && picker.currentLabel() === "Pistachio","Selecting a swatch updates the checked color by name")
+      picker.choose("")
       check(editor.collect().eventColorChanged && editor.collect().eventColor === "","Calendar default must explicitly clear a color override")
       var original = editor.event
       editor.event = Object.assign({},original,{colorId:"",eventLabelId:"pistachio"})
@@ -51,7 +67,7 @@ ShellRoot {
       editor.event = Object.assign({},editor.event,{editable:true})
       editor.calendars = [{value:"Test/calendar",label:"Outlook",provider:"microsoft"}]
       check(!picker.visible && !editor.collect().eventColorChanged,"Non-Google calendars must not pretend to support Google colors")
-      console.log("EVENT_COLORS_PASS: provider palette, preserved defaults, color-only writes, reset, permissions and provider gating")
+      console.log("EVENT_COLORS_PASS: swatch grid, named tooltips, preselected check, color-only writes, reset, permissions and provider gating")
       Qt.quit()
     }
   }

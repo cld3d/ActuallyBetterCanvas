@@ -26,6 +26,7 @@ def main():
         missing.append('quickshell not installed')
     for path in [shell / 'Commons/qmldir', plugins / 'blacksheep.calendar/TaskEditor.qml',
                  plugins / 'blacksheep.calendar/EventEditor.qml', plugins / 'blacksheep.calendar/EventColors.js',
+                 plugins / 'blacksheep.calendar/EventColorSwatches.qml',
                  plugins / 'gavin.lock/TaskCompletion.qml']:
         if not path.is_file():
             missing.append(str(path))
