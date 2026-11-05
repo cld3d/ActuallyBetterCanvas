@@ -70,8 +70,13 @@ def changes():
 
 
 def main():
+    from plugin_scope import installed
+    if not (PLUGINS / 'blacksheep.calendar').is_dir():
+        raise RuntimeError('Datebook plugin not found at ' + str(PLUGINS / 'blacksheep.calendar') + '; install it first, then rerun.')
     pending = []
     for relative, edits in changes().items():
+        if not installed(PLUGINS, relative):
+            continue
         path = PLUGINS / relative
         text = original = path.read_text()
         if 'Canvas Local deadlines v2' in text or 'Canvas Local deadline editor v2' in text or 'Canvas Local deadline editor v3' in text:

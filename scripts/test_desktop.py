@@ -26,10 +26,11 @@ def main():
         missing.append('quickshell not installed')
     for path in [shell / 'Commons/qmldir', plugins / 'blacksheep.calendar/TaskEditor.qml',
                  plugins / 'blacksheep.calendar/EventEditor.qml', plugins / 'blacksheep.calendar/EventColors.js',
-                 plugins / 'blacksheep.calendar/EventColorSwatches.qml',
-                 plugins / 'gavin.lock/TaskCompletion.qml']:
+                 plugins / 'blacksheep.calendar/EventColorSwatches.qml']:
         if not path.is_file():
             missing.append(str(path))
+    lock_qml = plugins / 'gavin.lock/TaskCompletion.qml'
+    lock_present = lock_qml.is_file()
     if missing:
         print('SKIP desktop QML tests: ' + '; '.join(missing))
         return 1 if args.strict else 0
@@ -41,6 +42,9 @@ def main():
         (imports / 'qs').symlink_to(shell, target_is_directory=True)
         env = dict(os.environ, QT_QPA_PLATFORM='offscreen', QML_IMPORT_PATH=str(imports) + os.pathsep + os.environ.get('QML_IMPORT_PATH', ''))
         for filename, marker in [('deadline-editor.qml', 'DEADLINE_EDITOR_PASS'), ('lock-canvas.qml', 'CANVAS_LOCK_PASS'), ('event-colors.qml', 'EVENT_COLORS_PASS')]:
+            if filename == 'lock-canvas.qml' and not lock_present:
+                print('SKIP lock-canvas.qml: gavin.lock not installed')
+                continue
             text = (ROOT / 'tests' / filename).read_text()
             text = text.replace('@CANVAS_CALENDAR_URL@', (plugins / 'blacksheep.calendar').as_uri())
             text = text.replace('@CANVAS_LOCK_URL@', (plugins / 'gavin.lock').as_uri())

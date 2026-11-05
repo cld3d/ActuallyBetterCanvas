@@ -4,7 +4,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def plan(plugins, pending):
+    from plugin_scope import installed
     result = dict(pending)
+    if not installed(plugins, 'blacksheep.calendar/Clock.js'):
+        return list(result.items())
     clock = plugins / 'blacksheep.calendar/Clock.js'
     desired = (ROOT / 'integrations/desktop/Clock.js').read_text()
     if clock.exists() and clock.read_text() != desired:
@@ -30,6 +33,8 @@ def plan(plugins, pending):
         ('placeholderText: "15:30"', 'placeholderText: "3:30 PM"')]
     }
     for relative, edits in replacements.items():
+        if not installed(plugins, 'blacksheep.calendar/' + relative):
+            continue
         path = plugins / 'blacksheep.calendar' / relative
         text = result.get(path, path.read_text())
         for before, after in edits:

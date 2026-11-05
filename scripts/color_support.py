@@ -5,7 +5,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def plan(plugins, pending):
+    from plugin_scope import installed
     result = dict(pending)
+    if not installed(plugins, 'blacksheep.calendar/CourseColors.js'):
+        return list(result.items())
     module = plugins / 'blacksheep.calendar/CourseColors.js'
     desired = (ROOT / 'integrations/desktop/CourseColors.js').read_text()
     if module.exists() and module.read_text() != desired and hashlib.sha256(module.read_bytes()).hexdigest() != '1d8030015c16dd4a9bb3bbd63b94f6058f783e59a7734aac4268a84718ae24b2':
@@ -78,6 +81,8 @@ def plan(plugins, pending):
     Caption { text: "NOTES";''')],
     }
     for relative, edits in replacements.items():
+        if not installed(plugins, relative):
+            continue
         path = plugins / relative
         text = result.get(path, path.read_text())
         if relative == 'blacksheep.calendar/TaskEditor.qml' and 'Canvas Local picker state v2' in text:

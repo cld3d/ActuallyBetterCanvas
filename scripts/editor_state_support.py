@@ -2,7 +2,10 @@
 
 
 def plan(plugins, pending):
+    from plugin_scope import installed
     result = dict(pending)
+    if not installed(plugins, 'blacksheep.calendar/EventEditor.qml'):
+        return list(result.items())
     edits = {
       'blacksheep.calendar/Panel.qml': [
         ('Tasks.forDay(eventData, selectedKey, todayKey, showAllTasks, root.clockNow)', 'Tasks.forDay(eventData, selectedKey, todayKey, showAllTasks, root.clockNow).filter(Tasks.hasDate)'),
@@ -78,6 +81,8 @@ def plan(plugins, pending):
         if editor_text != editor_path.read_text():
             result[editor_path] = editor_text
     for relative, replacements in edits.items():
+        if not installed(plugins, relative):
+            continue
         path = plugins / relative
         text = result.get(path, path.read_text())
         for before, after in replacements:

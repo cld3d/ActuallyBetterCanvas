@@ -82,6 +82,7 @@ def replacements():
 
 
 def plan(plugins, pending):
+    from plugin_scope import installed
     result = dict(pending)
     modules = {
         'blacksheep.calendar/scripts/omcal/event_colors.py': 'integrations/event_colors.py',
@@ -89,6 +90,8 @@ def plan(plugins, pending):
         'blacksheep.calendar/EventColorSwatches.qml': 'integrations/desktop/EventColorSwatches.qml',
     }
     for relative, source in modules.items():
+        if not installed(plugins, relative):
+            continue
         target = plugins / relative
         desired = (ROOT / source).read_text()
         if relative.endswith('/EventColorSwatches.qml'):
@@ -109,6 +112,8 @@ def plan(plugins, pending):
         if not target.exists() or target.read_text() != desired:
             result[target] = desired
     for relative, edits in replacements().items():
+        if not installed(plugins, relative):
+            continue
         path = plugins / relative
         text = result.get(path, path.read_text())
         for before, after in edits:

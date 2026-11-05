@@ -63,8 +63,11 @@ def edits():
 
 
 def plan(plugins, pending):
+    from plugin_scope import installed
     result = dict(pending)
     for relative, (source, baseline) in SOURCES.items():
+        if not installed(plugins, relative):
+            continue
         path = plugins / relative
         current = result.get(path, path.read_text())
         desired = (ROOT / 'integrations/desktop' / source).read_text()
@@ -83,6 +86,8 @@ def plan(plugins, pending):
                 raise RuntimeError('Refusing to overwrite unfamiliar deadline logic: ' + relative)
             result[path] = desired
     for relative, replacements in edits().items():
+        if not installed(plugins, relative):
+            continue
         path = plugins / relative
         text = result.get(path, path.read_text())
         if relative == 'blacksheep.calendar/TaskEditor.qml' and 'Canvas Local deadline editor v3' in text:
