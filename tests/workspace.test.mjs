@@ -141,7 +141,7 @@ test('pending course loads keep cached content visible without placeholder bars'
 
 async function assertPlainTaskRow(page) {
   const row = page.locator('.row:visible').first();
-  await page.locator('.topbar').hover();
+  await page.locator('.toolbar').hover();
   const before = await row.evaluate(node => {
     const style = getComputedStyle(node);
     return {background: style.backgroundColor, radius: style.borderRadius, transition: style.transitionProperty};
