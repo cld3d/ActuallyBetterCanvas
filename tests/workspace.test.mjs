@@ -94,7 +94,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
   } finally {await browser.close();}
 });
 
-test('sidebar settings icon opens the extension options page', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+test('sidebar settings icon opens an in-workspace connection dialog', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
     const page = await browser.newPage();
@@ -104,45 +104,18 @@ test('sidebar settings icon opens the extension options page', {skip: !executabl
     await page.addInitScript(() => {
       const attach = Element.prototype.attachShadow;
       Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
-      window.openedOptions = false;
-      window.chrome = {runtime: {
-        sendMessage: async () => ({ok: true, state: {assignments: []}}),
-        openOptionsPage: async () => {window.openedOptions = true;}
-      }};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}}) }, storage: {local: {get: async () => ({origin: 'https://canvas.test'})}}};
     });
     await page.goto('https://canvas.test/dashboard');
     await page.addScriptTag({content});
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
     await page.getByRole('button', {name: 'Extension settings', exact: true}).click();
-    assert.equal(await page.evaluate(() => window.openedOptions), true, 'settings opens the extension options');
-    assert.deepEqual(errors, []);
-  } finally {await browser.close();}
-});
-
-test('settings falls back to a new tab when the options API is missing', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
-  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
-  try {
-    const page = await browser.newPage();
-    const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
-    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
-    await page.addInitScript(() => {
-      const attach = Element.prototype.attachShadow;
-      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
-      window.chrome = {runtime: {
-        sendMessage: async () => ({ok: true, state: {assignments: []}}),
-        getURL: path => {window.openedUrl = 'chrome-extension://fake/' + path; return window.openedUrl;}
-      }};
-    });
-    await page.goto('https://canvas.test/dashboard');
-    await page.addScriptTag({content});
-    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
-    const [optionsPage] = await Promise.all([
-      page.context().waitForEvent('page'),
-      page.getByRole('button', {name: 'Extension settings', exact: true}).click()
-    ]);
-    assert.equal(await page.evaluate(() => window.openedUrl), 'chrome-extension://fake/options.html', 'fallback points a new tab at the options page');
-    await optionsPage.close().catch(() => {});
+    const dialog = page.getByRole('dialog', {name: 'Connection', exact: true});
+    await dialog.waitFor();
+    await page.waitForFunction(() => document.querySelector('#canvas-local-root').shadowRoot.textContent.includes('https://canvas.test'));
+    assert.ok((await dialog.textContent()).includes('https://canvas.test'), 'dialog shows the connected site');
+    await page.getByRole('button', {name: 'Close', exact: true}).click();
+    assert.equal(await dialog.count(), 0, 'dialog closes');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });

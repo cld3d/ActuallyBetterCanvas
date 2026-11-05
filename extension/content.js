@@ -30,10 +30,9 @@
     /* Sidebar selection uses one moving rule, without a filled active surface. */
     nav{position:relative}nav button.selected,nav button.selected:hover,nav button.selected:focus-visible{background:transparent}nav .selected:before{display:none}.sidebar-indicator{position:absolute;top:0;left:0;width:3px;height:1px;background:var(--accent);border-radius:1.5px;transform-origin:top;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
     nav button:hover:not(:disabled){background:transparent;color:var(--accent);opacity:.75}
-    /* Sidebar bottom: compact theme dot plus sync and Original Canvas icons in one row. */
+    /* Sidebar bottom: theme dot, then sync / Original Canvas / settings spread edge to edge. */
     .sidebar-bottom{margin-top:auto;display:flex;gap:8px;align-items:center}
     .theme-picker{position:relative;flex:none}
-    .sidebar-actions{display:flex;gap:8px}
     .theme-button{width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .theme-button .swatch{width:14px;height:14px;border-radius:50%;background:var(--accent);flex:none}
     .theme-options{position:absolute;bottom:calc(100% + 8px);left:0;min-width:230px;width:max-content;max-width:min(340px,80vw);max-height:min(380px,60dvh);overflow:auto;z-index:2;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);box-shadow:0 12px 32px #17241a24}
@@ -48,6 +47,7 @@
     .announcement.unread .announcement-title::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:8px}
     .announcement p{margin:8px 0}
     .announcement .message-body{line-height:1.7;max-width:78ch;white-space:pre-wrap}
+    dialog .actions{display:flex;gap:10px;margin-top:16px}
     nav button .nav-badge{display:inline-block;min-width:18px;text-align:center;font-size:11px;font-weight:700;background:var(--accent);color:var(--on-accent);border-radius:9px;padding:1px 5px;margin-left:6px;vertical-align:baseline}
     .sidebar-actions{display:flex;justify-content:space-between;flex:1;min-width:0}
     .theme-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -136,26 +136,36 @@
   const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox' || page === 'announcements') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
   const originalButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', 'data-tip': 'Original Canvas', onclick: close}, externalIcon);
   const settingsIcon = icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
-  const settingsButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Extension settings', 'data-tip': 'Extension settings', onclick: () => {
-    try {
-      if (chrome.runtime.openOptionsPage) {
-        const opened = chrome.runtime.openOptionsPage();
-        if (opened && typeof opened.then === 'function') opened.catch(() => openOptionsPageFallback());
-        return;
-      }
-    } catch {}
-    openOptionsPageFallback();
-  }}, settingsIcon);
-  function openOptionsPageFallback() {
-    try {
-      const anchor = document.createElement('a');
-      anchor.href = chrome.runtime.getURL('options.html');
-      anchor.target = '_blank';
-      anchor.rel = 'noopener';
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-    } catch {}
+  const settingsButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Extension settings', 'data-tip': 'Extension settings', onclick: () => openConnectionDialog()}, settingsIcon);
+  function openConnectionDialog() {
+    const siteName = el('strong', {}, '…');
+    const status = el('p', {class: 'source-status', role: 'status'}, 'Reading local feed…');
+    const syncNow = el('button', {class: 'quiet primary', type: 'button', onclick: async event => {
+      event.target.disabled = true; status.textContent = 'Syncing…';
+      try {
+        await refresh(true);
+        status.textContent = `${state.assignments.length} assignments cached.` + (state.lastSync ? ' Last synced ' + new Date(state.lastSync).toLocaleString() + '.' : ' Not synced yet.');
+      } catch (error) {status.textContent = error.message;}
+      finally {event.target.disabled = false;}
+    }}, 'Sync now');
+    const dialog = el('dialog', {'aria-labelledby': 'connection-heading'},
+      el('h2', {id: 'connection-heading'}, 'Connection'),
+      el('p', {}, 'Canvas website: ', siteName),
+      status,
+      el('p', {class: 'meta'}, 'To connect a different Canvas site, use the Canvas Local button in the browser toolbar.'),
+      el('div', {class: 'actions'}, syncNow, el('button', {class: 'quiet', type: 'button', onclick: () => dialog.close()}, 'Close')));
+    shadow.append(dialog);
+    dialog.addEventListener('close', () => {dialog.remove(); settingsButton.focus();});
+    dialog.showModal();
+    syncNow.focus();
+    (async () => {
+      try {
+        const {origin} = await chrome.storage.local.get('origin');
+        siteName.textContent = origin || 'Not connected yet';
+        const reply = await request({action: 'list'});
+        status.textContent = `${reply.state.assignments.length} assignments cached.` + (reply.state.lastSync ? ' Last synced ' + new Date(reply.state.lastSync).toLocaleString() + '.' : ' Not synced yet.');
+      } catch (error) {status.textContent = error.message;}
+    })();
   }
   const sidebarActions = el('div', {class: 'sidebar-actions'}, syncButton, originalButton, settingsButton);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
@@ -319,7 +329,7 @@
   applyTheme(...loadTheme(), false);
   const tooltipBubble = el('div', {class: 'tooltip-bubble', role: 'status', hidden: ''});
   shadow.append(tooltipBubble);
-  let tooltipTimer = 0;
+  let tooltipTimer = 0, tooltipAnchor = null;
   function placeTooltip(anchor) {
     // Measure first, then clamp the bubble inside the viewport.
     tooltipBubble.style.left = '0px'; tooltipBubble.style.top = '0px';
@@ -332,7 +342,9 @@
     tooltipBubble.style.left = Math.round(Math.max(padding, left)) + 'px';
     tooltipBubble.style.top = Math.round(Math.max(padding, top)) + 'px';
   }
-  function showTooltip(anchor) {
+  function showTooltip(anchor, delay = 350) {
+    if (anchor === tooltipAnchor) return;
+    tooltipAnchor = anchor;
     clearTimeout(tooltipTimer);
     tooltipTimer = setTimeout(() => {
       if (!anchor.isConnected) return;
@@ -344,19 +356,20 @@
       void tooltipBubble.offsetWidth;
       placeTooltip(anchor);
       tooltipBubble.classList.add('show');
-    }, 350);
+    }, delay);
   }
-  function hideTooltip() {clearTimeout(tooltipTimer); tooltipBubble.classList.remove('show'); tooltipBubble.hidden = true;}
+  function hideTooltip() {clearTimeout(tooltipTimer); tooltipAnchor = null; tooltipBubble.classList.remove('show'); tooltipBubble.hidden = true;}
   shadow.addEventListener('mouseover', event => {
     const anchor = event.target.closest?.('[data-tip]');
-    if (anchor && shadow.contains(anchor)) showTooltip(anchor);
+    if (!anchor || !shadow.contains(anchor)) {tooltipAnchor = null; hideTooltip(); return;}
+    showTooltip(anchor);
   });
   shadow.addEventListener('mouseout', event => {
     const left = event.target.closest?.('[data-tip]');
-    if (left && !left.contains(event.relatedTarget)) hideTooltip();
+    if (left && !left.contains(event.relatedTarget)) {tooltipAnchor = null; hideTooltip();}
   });
-  shadow.addEventListener('focusin', event => {const anchor = event.target.closest?.('[data-tip]'); if (anchor) showTooltip(anchor);});
-  shadow.addEventListener('focusout', () => hideTooltip());
+  shadow.addEventListener('focusin', event => {const anchor = event.target.closest?.('[data-tip]'); if (anchor) showTooltip(anchor, 0);});
+  shadow.addEventListener('focusout', () => {tooltipAnchor = null; hideTooltip();});
   shadow.addEventListener('click', () => hideTooltip(), true);
   workspace.addEventListener('scroll', hideTooltip, true);
   window.addEventListener('resize', hideTooltip);
