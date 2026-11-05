@@ -232,6 +232,13 @@
     themeButton.setAttribute('aria-label', 'Color theme: ' + label);
     themeButton.dataset.tip = label;
     if (persist) {try {localStorage.setItem('canvas-local-theme', themeFamilyId); localStorage.setItem('canvas-local-mode', themeMode);} catch {}}
+    // Persist the resolved first-paint values so the document-start guard can
+    // paint the active theme before this script runs. System mode follows the
+    // live OS setting instead, so it leaves no record behind.
+    try {
+      if (themeMode === 'system') localStorage.removeItem('canvas-local-boot');
+      else localStorage.setItem('canvas-local-boot', JSON.stringify({bg: vars['--bg'], scheme}));
+    } catch {}
   }
   function toggleThemePicker(show = themeOptions.hidden) {
     themeOptions.hidden = !show; themeButton.setAttribute('aria-expanded', String(show));

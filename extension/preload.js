@@ -4,10 +4,22 @@
   try {if (sessionStorage.getItem('actually-better-canvas-mode') === 'original') return;} catch {}
   if (document.getElementById('canvas-local-preload-style')) return;
 
+  // Paint the saved theme on the very first frame so the page never flashes
+  // the default palette before the main script applies the active theme.
+  // Falls back to the previous system-matched default when nothing is stored.
+  let bootBackground = null;
+  try {
+    const boot = JSON.parse(localStorage.getItem('canvas-local-boot') || 'null');
+    if (boot && typeof boot.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(boot.bg)) bootBackground = boot.bg;
+  } catch {}
+  if (!bootBackground) {
+    try {bootBackground = matchMedia('(prefers-color-scheme: dark)').matches ? '#101013' : '#f3f3f4';} catch {bootBackground = '#f3f3f4';}
+  }
+
   // Run before Canvas can paint. Removing this stylesheet restores every original style.
   const style = document.createElement('style');
   style.id = 'canvas-local-preload-style';
-  style.textContent = ':root{background:#f3f5f3!important}body{opacity:0!important}@media(prefers-color-scheme:dark){:root{background:#171e1a!important}}';
+  style.textContent = `:root{background:${bootBackground}!important}body{opacity:0!important}`;
   let observer;
   function attach() {
     if (!document.documentElement) return;

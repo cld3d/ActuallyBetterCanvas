@@ -68,6 +68,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     await page.getByRole('option', {name: 'Appearance: Dark', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).count(), 1);
     assert.equal(await inlineVar(), '#0f1720');
+    assert.equal(await page.evaluate(() => {try {return JSON.parse(localStorage.getItem('canvas-local-boot')).scheme;} catch {return 'missing';}}), 'dark', 'explicit modes stash their resolved scheme for first paint');
     assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#0f1720');
     await page.reload();
     await page.addScriptTag({content});
@@ -79,6 +80,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     await page.getByRole('button', {name: 'Color theme: Matcha · Dark', exact: true}).click();
     await page.getByRole('option', {name: 'Appearance: System', exact: true}).click();
     assert.equal(await inlineVar(), '#f3f5f3', 'System reapplies the resolved Matcha pair');
+    assert.equal(await page.evaluate(() => {try {return localStorage.getItem('canvas-local-boot');} catch {return 'ERR';}}), null, 'System mode leaves first paint to the live OS setting');
     await page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true}).click();
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.theme-options').isHidden(), true, 'Escape closes the picker, not the workspace');
