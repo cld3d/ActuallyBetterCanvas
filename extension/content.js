@@ -53,6 +53,10 @@
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
     .icon-button.busy svg{animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
+    /* Custom tooltips replace native title popups everywhere in the workspace. */
+    [data-tip]{position:relative}
+    [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%) translateY(3px);background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;max-width:200px;padding:6px 10px;border-radius:8px;box-shadow:0 6px 18px #00000030;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease-out,transform .15s ease-out,visibility 0s linear .15s;z-index:20}
+    [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);transition-delay:.35s}
   `;
   shadow.append(style);
   function el(tag, attrs = {}, ...children) {
@@ -119,7 +123,7 @@
       selectView(view); tabs.querySelector('[aria-selected="true"]').focus();
     }
   });
-  const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', title: 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
+  const syncButton = el('button', {class: 'quiet icon-button', 'aria-label': 'Sync now', 'data-tip': 'Connecting to local feed…', onclick: () => {refresh(true); if (page === 'courses' || page === 'inbox') loadRemote(true); if (page === 'course') courseWorkspace.refresh();}}, syncIcon);
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
@@ -232,7 +236,7 @@
     modeOptions.append(option);
   }
   for (const candidate of themeFamilies) {
-    const darkDot = el('span', {class: 'dot', title: 'Dark variant', 'aria-hidden': 'true'});
+    const darkDot = el('span', {class: 'dot', 'aria-hidden': 'true'});
     darkDot.style.background = dotBackground(candidate.dark);
     const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, darkDot);
     const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); themeButton.focus();}}, dots, el('span', {}, candidate.label));
@@ -265,7 +269,7 @@
     sidebarIndicator.style.borderRadius = length > 0 ? `1.5px / ${(1.5 / length).toFixed(4)}px` : '0';
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
-  const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, el('div', {}, syncButton, el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', title: 'Original Canvas', onclick: close}, externalIcon))),
+  const main = el('main', {tabindex: '-1'}, el('div', {class: 'topbar'}, el('div', {}, syncButton, el('button', {class: 'quiet icon-button', 'aria-label': 'Original Canvas', 'data-tip': 'Original Canvas', onclick: close}, externalIcon))),
     toolbar, tabs, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('a', {class: 'brand', href: pagePaths.tasks, 'aria-label': 'Canvas', onclick: event => {
@@ -392,7 +396,7 @@
     if (reply.feedVersion < appliedFeedVersion) {render(); return;}
     appliedFeedVersion = reply.feedVersion;
     state = reply.state;
-    syncButton.title = state.lastSync ? 'Last synced ' + new Date(state.lastSync).toLocaleString() : 'Not synced yet';
+    syncButton.dataset.tip = state.lastSync ? 'Last synced ' + new Date(state.lastSync).toLocaleString() : 'Not synced yet';
     notice.textContent = reply.warning || reply.lastError || state.syncError || '';
     if (course && !state.assignments.some(a => a.course === course)) course = '';
     renderCoursesFilter();
