@@ -165,6 +165,10 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
     await page.getByRole('navigation', {name: 'Course navigation', exact: true}).getByRole('link', {name: 'Pages', exact: true}).click();
     await page.locator('.course-loading').waitFor();
     assert.equal(await page.locator('.course-loading .nebula-particle').count(), 13, 'course loads show the nebula orbit');
+    const orbitBox = await page.locator('.course-loading .nebula-loader').boundingBox();
+    const bodyBox = await page.locator('.course-body').boundingBox();
+    assert.equal(Math.round(orbitBox.width), 96, 'the orbit renders big');
+    assert.ok(Math.abs((orbitBox.x + orbitBox.width / 2) - (bodyBox.x + bodyBox.width / 2)) < 4, 'the orbit sits mid-page, sidebar excluded');
     assert.equal(await page.locator('.nebula-loader[aria-label="Loading course content"]').count(), 1);
     assert.equal(await page.getByText('Loading course content').count(), 0, 'no text spinner alongside the orbit');
     assert.equal(await page.getByRole('heading', {name: 'Week one', exact: true}).count(), 0, 'old course content is not shown under a new URL');
