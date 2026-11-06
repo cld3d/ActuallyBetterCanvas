@@ -13,7 +13,7 @@
     if (boot && typeof boot.bg === 'string' && /^#[0-9a-fA-F]{6}$/.test(boot.bg)) bootBackground = boot.bg;
   } catch {}
   if (!bootBackground) {
-    try {bootBackground = matchMedia('(prefers-color-scheme: dark)').matches ? '#101013' : '#e1e1e3';} catch {bootBackground = '#e1e1e3';}
+    try {bootBackground = matchMedia('(prefers-color-scheme: dark)').matches ? '#101013' : '#d3d3d8';} catch {bootBackground = '#d3d3d8';}
   }
 
   // Run before Canvas can paint. Removing this stylesheet restores every original style.

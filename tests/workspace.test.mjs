@@ -51,7 +51,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     const themeButton = page.getByRole('button', {name: 'Color theme: Graphite · System', exact: true});
     assert.equal(await themeButton.count(), 1, 'Graphite + System is the default theme');
     const inlineVar = () => page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--bg'));
-    assert.equal(await inlineVar(), '#e1e1e3', 'System resolves the Graphite light pair in a light OS scheme');
+    assert.equal(await inlineVar(), '#d3d3d8', 'System resolves the Graphite light pair in a light OS scheme');
     await themeButton.click();
     assert.equal(await page.locator('.theme-grid .theme-card').first().getAttribute('aria-label'), 'Theme: Graphite', 'Graphite lists first');
     assert.equal(await page.locator('.theme-card').first().evaluate(node => getComputedStyle(node).minWidth), '88px', 'cards reserve room for bold labels');
@@ -63,23 +63,23 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     assert.equal(await page.locator('.theme-options').isVisible(), true);
     await page.getByRole('option', {name: 'Theme: Ocean', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · System', exact: true}).count(), 1);
-    assert.equal(await inlineVar(), '#dae5ea');
+    assert.equal(await inlineVar(), '#b6ddef');
     await page.getByRole('button', {name: 'Color theme: Ocean · System', exact: true}).click();
     await page.getByRole('option', {name: 'Appearance: Dark', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).count(), 1);
-    assert.equal(await inlineVar(), '#0f1720');
+    assert.equal(await inlineVar(), '#0b1724');
     assert.equal(await page.evaluate(() => {try {return JSON.parse(localStorage.getItem('canvas-local-boot')).scheme;} catch {return 'missing';}}), 'dark', 'explicit modes stash their resolved scheme for first paint');
-    assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#0f1720');
+    assert.equal(await page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--bg').trim()), '#0b1724');
     await page.reload();
     await page.addScriptTag({content});
     await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
     assert.equal(await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).count(), 1, 'theme survives reload');
-    assert.equal(await inlineVar(), '#0f1720');
+    assert.equal(await inlineVar(), '#0b1724');
     await page.getByRole('button', {name: 'Color theme: Ocean · Dark', exact: true}).click();
     await page.getByRole('option', {name: 'Theme: Matcha', exact: true}).click();
     await page.getByRole('button', {name: 'Color theme: Matcha · Dark', exact: true}).click();
     await page.getByRole('option', {name: 'Appearance: System', exact: true}).click();
-    assert.equal(await inlineVar(), '#e0e6e1', 'System reapplies the resolved Matcha pair');
+    assert.equal(await inlineVar(), '#c4e3c9', 'System reapplies the resolved Matcha pair');
     assert.equal(await page.evaluate(() => {try {return localStorage.getItem('canvas-local-boot');} catch {return 'ERR';}}), null, 'System mode leaves first paint to the live OS setting');
     await page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true}).click();
     await page.keyboard.press('Escape');
@@ -89,7 +89,7 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
     await page.getByRole('button', {name: 'Color theme: Matcha · System', exact: true}).click();
     assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, 'picker fits mobile widths');
     await page.getByRole('option', {name: 'Theme: Lagoon', exact: true}).click();
-    assert.equal(await page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--accent').trim()), '#126d80', 'lagoon light leans blue while staying teal');
+    assert.equal(await page.locator('#canvas-local-root').evaluate(node => node.style.getPropertyValue('--accent').trim()), '#146779', 'lagoon light leans blue while staying teal');
     assert.deepEqual(errors, []);
   } finally {await browser.close();}
 });
