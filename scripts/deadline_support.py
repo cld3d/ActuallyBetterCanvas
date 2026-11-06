@@ -69,7 +69,10 @@ def plan(plugins, pending):
         if not installed(plugins, relative):
             continue
         path = plugins / relative
-        current = result.get(path, path.read_text())
+        if not path.exists() and path not in result:
+            result[path] = (ROOT / 'integrations/desktop' / source).read_text()
+            continue
+        current = result.get(path, path.read_text() if path.exists() else '')
         desired = (ROOT / 'integrations/desktop' / source).read_text()
         if current != desired:
             accepted = {baseline}

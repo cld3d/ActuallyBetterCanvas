@@ -78,12 +78,21 @@ def main():
     from plugin_scope import installed
     if not (PLUGINS / 'blacksheep.calendar').is_dir():
         raise RuntimeError('Datebook plugin not found at ' + str(PLUGINS / 'blacksheep.calendar') + '; install it first, then rerun.')
-    pending = []
+    from tasks_support import plan as plan_tasks
+    staged = dict(plan_tasks(PLUGINS, []))
+    # New subsystem files are written immediately so the planners below can
+    # match against them; modifications stay staged until every check passes.
+    for path, text in staged.items():
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(text)
+            print('Added ' + str(path.relative_to(PLUGINS)))
+    pending = staged
     for relative, edits in changes().items():
         if not installed(PLUGINS, relative):
             continue
         path = PLUGINS / relative
-        text = original = path.read_text()
+        text = original = pending.get(path, path.read_text() if path.exists() else '')
         if 'Canvas Local deadlines v2' in text or 'Canvas Local deadline editor v2' in text or 'Canvas Local deadline editor v3' in text:
             continue
         for before, after in edits:
@@ -95,7 +104,8 @@ def main():
                 raise RuntimeError('Integration stopped without changes: unmatched or ambiguous text in ' + relative + '\n' + before)
             text = text.replace(before, after, 1)
         if original != text:
-            pending.append((path, text))
+            pending[path] = text
+    pending = list(pending.items())
     from deadline_support import plan
     pending = plan(PLUGINS, dict(pending))
     from twelve_hour_support import plan as plan_twelve_hour
@@ -116,7 +126,7 @@ def main():
     adapter = PLUGINS / 'blacksheep.calendar/scripts/omcal/canvas_local.py'
     shutil.copy2(ROOT / 'integrations/canvas_local.py', adapter)
     config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config')) / 'canvas-local'
-    config.mkdir(exist_ok=True, mode=0o700)
+    config.mkdir(parents=True, exist_ok=True, mode=0o700)
     (config / 'integration.json').write_text(json.dumps({'host': str(ROOT / 'native/canvas_feed.py')}))
     for path, text in pending:
         path.write_text(text)

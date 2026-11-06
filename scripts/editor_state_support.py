@@ -24,6 +24,8 @@ def plan(plugins, pending):
         ('        provider: e.provider || "", colorId: e.colorId || "", eventLabelId: e.eventLabelId || "",', '        provider: e.provider || "", colorId: e.colorId || "", eventLabelId: e.eventLabelId || "",\n        eventColorKnown: e.provider === "google" || ("colorId" in e) || ("eventLabelId" in e),'),
         ('    eventColor: ev.eventLabelId ?', '    eventColorKnown: ev.eventColorKnown !== false, eventColorHint: ev.color || "",\n    eventColor: ev.eventLabelId ?')],
       'blacksheep.calendar/EventEditor.qml': [
+        ('    editor.calendarRef = draft.calendar\n    editor.eventColorChoice = draft.eventColor || ""\n    editor.eventColorChanged = false',
+         '    editor.calendarRef = draft.calendar\n    // Canvas Local picker state v3: swatches emit changed() without\n    // assigning value, so the declarative value binding below survives\n    // selection and reopening. Use this draft, not stale event bindings.\n    var selectedCalendar = calendars.filter(function(c) { return c.value === draft.calendar })[0] || null\n    editor.eventColorChoice = EventColors.initial(draft, selectedCalendar)\n    editor.eventColorChanged = false'),
         ('      objectName: "eventColorPicker"', '      id: eventColorPicker\n      objectName: "eventColorPicker"'),
         ('''    // Canvas Local picker state v2: use this draft, not potentially stale event bindings.
     var selectedCalendar = calendars.filter(function(c) { return c.value === draft.calendar })[0] || null
