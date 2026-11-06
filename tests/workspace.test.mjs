@@ -94,6 +94,37 @@ test('sidebar theme picker recolors the workspace and persists across reloads', 
   } finally {await browser.close();}
 });
 
+test('each theme family applies its own corner radius to controls and cards', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html', body: '<p>Canvas</p>'}));
+    await page.addInitScript(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: {assignments: []}}) }};
+    });
+    await page.goto('https://canvas.test/dashboard');
+    await page.addScriptTag({content});
+    await page.getByRole('main', {name: 'Tasks', exact: true}).waitFor();
+    const radiusOf = () => page.locator('#canvas-local-root').evaluate(node => getComputedStyle(node).getPropertyValue('--radius').trim());
+    assert.equal(await radiusOf(), '8px', 'Graphite defaults to neutral corners');
+    const pick = async name => {
+      await page.getByRole('button', {name: /Color theme/, exact: false }).first().click();
+      await page.getByRole('option', {name, exact: true}).click();
+      await page.waitForTimeout(200);
+    };
+    await pick('Theme: Crimson');
+    assert.equal(await radiusOf(), '6px', 'Crimson stays sharp');
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#canvas-local-root').shadowRoot.querySelector('.theme-card[aria-label="Theme: Crimson"]')).borderRadius), '6px', 'picker previews each family shape');
+    await pick('Theme: Iris');
+    assert.equal(await radiusOf(), '14px', 'Iris goes soft');
+    assert.deepEqual(errors, []);
+  } finally {await browser.close();}
+});
+
 test('sidebar settings icon opens an in-workspace connection dialog', {skip: !executablePath && 'Chromium unavailable or browser tests disabled; set CANVAS_BROWSER_PATH to enable'}, async () => {
   const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage']});
   try {
