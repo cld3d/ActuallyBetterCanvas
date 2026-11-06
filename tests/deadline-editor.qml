@@ -25,19 +25,21 @@ ShellRoot {
       classColor.text = "#7cb342"
       check(editor.collect().classColor === "#7cb342","Saving a class color must include it in the local write")
       var preset = find(editor,"taskClassColorPreset")
-      check(preset && preset.options.length === 7,"Named class palette must be available")
-      check(preset.value === "#7cb342" && preset.currentLabel() === "Philosophy","Picker must preselect the current class color")
+      check(preset && preset.options.length === 12,"Custom colors append to the named palette instead of replacing it")
+      check(preset.value === "#7cb342" && preset.currentLabel() === "Custom (#7cb342)","Custom current colors show as custom")
+      classColor.text = "#0b8043"
+      check(preset.value === "#0b8043" && preset.currentLabel() === "Basil","Picker must preselect the current named color")
       // Ui.Dropdown assigns value before emitting changed, which breaks a plain QML binding.
       preset.value = "#0b8043"
       preset.changed("#0b8043")
       check(editor.collect().classColor === "#0b8043","Choosing a palette color must update the write")
       var original = editor.draft
       editor.draft = Object.assign({},original,{color:"#039be5"})
-      check(preset.value === "#039be5" && preset.currentLabel() === "Calculus","Reopening a different task must reset the selected option")
+      check(preset.value === "#039be5" && preset.currentLabel() === "Peacock","Reopening a different task must reset the selected option")
       classColor.text = "#AABBCC"
       check(preset.value === "#aabbcc" && preset.currentLabel().indexOf("Custom") === 0,"Custom current colors must remain selected")
       editor.draft = Object.assign({},original,{color:"#616161"})
-      check(preset.currentLabel() === "Other","Gray must be named Other")
+      check(preset.currentLabel() === "Graphite","Gray must be named Graphite")
       classColor.text = ""
       check(editor.collect().classColor === "","Clearing a class color must restore its default")
       check(date && time,"Datebook must expose separate date and time fields")
