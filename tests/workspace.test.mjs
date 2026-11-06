@@ -503,7 +503,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
     assert.deepEqual(await page.locator('.row .title').allTextContents(), ['Personal deadline task']);
     await page.getByRole('button', {name: 'Calendar', exact: true}).click();
     assert.equal(await page.locator('.calendar-day[aria-pressed=true] .day-count').textContent(), '1');
-    assert.equal(await page.locator('.calendar-day[aria-pressed=true]').evaluate(node => getComputedStyle(node).boxShadow), 'none', 'selected calendar day has no border-like shadow');
+    assert.match(await page.locator('.calendar-day[aria-pressed=true]').evaluate(node => getComputedStyle(node).boxShadow), /inset/, 'selected calendar day keeps its accent ring');
     assert.deepEqual(await page.locator('.agenda .title').allTextContents(), ['Personal deadline task'], 'calendar follows personal deadline, not Canvas date');
     await assertPlainTaskRow(page);
     assert.equal(await page.getByRole('heading', {name: 'No deadline', exact: true}).count(), 0);
