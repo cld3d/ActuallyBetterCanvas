@@ -367,6 +367,26 @@ test('quiz resume picks up only the signed-in student unfinished attempt with a 
   await assert.rejects(quizResume(origin, identity, {courseId: '34', kind: 'quizzes', id: '../9'}, fetcher), /Invalid course request/);
 });
 
+test('quiz start reopens an attempt Canvas already holds open instead of failing', async () => {
+  const open = {id: 55, quiz_id: 9, user_id: 42, attempt: 1, started_at: '2026-11-05T00:00:00Z', finished_at: null, end_at: '2099-11-06T00:00:00Z', validation_token: 'tok55'};
+  const {fetcher} = quizFixture(url => {
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submissions') return new Response(JSON.stringify({errors: [{message: 'You already have a submission in progress'}]}), {status: 422, headers: {'content-type': 'application/json'}});
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submission') return json({quiz_submissions: [open]});
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  const started = await quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher);
+  assert.deepEqual([started.qsId, started.attempt, started.validationToken], ['55', 1, 'tok55']);
+});
+
+test('quiz start surfaces the reason Canvas refused instead of a bare status', async () => {
+  const {fetcher} = quizFixture(url => {
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submissions') return new Response(JSON.stringify({errors: [{message: 'Quiz has no attempts left'}]}), {status: 422, headers: {'content-type': 'application/json'}});
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submission') return json({quiz_submissions: []});
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher), /422: Quiz has no attempts left/);
+});
+
 test('quiz take questions verify the submission before listing', async () => {
   const {fetcher, calls} = quizFixture(url => {
     if (url.pathname.endsWith('/submissions/41')) return json({quiz_submissions: [quizSubmission]});
