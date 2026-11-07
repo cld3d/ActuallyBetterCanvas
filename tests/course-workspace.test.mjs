@@ -451,9 +451,10 @@ test('quiz assignments redirect to the quiz, attempts use grade fractions, in-pr
     assert.equal(await page.getByText('Score:', {exact: false}).count(), 0, 'score labels give way to fractions');
     await page.goto('https://canvas.test/courses/34/quizzes/10');
     await page.getByRole('heading', {name: 'Resumable quiz', exact: true}).waitFor();
-    assert.equal(await page.getByRole('button', {name: 'Resume attempt 2', exact: true}).count(), 1);
+    assert.equal(await page.getByRole('button', {name: 'Continue in Canvas', exact: true}).count(), 1, 'in-progress attempts continue in Canvas');
+    assert.equal(await page.getByRole('button', {name: 'Try continuing here', exact: true}).count(), 1);
     assert.equal(await page.getByRole('button', {name: 'Begin', exact: true}).count(), 0, 'no new attempt starts while one is in progress');
-    await page.getByRole('button', {name: 'Resume attempt 2', exact: true}).click();
+    await page.getByRole('button', {name: 'Try continuing here', exact: true}).click();
     await page.getByRole('heading', {name: 'Taking attempt 2', exact: true}).waitFor();
     await page.getByRole('radio', {name: 'Four', exact: true}).check();
     await page.getByRole('button', {name: 'Save answers', exact: true}).click();

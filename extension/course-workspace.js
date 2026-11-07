@@ -505,6 +505,9 @@
       body.append(element('div', {class: 'course-actions'}, nativeButton(path('discussions', item.id), 'Reply in Original Canvas')));
     }
     let take = null, takeTimer = null, takeNotice = '', takeCode = false, canvasQuizFrame = null;
+    function canvasQuizHref(itemId) {
+      return '/courses/' + encodeURIComponent(route.courseId) + '/quizzes/' + encodeURIComponent(itemId ?? data?.item?.id ?? take?.itemId ?? '');
+    }
     function clearTake() {if (takeTimer) clearInterval(takeTimer); takeTimer = null; take = null; takeNotice = ''; takeCode = false; canvasQuizFrame = null;}
     function takeTimeLeft() {
       if (!take?.endAt) return null;
@@ -668,9 +671,9 @@
       } catch (reason) {
         if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.'; paint(); return;}
         if (/already exists|in progress|conflict|409/i.test(reason.message)) {takeNotice = 'An attempt is already in progress. Trying to resume it…'; paint(); await resumeTake(item); return;}
-        // Canvas refused the API attempt. Its own quiz page is authoritative, so
-        // show that page here rather than dead-ending on a generic error.
-        takeNotice = 'Canvas would not start the attempt through its API (' + friendlyError(reason) + ') Taking the quiz in Canvas below.';
+        // Canvas refused the API attempt. Its own quiz page is authoritative, and
+        // it breaks out of frames when an attempt starts, so hand off to a tab.
+        takeNotice = 'Canvas would not start this attempt here (' + friendlyError(reason) + ') Take the quiz in Canvas instead.';
         canvasQuizFrame = item.id;
         paint();
       }
@@ -712,14 +715,19 @@
           section.append(field);
         }
         if (resumable) {
-          section.append(element('p', {class: 'course-original-note'}, 'You have an attempt in progress, including one that may have been started in Original Canvas.'));
-          const resume = element('button', {class: 'quiet primary'}, 'Resume attempt ' + (resumable.attempt ?? ''));
+          // Canvas only lets the page that started an attempt answer it, so an
+          // in-progress attempt continues in Canvas. Offer the in-workspace try
+          // as a secondary option for attempts that do share a token.
+          section.append(element('p', {class: 'course-original-note'}, 'Attempt ' + (resumable.attempt ?? '') + ' is in progress. Canvas continues in-progress attempts in its own quiz page.'));
+          const continueInCanvas = element('button', {class: 'quiet primary', type: 'button'}, 'Continue in Canvas');
+          continueInCanvas.addEventListener('click', () => {const href = canvasQuizHref(item.id); try {window.open(href, '_blank', 'noopener');} catch {window.location.href = href;}});
+          const resume = element('button', {class: 'quiet', type: 'button'}, 'Try continuing here');
           resume.addEventListener('click', async () => {
             resume.disabled = true;
             try {await resumeTake(item);}
             finally {resume.disabled = false;}
           });
-          section.append(element('div', {class: 'course-actions'}, resume));
+          section.append(element('div', {class: 'course-actions'}, continueInCanvas, resume));
         } else if (remaining) {
           const begin = element('button', {class: 'quiet primary'}, takeCode ? 'Begin with access code' : 'Begin');
           begin.addEventListener('click', async () => {
@@ -733,13 +741,14 @@
         }
         if (takeNotice) status.textContent = takeNotice;
         section.append(status);
+        const quizHref = canvasQuizHref(item.id);
+        const openInCanvas = () => {try {window.open(quizHref, '_blank', 'noopener');} catch {window.location.href = quizHref;}};
         if (canvasQuizFrame === item.id) {
-          const quizHref = '/courses/' + encodeURIComponent(route.courseId) + '/quizzes/' + encodeURIComponent(item.id);
-          section.append(element('iframe', {src: quizHref, title: item.title + ' quiz in Canvas', class: 'course-quiz-frame', allow: 'fullscreen'}));
-          section.append(element('div', {class: 'course-actions'}, link(quizHref, 'Open this quiz in a new window')));
+          const takeAnyway = element('button', {class: 'quiet primary', type: 'button'}, 'Take this quiz in Canvas');
+          takeAnyway.addEventListener('click', openInCanvas);
+          section.append(element('div', {class: 'course-actions'}, takeAnyway, link(quizHref, 'Open this quiz in a new window')));
         } else {
-          const canvasLink = link('/courses/' + encodeURIComponent(route.courseId) + '/quizzes/' + encodeURIComponent(item.id), 'Open this quiz in Canvas');
-          section.append(element('p', {class: 'course-original-note'}, 'Quiz attempts always work in Canvas itself; use this link if an attempt will not start here. ', canvasLink, '.'));
+          section.append(element('p', {class: 'course-original-note'}, 'Quiz attempts always run in Canvas itself; use ', link(quizHref, 'Open this quiz in Canvas'), ' if an attempt will not start here.'));
         }
         return;
       }
