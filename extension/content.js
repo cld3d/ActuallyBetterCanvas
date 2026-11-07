@@ -38,7 +38,8 @@ dialog .source-status{color:var(--ink)}
     /* Hide scrollbars only inside this Shadow DOM; preserve normal scrolling. */
     ::selection{background:var(--tint);background:color-mix(in srgb, var(--accent) 26%, transparent)}
     *{scrollbar-width:none}*::-webkit-scrollbar{display:none}
-    .brand{display:grid;gap:0;padding:0 12px;line-height:1;letter-spacing:0;color:var(--ink);text-decoration:none}.brand-name{font-size:28px;font-weight:750;line-height:1.05;letter-spacing:-.065em}
+    .brand{display:grid;gap:0;padding:0 12px;line-height:1;letter-spacing:0;color:var(--ink);text-decoration:none}.brand-name{font-size:28px;font-weight:700;line-height:1.05;letter-spacing:-.03em;margin-left:-1px}
+.brand-name::after{content:'';display:inline-block;width:4.4px;height:4.4px;margin-left:3.8px;margin-bottom:.15px;border-radius:1.15px;background:var(--accent)}
     .calendar-day[aria-pressed=true]{box-shadow:inset 0 0 0 1.5px var(--accent);background:color-mix(in srgb, var(--tint) 60%, var(--surface))}
 .theme-card:hover:not([aria-selected=true]){border-color:color-mix(in srgb, var(--line) 60%, var(--ink))}
 .calendar-day:hover:not([aria-pressed=true]){background:color-mix(in srgb, var(--tint) 55%, var(--surface))}
@@ -87,7 +88,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     @media(max-width:850px){.workspace{grid-template-columns:minmax(0,1fr);display:block}aside{position:static;height:auto;padding:16px 22px;gap:16px;border-right:0;border-bottom:1px solid var(--line)}.brand{font-size:10px;padding:0}.local{font-size:13px;display:inline;margin-left:6px}nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}nav button{text-align:center;padding:10px 4px;font-size:11px}nav .selected:before{display:none}main{padding:22px}.row{grid-template-columns:22px minmax(0,1fr) auto;gap:10px;padding:16px 4px}.deadline{grid-column:2;grid-row:2;text-align:left}.edit{grid-column:3;grid-row:1}.stats{gap:24px}.stats strong{font-size:26px}.course-grid{grid-template-columns:1fr}.inbox-layout{grid-template-columns:minmax(0,1fr)}.threads{border-right:0;border-bottom:1px solid var(--line);max-height:min(48dvh,360px)}
 .inbox-layout:has(.reader h2) .reader{order:-1}
 .reader{padding:20px;max-height:50dvh}.calendar-day{min-height:70px;padding:8px 5px}.day-task{display:none}.day-count{top:8px;bottom:auto;right:5px;left:auto}.calendar-controls{align-items:center}.calendar-controls h2{font-size:18px}.calendar-controls .quiet{padding:8px 10px}.custom-select{min-width:140px}.toolbar input{min-width:130px}h1{font-size:32px}.tabs button{flex:1}}
-    @media(max-width:850px){.brand{display:flex;align-items:baseline;gap:8px;padding:0}.brand-prefix{margin:0}.brand-name{font-size:24px}}
+    @media(max-width:850px){.brand{display:flex;align-items:baseline;gap:8px;padding:0}.brand-name{font-size:24px}
+.brand-name::after{width:3.9px;height:3.9px;margin-left:3.2px;border-radius:1px}}
     .sidebar-bottom .quiet.icon-button{padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;flex:none}
     .icon-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
     .icon-button.busy svg{animation:spin 1s linear infinite}
