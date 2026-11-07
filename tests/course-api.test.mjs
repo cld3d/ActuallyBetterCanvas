@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
+import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submissionUploadPut, submitAssignment, toolLaunch} from '../extension/course-api.mjs';
 
 const origin = 'https://canvas.test', identity = origin + '/42';
 const json = (value, headers = {}) => new Response(JSON.stringify(value), {headers: {'content-type': 'application/json', ...headers}});
@@ -231,6 +231,45 @@ test('submission file uploads initialize only safe shell requests', async () => 
   }
   const evil = writeFixture(() => json({upload_url: 'javascript:alert(1)', upload_params: {}}));
   await assert.rejects(submissionUploadInit(origin, identity, assignmentRoute, {name: 'a', size: 1, content_type: 'text/plain'}, evil.fetcher), /Unexpected/);
+});
+
+test('submission file bytes post to the signed destination from the extension', async () => {
+  const seen = [];
+  const fetcher = async (input, options) => {
+    const url = new URL(input);
+    seen.push({href: url.href, method: options?.method, body: options?.body});
+    if (url.host === 'uploads.test') return json({id: 77});
+    if (url.host === 'done.test') return json({id: 88});
+    throw new Error('unexpected ' + url.href);
+  };
+  const base64 = Buffer.from('hello canvas').toString('base64');
+  assert.equal(await submissionUploadPut('https://uploads.test/put', {key: 'abc'}, {name: 'essay.pdf', type: 'application/pdf', data: base64}, fetcher), '77');
+  assert.equal(seen[0].method, 'POST');
+  assert.ok(seen[0].body instanceof FormData, 'uploads as multipart form data');
+  assert.equal(seen[0].body.get('key'), 'abc');
+  const uploaded = seen[0].body.get('file');
+  assert.equal(uploaded.name, 'essay.pdf');
+  assert.equal(uploaded.type, 'application/pdf');
+  assert.equal(Buffer.from(await uploaded.arrayBuffer()).toString(), 'hello canvas');
+
+  // Canvas's older redirect flow finishes with a JSON fetch at the Location header.
+  const redirecting = async (input, options) => {
+    const url = new URL(input);
+    if (url.host === 'uploads.test') return new Response('', {status: 302, headers: {location: 'https://done.test/confirm'}});
+    if (url.host === 'done.test') return json({id: 88});
+    throw new Error('unexpected ' + url.href);
+  };
+  assert.equal(await submissionUploadPut('https://uploads.test/put', {}, {name: 'a.txt', type: 'text/plain', data: base64}, redirecting), '88');
+
+  for (const [url, params, file] of [
+    ['javascript:alert(1)', {}, {name: 'a.txt', type: 'text/plain', data: base64}],
+    ['https://user:pass@uploads.test/put', {}, {name: 'a.txt', type: 'text/plain', data: base64}],
+    ['https://uploads.test/put', [], {name: 'a.txt', type: 'text/plain', data: base64}],
+    ['https://uploads.test/put', {}, {name: '../evil', type: 'text/plain', data: base64}],
+    ['https://uploads.test/put', {}, {name: 'a.txt', type: 'text/plain', data: ''}]
+  ]) {
+    await assert.rejects(submissionUploadPut(url, params, file, fetcher), /Invalid|No file/);
+  }
 });
 
 test('tool launches use fixed sessionless endpoints with validated targets', async () => {

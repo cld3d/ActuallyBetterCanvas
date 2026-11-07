@@ -41,6 +41,11 @@ async function setup(browser, path = '/courses/34') {
       if (message.action === 'quizComplete') {window.quizCalls.push({action: 'quizComplete'}); return {ok: true, score: 8, keptScore: 8, workflowState: 'complete', finishedAt: '2026-11-05T00:00:00Z'};}
       if (message.action === 'submitAssignment') {window.submissions.push(message.submission); return {ok: true, submission: {id: 1, assignment_id: Number(message.route.id), submitted_at: '2026-11-05T00:00:00Z', workflow_state: 'submitted'}};}
       if (message.action === 'submissionUploadInit') return {ok: true, uploadUrl: 'https://uploads.test/put', uploadParams: {key: 'abc'}};
+      if (message.action === 'submissionUpload') {
+        window.uploads = window.uploads || [];
+        window.uploads.push({uploadUrl: message.uploadUrl, uploadParams: message.uploadParams, name: message.file.name, type: message.file.type, bytes: atob(message.file.data)});
+        return {ok: true, id: '77'};
+      }
       if (message.action === 'toolLaunch') {window.launches.push(message.launch); return {ok: true, url: 'https://tool.test/launch?x=1', name: 'Example tool'};}
       if (message.action !== 'course') return {ok: true, state: structuredClone(window.testState), conversations: []};
       window.courseRequests.push(message.route);
@@ -324,6 +329,7 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
     await page.waitForFunction(() => window.submissions.length === 1);
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_upload', file_ids: ['77']}]);
+    assert.deepEqual(await page.evaluate(() => window.uploads), [{uploadUrl: 'https://uploads.test/put', uploadParams: {key: 'abc'}, name: 'essay.pdf', type: 'application/pdf', bytes: 'hello'}], 'file bytes upload through the extension worker, not the CSP-restricted page');
     await page.goto('https://canvas.test/courses/34/assignments/16');
     await page.getByRole('heading', {name: 'Link', exact: true}).waitFor();
     await page.getByLabel('Website URL to submit').fill('example.com/work');

@@ -164,6 +164,40 @@ export async function submissionUploadInit(origin, identity, route, file, fetche
   return {uploadUrl: uploadURL.href, uploadParams: data.upload_params};
 }
 
+export async function submissionUploadPut(uploadUrl, uploadParams, file, fetcher = fetch) {
+  let parsed;
+  try {parsed = new URL(uploadUrl);} catch {throw new Error('Invalid upload destination.');}
+  if (!['https:', 'http:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Invalid upload destination.');
+  if (!uploadParams || typeof uploadParams !== 'object' || Array.isArray(uploadParams) || Object.keys(uploadParams).length > 50) throw new Error('Invalid upload parameters.');
+  const {name, type, data} = file || {};
+  if (typeof name !== 'string' || name.length < 1 || name.length > 255 || /[/\\\0]/.test(name)) throw new Error('Invalid file name.');
+  if (typeof data !== 'string' || !data.length) throw new Error('No file data to upload.');
+  let bytes;
+  try {bytes = Uint8Array.from(atob(data), character => character.charCodeAt(0));} catch {throw new Error('No file data to upload.');}
+  if (!bytes.length) throw new Error('No file data to upload.');
+  const form = new FormData();
+  for (const [key, value] of Object.entries(uploadParams)) form.append(key, String(value));
+  form.append('file', new Blob([bytes], {type: typeof type === 'string' && type ? type : 'application/octet-stream'}), name);
+  // The signed destination is not on the Canvas origin, so the service worker
+  // performs the write instead of the page, which Canvas's CSP would block.
+  const post = await fetcher(parsed.href, {method: 'POST', body: form, redirect: 'follow', signal: AbortSignal.timeout(120000)});
+  if (!post.ok && !(post.status >= 300 && post.status < 400)) throw new Error(`Upload failed (status ${post.status}). Try Original Canvas.`);
+  let payload = null;
+  try {payload = await post.json();} catch {}
+  if (!payload || !/^\d+$/.test(String(payload.id))) {
+    const location = post.headers.get('location');
+    if (!location) throw new Error('Upload did not complete. Try Original Canvas.');
+    let next;
+    try {next = new URL(location, parsed);} catch {throw new Error('Upload did not complete. Try Original Canvas.');}
+    if (!['https:', 'http:'].includes(next.protocol) || next.username || next.password) throw new Error('Upload did not complete. Try Original Canvas.');
+    const done = await fetcher(next.href, {redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
+    if (!done.ok) throw new Error('Upload did not complete. Try Original Canvas.');
+    try {payload = await done.json();} catch {}
+  }
+  if (!payload || !/^\d+$/.test(String(payload.id))) throw new Error('Upload did not complete. Try Original Canvas.');
+  return String(payload.id);
+}
+
 export async function toolLaunch(origin, identity, launch, fetcher = fetch) {
   const {courseId, launchType, assessmentId, moduleItemId} = launch || {};
   if (!/^\d+$/.test(String(courseId))) throw new Error('Invalid course request.');

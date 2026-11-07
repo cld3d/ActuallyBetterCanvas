@@ -264,25 +264,50 @@
       section.append(status);
       return message => {status.replaceChildren(); if (message) status.append(message);};
     }
-    // The second leg of a submission file upload runs here, next to the file:
-    // Canvas signs the destination, so the bytes go straight there.
-    async function uploadSubmissionFile(uploadUrl, uploadParams, file) {
+    // The bytes go through the background service worker: Canvas's CSP does not
+    // allow this page to reach the signed upload host itself.
+    function readAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Could not read ' + file.name + '.'));
+        reader.onload = () => {
+          const value = String(reader.result || '');
+          const comma = value.indexOf(',');
+          resolve(comma >= 0 ? value.slice(comma + 1) : '');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    async function uploadSubmissionFile(init, file) {
+      const data = await readAsBase64(file);
+      try {
+        const reply = await request({action: 'submissionUpload', uploadUrl: init.uploadUrl, uploadParams: init.uploadParams, file: {name: file.name, type: file.type || 'application/octet-stream', data}});
+        if (/^\d+$/.test(String(reply.id))) return String(reply.id);
+        throw new Error('Upload did not complete. Try Original Canvas.');
+      } catch (error) {
+        // Canvas-hosted destinations can also be written from the page itself;
+        // keep that path as a fallback when the extension host is refused.
+        if (!/failed to fetch|couldn't reach|network/i.test(String(error?.message))) throw error;
+        return uploadFromPage(init.uploadUrl, init.uploadParams, file);
+      }
+    }
+    async function uploadFromPage(uploadUrl, uploadParams, file) {
       const form = new FormData();
       for (const [key, value] of Object.entries(uploadParams)) form.append(key, String(value));
       form.append('file', file, file.name);
       const post = await fetch(uploadUrl, {method: 'POST', body: form, redirect: 'follow', signal: AbortSignal.timeout(120000)});
-      if (!post.ok) throw new Error(`Upload failed (status ${post.status}). Try Original Canvas.`);
-      let data = null;
-      try {data = await post.json();} catch {}
-      if (!data || !/^\d+$/.test(String(data.id))) {
+      if (!post.ok && !(post.status >= 300 && post.status < 400)) throw new Error(`Upload failed (status ${post.status}). Try Original Canvas.`);
+      let payload = null;
+      try {payload = await post.json();} catch {}
+      if (!payload || !/^\d+$/.test(String(payload.id))) {
         const location = post.headers.get('location');
         if (!location) throw new Error('Upload did not complete. Try Original Canvas.');
         const done = await fetch(location, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
         if (!done.ok) throw new Error('Upload did not complete. Try Original Canvas.');
-        data = await done.json();
+        try {payload = await done.json();} catch {}
       }
-      if (!data || !/^\d+$/.test(String(data.id))) throw new Error('Upload did not complete. Try Original Canvas.');
-      return String(data.id);
+      if (!payload || !/^\d+$/.test(String(payload.id))) throw new Error('Upload did not complete. Try Original Canvas.');
+      return String(payload.id);
     }
     function openLaunchedTab() {
       // Popup blockers only allow tabs opened inside the click handler, so open
@@ -414,7 +439,7 @@
             setStatus(`Uploading ${count} of ${files.length}…`);
             if (item.allowed_extensions?.length && !item.allowed_extensions.some(extension => file.name.toLowerCase().endsWith('.' + extension.toLowerCase()))) throw new Error(`${file.name} is not an accepted file type.`);
             const init = await request({action: 'submissionUploadInit', route: {courseId: route.courseId, id: String(item.id)}, file: {name: file.name, size: file.size, content_type: file.type || 'application/octet-stream'}});
-            ids.push(await uploadSubmissionFile(init.uploadUrl, init.uploadParams, file));
+            ids.push(await uploadSubmissionFile(init, file));
           }
           setStatus('Submitting…');
           const reply = await request({action: 'submitAssignment', route: {courseId: route.courseId, id: String(item.id)}, submission: {submission_type: 'online_upload', file_ids: ids}});

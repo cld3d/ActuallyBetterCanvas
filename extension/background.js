@@ -1,5 +1,5 @@
 import {announcementsRead, collect, workspaceRead} from './api.mjs';
-import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submitAssignment, toolLaunch} from './course-api.mjs';
+import {courseFileRead, courseRead, quizAnswer, quizComplete, quizResume, quizStart, quizTakeQuestions, submissionUploadInit, submissionUploadPut, submitAssignment, toolLaunch} from './course-api.mjs';
 const HOST = 'com.canvas_local.feed';
 let currentSync;
 
@@ -88,6 +88,9 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
       return {ok: true, ...await submissionUploadInit(origin, state.identity, message.route, message.file)};
+    }
+    if (message.action === 'submissionUpload') {
+      return {ok: true, id: await submissionUploadPut(message.uploadUrl, message.uploadParams, message.file)};
     }
     if (message.action === 'toolLaunch') {
       if (!origin) throw new Error('Connect your Canvas website first.');
