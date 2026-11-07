@@ -668,7 +668,7 @@
       } catch (reason) {
         if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.';}
         else if (/already exists|in progress|conflict|409/i.test(reason.message)) {takeNotice = 'An attempt is already in progress. Trying to resume it…'; paint(); await resumeTake(item); return;}
-        else takeNotice = 'Could not start: ' + friendlyError(reason);
+        else takeNotice = 'Could not start here: ' + friendlyError(reason) + ' Use “Open this quiz in Canvas” below to take it in Canvas.';
         paint();
       }
     }
@@ -728,6 +728,8 @@
         } else {
           section.append(element('p', {class: 'course-original-note'}, 'No attempts remaining.'));
         }
+        const canvasLink = link('/courses/' + encodeURIComponent(route.courseId) + '/quizzes/' + encodeURIComponent(item.id), 'Open this quiz in Canvas');
+        section.append(element('p', {class: 'course-original-note'}, 'Quiz attempts always work in Canvas itself; use this link if an attempt will not start here. ', canvasLink, '.'));
         if (takeNotice) status.textContent = takeNotice;
         section.append(status);
         return;
