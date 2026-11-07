@@ -125,19 +125,24 @@ async function statusMessage(response) {
   return '';
 }
 
-async function failStatus(response) {
+async function failStatus(response, path) {
   if (response.status === 401) throw new Error('Sign in to Canvas to read this course.');
   if (response.status === 403) throw new Error('Canvas has restricted access to this content.');
   if (response.status === 404) throw new Error('This content is unavailable or has been removed.');
   const detail = await statusMessage(response);
-  throw new Error(`Canvas returned ${response.status}${detail ? ': ' + detail : ''}. Try again.`);
+  // Name the exact call: Canvas's generic failures are otherwise impossible to
+  // tell apart, and a bug report needs to say which endpoint refused.
+  const where = path ? ` [${path.replace(/^\/api\/v1/, '')}]` : '';
+  throw new Error(`Canvas returned ${response.status}${detail ? ': ' + detail : ''}${where}. Try again.`);
 }
 
-async function postJSON(origin, path, body, fetcher) {
+async function postJSON(origin, path, body, fetcher, csrfToken) {
   const payload = JSON.stringify(body);
   if (payload.length > 500000) throw new Error('Submission is too large.');
-  const response = await fetcher(origin + path, {method: 'POST', headers: {'content-type': 'application/json', accept: 'application/json'}, credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000), body: payload});
-  if (!response.ok) await failStatus(response);
+  const headers = {'content-type': 'application/json', accept: 'application/json'};
+  if (typeof csrfToken === 'string' && csrfToken.length >= 8 && csrfToken.length <= 512) headers['x-csrf-token'] = csrfToken;
+  const response = await fetcher(origin + path, {method: 'POST', headers, credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000), body: payload});
+  if (!response.ok) await failStatus(response, path);
   if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
   const data = await response.json();
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Unexpected Canvas course response.');
@@ -146,7 +151,7 @@ async function postJSON(origin, path, body, fetcher) {
 
 async function getObject(origin, path, fetcher) {
   const response = await fetcher(origin + path, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
-  if (!response.ok) await failStatus(response);
+  if (!response.ok) await failStatus(response, path);
   if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
   const data = await response.json();
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Unexpected Canvas course response.');
@@ -246,7 +251,7 @@ async function envelopeList(origin, path, key, fetcher) {
     if (visited.has(url) || visited.size >= 100) throw new Error('Canvas pagination did not finish.');
     visited.add(url);
     const response = await fetcher(url, {credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000)});
-    if (!response.ok) await failStatus(response);
+    if (!response.ok) await failStatus(response, new URL(response.url || url).pathname);
     if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
     const data = await response.json();
     if (!data || typeof data !== 'object' || !Array.isArray(data[key])) throw new Error('Unexpected Canvas course response.');
@@ -275,7 +280,7 @@ function checkValidationToken(token) {
   if (typeof token !== 'string' || token.length < 1 || token.length > 4096) throw new Error('Invalid quiz session. Start a new attempt in Original Canvas.');
 }
 
-export async function quizStart(origin, identity, route, options, fetcher = fetch) {
+export async function quizStart(origin, identity, route, options, fetcher = fetch, csrfToken = null) {
   const {courseId, id} = route || {};
   if (!/^\d+$/.test(String(courseId)) || !/^\d+$/.test(String(id))) throw new Error('Invalid course request.');
   const accessCode = options?.access_code;
@@ -287,7 +292,7 @@ export async function quizStart(origin, identity, route, options, fetcher = fetc
   if (open) return open;
   let data;
   try {
-    data = await postJSON(origin, `/api/v1/courses/${courseId}/quizzes/${id}/submissions`, accessCode ? {access_code: accessCode} : {}, fetcher);
+    data = await postJSON(origin, `/api/v1/courses/${courseId}/quizzes/${id}/submissions`, accessCode ? {access_code: accessCode} : {}, fetcher, csrfToken);
   } catch (error) {
     if (!/Canvas returned 422/.test(String(error?.message))) throw error;
     const resumed = await currentAttempt(origin, profile, courseId, id, fetcher).catch(() => null);

@@ -662,7 +662,8 @@
     async function beginTake(item, code) {
       takeNotice = 'Starting your attempt…'; paint();
       try {
-        const start = await request({action: 'quizStart', route: {courseId: route.courseId, id: String(item.id)}, options: code ? {access_code: code} : {}});
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || null;
+        const start = await request({action: 'quizStart', route: {courseId: route.courseId, id: String(item.id)}, options: code ? {access_code: code} : {}, csrfToken});
         await openTake(item, {qsId: start.qsId, attempt: start.attempt, validationToken: start.validationToken, endAt: start.endAt});
       } catch (reason) {
         if (/access code/i.test(reason.message)) {takeCode = true; takeNotice = reason.message + ' Enter it below to begin.';}

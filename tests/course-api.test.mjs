@@ -401,7 +401,7 @@ test('quiz start surfaces the reason Canvas refused instead of a bare status', a
     if (url.pathname === '/api/v1/courses/34/quizzes/9/submission') return json({quiz_submissions: []});
     throw new Error('Unexpected endpoint ' + url);
   });
-  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher), /422: Quiz has no attempts left/);
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher), /422: Quiz has no attempts left \[\/courses\/34\/quizzes\/9\/submissions\]/);
 });
 
 test('quiz take questions verify the submission before listing', async () => {

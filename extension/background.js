@@ -100,7 +100,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (message.action === 'quizStart') {
       if (!origin) throw new Error('Connect your Canvas website first.');
       const {state} = await native({action: 'list'});
-      return {ok: true, ...await quizStart(origin, state.identity, message.route, message.options)};
+      return {ok: true, ...await quizStart(origin, state.identity, message.route, message.options, undefined, message.csrfToken)};
     }
     if (message.action === 'quizQuestions') {
       if (!origin) throw new Error('Connect your Canvas website first.');
