@@ -160,6 +160,16 @@ test('tool-backed assignments without a classic quiz resolve New Quizzes, others
   assert.equal((await read(plain.fetcher, 'assignments', '12')).newQuiz, null);
 });
 
+test('refused quiz starts describe the quiz Canvas turned down', async () => {
+  const {fetcher} = quizFixture(url => {
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submissions') return new Response(JSON.stringify({errors: [{message: 'An error occurred.'}]}), {status: 422, headers: {'content-type': 'application/json'}});
+    if (url.pathname === '/api/v1/courses/34/quizzes/9/submission') return json({quiz_submissions: []});
+    if (url.pathname === '/api/v1/courses/34/quizzes/9') return json({id: 9, quiz_type: 'quizzes.next', question_count: 12, allowed_attempts: 1, published: true, quiz_lti: true});
+    throw new Error('Unexpected endpoint ' + url);
+  });
+  await assert.rejects(quizStart(origin, identity, {courseId: '34', kind: 'quizzes', id: '9'}, {}, fetcher), /type=quizzes\.next[^\]]*questions=12/);
+});
+
 test('New Quizzes are never routed through the classic quiz submission endpoints', async () => {
   const {fetcher} = fixture(url => {
     if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['online_quiz'], is_quiz_assignment: true});

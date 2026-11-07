@@ -296,12 +296,36 @@ export async function quizStart(origin, identity, route, options, fetcher = fetc
   } catch (error) {
     if (!/Canvas returned 422/.test(String(error?.message))) throw error;
     const resumed = await currentAttempt(origin, profile, courseId, id, fetcher).catch(() => null);
-    if (!resumed) throw error;
-    return resumed;
+    if (resumed) return resumed;
+    // Canvas answers this endpoint with a generic message, so describe the quiz
+    // it refused: the fields tell a real quiz problem from a wrong-quiz guess.
+    const facts = await quizFacts(origin, courseId, id, fetcher);
+    throw new Error(String(error.message).replace(/\. Try again\.$/, '') + (facts ? ' [' + facts + ']' : '') + '. Try again.');
   }
   const submission = Array.isArray(data.quiz_submissions) ? data.quiz_submissions[0] : null;
   if (!submission || !/^\d+$/.test(String(submission.id)) || String(submission.quiz_id) !== String(id)) throw new Error('Unexpected Canvas course response.');
   return {qsId: String(submission.id), attempt: submission.attempt, validationToken: typeof submission.validation_token === 'string' ? submission.validation_token : null, endAt: submission.end_at || null, workflowState: submission.workflow_state || null};
+}
+
+// A compact, one-line description of the quiz Canvas refused to start.
+async function quizFacts(origin, courseId, quizId, fetcher) {
+  try {
+    const quiz = await getObject(origin, `/api/v1/courses/${courseId}/quizzes/${quizId}`, fetcher);
+    const parts = [];
+    const add = (label, value) => { if (value != null && value !== '') parts.push(label + '=' + value); };
+    add('type', typeof quiz.quiz_type === 'string' ? quiz.quiz_type : null);
+    add('questions', Number.isFinite(quiz.question_count) ? quiz.question_count : null);
+    add('attempts', quiz.allowed_attempts);
+    add('published', quiz.published);
+    add('access_code', quiz.access_code_required ?? (quiz.access_code ? 'set' : null));
+    add('lti', quiz.quiz_lti);
+    add('submission_types', Array.isArray(quiz.submission_types) ? quiz.submission_types.join('|') : null);
+    add('lock_at', quiz.lock_at);
+    add('unlock_at', quiz.unlock_at);
+    return parts.join(', ').slice(0, 220);
+  } catch {
+    return '';
+  }
 }
 
 // Finds this student's unfinished attempt, if Canvas is holding one open.
