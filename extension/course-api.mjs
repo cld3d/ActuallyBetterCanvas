@@ -46,17 +46,23 @@ export async function courseRead(origin, identity, request, fetcher = fetch) {
     const item = await object(`${base}/assignments/${id}?include[]=submission&override_assignment_dates=true`, id);
     // Link quiz assignments to their workspace quiz when the pairing is visible.
     // Match by linkage, not by flag: Canvas does not always set is_quiz_assignment.
+    // New Quizzes reuse ids from a different table, so they must never be
+    // started through the classic quiz endpoints.
     let quizId = null;
+    let newQuiz = null;
     if (item.is_quiz_assignment || (item.submission_types || []).some(type => ['online_quiz', 'external_tool'].includes(type))) {
       try {
         const match = (await list(base + '/quizzes')).find(quiz => String(quiz.assignment_id) === String(id));
-        if (match && /^\d+$/.test(String(match.id))) quizId = match.id;
+        if (match) {
+          const isNewQuiz = /quizzes\.next|new_quiz/i.test(String(match.quiz_type || '')) || match.quiz_lti === true;
+          if (isNewQuiz) newQuiz = match;
+          else if (/^\d+$/.test(String(match.id))) quizId = String(match.id);
+        }
       } catch {quizId = null;}
     }
     // Tool-backed assignments without a classic quiz may still be New Quizzes,
     // which expose a read API but can only be taken inside the quiz player.
-    let newQuiz = null;
-    if (!quizId && (item.submission_types || []).includes('external_tool')) {
+    if (!quizId && !newQuiz && (item.submission_types || []).includes('external_tool')) {
       try {
         const fetched = await object(`/api/quiz/v1/courses/${courseId}/quizzes/${id}`, null);
         if (fetched && (fetched.id != null || typeof fetched.title === 'string')) newQuiz = fetched;
@@ -130,7 +136,7 @@ async function failStatus(response) {
 async function postJSON(origin, path, body, fetcher) {
   const payload = JSON.stringify(body);
   if (payload.length > 500000) throw new Error('Submission is too large.');
-  const response = await fetcher(origin + path, {method: 'POST', headers: {'content-type': 'application/json'}, credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000), body: payload});
+  const response = await fetcher(origin + path, {method: 'POST', headers: {'content-type': 'application/json', accept: 'application/json'}, credentials: 'include', redirect: 'error', cache: 'no-store', signal: AbortSignal.timeout(30000), body: payload});
   if (!response.ok) await failStatus(response);
   if (!(response.headers.get('content-type') || '').includes('application/json')) throw new Error('Sign in to Canvas to read this course.');
   const data = await response.json();
@@ -275,14 +281,16 @@ export async function quizStart(origin, identity, route, options, fetcher = fetc
   const accessCode = options?.access_code;
   if (accessCode != null && (typeof accessCode !== 'string' || accessCode.length > 255)) throw new Error('Invalid access code.');
   const profile = await verifyWorkspaceIdentity(origin, identity, fetcher);
+  // Canvas's quiz page reopens an existing attempt instead of creating another.
+  // Do the same first: creating a duplicate attempt is what Canvas rejects.
+  const open = await currentAttempt(origin, profile, courseId, id, fetcher).catch(() => null);
+  if (open) return open;
   let data;
   try {
     data = await postJSON(origin, `/api/v1/courses/${courseId}/quizzes/${id}/submissions`, accessCode ? {access_code: accessCode} : {}, fetcher);
   } catch (error) {
-    // Canvas refuses to create a second attempt when one is already open. Reopen
-    // it instead of failing, matching what Canvas's own quiz page does.
     if (!/Canvas returned 422/.test(String(error?.message))) throw error;
-    const resumed = await currentAttempt(origin, profile, courseId, id, fetcher);
+    const resumed = await currentAttempt(origin, profile, courseId, id, fetcher).catch(() => null);
     if (!resumed) throw error;
     return resumed;
   }

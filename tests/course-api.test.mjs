@@ -131,7 +131,7 @@ test('quiz linkage is matched even when Canvas omits the quiz flag', async () =>
     return json([]);
   });
   const data = await read(fetcher, 'assignments', '12');
-  assert.equal(data.quizId, 9);
+  assert.equal(data.quizId, '9');
   assert.ok(calls.some(url => url === '/api/v1/courses/34/quizzes?per_page=100'), 'linkage lookup runs for tool-backed assignments');
   const plain = fixture(url => {
     if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['online_text_entry']});
@@ -158,6 +158,23 @@ test('tool-backed assignments without a classic quiz resolve New Quizzes, others
     return json([]);
   });
   assert.equal((await read(plain.fetcher, 'assignments', '12')).newQuiz, null);
+});
+
+test('New Quizzes are never routed through the classic quiz submission endpoints', async () => {
+  const {fetcher} = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['online_quiz'], is_quiz_assignment: true});
+    if (url.pathname.endsWith('/quizzes')) return json([{id: 77, assignment_id: 12, quiz_type: 'quizzes.next'}]);
+    return json([]);
+  });
+  const data = await read(fetcher, 'assignments', '12');
+  assert.equal(data.quizId, null, 'a New Quiz id is not a classic quiz id');
+  assert.equal(data.newQuiz.quiz_type, 'quizzes.next');
+  const classic = fixture(url => {
+    if (url.pathname.endsWith('/assignments/12')) return json({id: 12, submission_types: ['online_quiz'], is_quiz_assignment: true});
+    if (url.pathname.endsWith('/quizzes')) return json([{id: 77, assignment_id: 12, quiz_type: 'assignment'}]);
+    return json([]);
+  });
+  assert.equal((await read(classic.fetcher, 'assignments', '12')).quizId, '77');
 });
 
 test('malformed quiz envelopes degrade to attempts and description instead of failing the page', async () => {
