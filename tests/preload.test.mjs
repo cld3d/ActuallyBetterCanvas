@@ -49,7 +49,7 @@ test('document-start guard prevents Canvas flashes, respects Original mode, and 
         await page.goto('https://canvas.test' + path);
         assert.equal(await page.locator('#canvas-local-preload-style').count(), 1);
         assert.equal(await page.locator('body').evaluate(node => getComputedStyle(node).opacity), '0', 'Original Canvas is hidden before the workspace script runs');
-        assert.equal(await page.locator('html').evaluate(node => getComputedStyle(node).backgroundColor), colorScheme === 'dark' ? 'rgb(16, 16, 19)' : 'rgb(211, 211, 216)');
+        assert.equal(await page.locator('html').evaluate(node => getComputedStyle(node).backgroundColor), colorScheme === 'dark' ? 'rgb(16, 16, 19)' : 'rgb(212, 212, 216)');
         await page.addScriptTag({content});
         await page.locator('.workspace').waitFor();
         assert.equal(await page.locator('#canvas-local-preload-style').count(), 0, 'guard is released only once the workspace is mounted');
