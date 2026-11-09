@@ -730,7 +730,9 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
   // BetterCampus. Each ring is one class in the current search/course focus;
   // rings fill as tasks are completed. Totals ignore the To do/Completed tab
   // so progress stays visible while working through the list.
-  const RING_MAX = 8;
+  // Alternate stronger and softer theme shades so adjacent classes stay distinct.
+  const RING_SHADES = [100, 45, 90, 55, 80, 50, 95, 65];
+  const RING_MAX = RING_SHADES.length;
   function tasksProgress() {
     const base = state.assignments.filter(a => (!course || a.course === course) && (a.title + ' ' + a.course).toLowerCase().includes(query.toLowerCase()));
     if (!base.length) return null;
@@ -757,7 +759,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     svg.setAttribute('aria-label', `Overall progress: ${done} of ${base.length} tasks completed`);
     shown.forEach((group, index) => {
       const radius = outerRadius - index * step;
-      const shade = 100 - (shown.length > 1 ? index / (shown.length - 1) * 30 : 0);
+      const shade = RING_SHADES[index];
       const color = `color-mix(in srgb, var(--accent) ${shade}%, var(--bg))`;
       const track = document.createElementNS(svgNS, 'circle');
       track.setAttribute('cx', String(center)); track.setAttribute('cy', String(center)); track.setAttribute('r', String(radius));

@@ -200,6 +200,9 @@ test('dense progress rings leave a clear center and follow the selected theme', 
         await page.getByRole('option', {name: 'Theme: ' + theme, exact: true}).click();
         const shades = await page.locator('.rings-wrap circle:nth-of-type(even)').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).stroke));
         assert.equal(new Set(shades).size, 8, 'each class uses a distinct shade from the theme');
+        const weights = await page.locator('.rings-wrap circle:nth-of-type(even)').evaluateAll(nodes => nodes.map(node => Number(node.getAttribute('stroke').match(/--accent\) ([\d.]+)%/)[1])));
+        assert.ok(Math.max(...weights) - Math.min(...weights) >= 55, 'theme shades span a visibly wider range');
+        assert.ok(weights.slice(1).every((weight, index) => Math.abs(weight - weights[index]) >= 25), 'neighboring rings use separated shades, not a near-identical gradient');
         assert.notEqual(shades[0], previousShade, 'changing the theme updates the ring without reloading');
         previousShade = shades[0];
         assert.match(await page.locator('.rings-wrap circle').first().getAttribute('stroke'), /var\(--accent\) 100%/);
