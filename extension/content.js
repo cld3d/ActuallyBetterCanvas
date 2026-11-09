@@ -104,7 +104,21 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     .calendar-layout{min-width:0}.reader h2:focus{outline:2px solid var(--accent);outline-offset:4px}
     @media(min-width:1250px){.calendar-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:28px;align-items:start}.calendar-layout .agenda{margin:0}.calendar-layout .calendar-day{min-height:90px;padding:8px}.calendar-layout .agenda .row{grid-template-columns:22px minmax(0,1fr) auto;gap:10px}.calendar-layout .agenda .deadline{grid-column:2;grid-row:2;text-align:left}.calendar-layout .agenda .edit{grid-column:3;grid-row:1}}
     /* Shared finishing rules: stable reading alignment and unmistakable keyboard cues. */
-    .page-heading{font-size:26px;line-height:1.2;letter-spacing:-.035em;font-weight:650;margin:0 0 26px}
+    .tasks-hero{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:center;margin:0 0 8px;padding:22px 4px 26px;border-bottom:1px solid color-mix(in srgb, var(--line) 62%, transparent);margin-bottom:24px}
+    .rings-wrap{position:relative;width:220px;height:220px;flex:none;margin:auto}
+    .rings-wrap svg{display:block;width:100%;height:100%}
+    .rings-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+    .rings-center strong{font-size:34px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
+    .rings-center span{font-size:13px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+    .rings-legend{display:grid;gap:2px;min-width:0;align-content:center}
+    .rings-title{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+    .rings-legend button{display:flex;align-items:center;gap:10px;background:none;border:0;padding:7px 8px;border-radius:8px;color:var(--ink);text-align:left;min-width:0}
+    .rings-legend button:hover{background:var(--state-hover)}
+    .rings-legend button[aria-pressed=true]{background:var(--state-focus)}
+    .rings-legend button:focus-visible{box-shadow:inset 0 0 0 2px var(--accent);text-decoration:underline;text-underline-offset:4px}
+    .rings-dot{width:12px;height:12px;border-radius:50%;flex:none}
+    .rings-course{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550;font-size:13px}
+    .rings-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
     .row{align-items:start}.row .check{margin-top:3px}.row .deadline{padding-top:3px}.row .edit{margin-top:-6px}
     dialog h2,.announcement-title,.reader h2{overflow-wrap:anywhere}.course-card h2 a{color:inherit;text-decoration:none}.course-card h2 a:hover{text-decoration:underline;text-underline-offset:4px}
     .course-card progress{height:7px}.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 12px;text-align:center}.loading-state p{margin:0}
@@ -113,11 +127,11 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     .threads,.reader,.course-rich pre,.course-rich table{scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
     .threads::-webkit-scrollbar,.reader::-webkit-scrollbar,nav::-webkit-scrollbar{display:block;width:6px;height:4px}.threads::-webkit-scrollbar-thumb,.reader::-webkit-scrollbar-thumb,nav::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
     @media(prefers-reduced-motion:reduce){.nebula-particle{display:none}.nebula-loader{border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;width:24px!important;height:24px!important}}
-    @media(max-width:850px){aside{position:relative;padding:12px 18px;gap:8px}.brand{min-height:44px}.sidebar-bottom{position:absolute;top:12px;right:18px;width:176px;margin:0;gap:0}.sidebar-bottom .quiet.icon-button{width:44px;height:44px}nav{display:flex;overflow-x:auto;gap:16px;scrollbar-width:thin}nav button{flex:none;min-height:44px;padding:8px 0;font-size:13px}.sidebar-indicator{display:none}nav button.selected{box-shadow:inset 0 -2px var(--accent)}main{padding:24px 18px}.page-heading{font-size:24px;margin-bottom:22px}.inbox-layout .reader{order:0;max-height:none}.inbox-layout:not(.has-conversation) .reader{display:none}.inbox-layout.has-conversation .threads{display:none}.inbox-layout.has-conversation .reader{display:block;padding:20px 0}.inbox-back{display:inline-block;margin-bottom:20px}.calendar-day .day-task{display:block;font-size:10px;line-height:1.4;margin-top:6px}.calendar-day .day-task~.day-task{display:none}.calendar-day{min-height:86px}.calendar-controls .quiet{min-height:44px}.reader h2:focus{box-shadow:inset 3px 0 var(--accent);padding-left:12px}}
+    @media(max-width:850px){aside{position:relative;padding:12px 18px;gap:8px}.brand{min-height:44px}.sidebar-bottom{position:absolute;top:12px;right:18px;width:176px;margin:0;gap:0}.sidebar-bottom .quiet.icon-button{width:44px;height:44px}nav{display:flex;overflow-x:auto;gap:16px;scrollbar-width:thin}nav button{flex:none;min-height:44px;padding:8px 0;font-size:13px}.sidebar-indicator{display:none}nav button.selected{box-shadow:inset 0 -2px var(--accent)}main{padding:24px 18px}.inbox-layout .reader{order:0;max-height:none}.inbox-layout:not(.has-conversation) .reader{display:none}.inbox-layout.has-conversation .threads{display:none}.inbox-layout.has-conversation .reader{display:block;padding:20px 0}.inbox-back{display:inline-block;margin-bottom:20px}.calendar-day .day-task{display:block;font-size:10px;line-height:1.4;margin-top:6px}.calendar-day .day-task~.day-task{display:none}.calendar-day{min-height:86px}.calendar-controls .quiet{min-height:44px}.reader h2:focus{box-shadow:inset 3px 0 var(--accent);padding-left:12px}}
     /* Final responsive refinements intentionally follow the base mobile rules. */
     input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.course-card progress{height:8px}progress::-webkit-progress-bar{background:var(--line-strong)}
     .course-card h2 a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--line-strong)}
-    @media(max-width:850px){.inbox-layout.has-conversation .reader{padding:20px 18px}.reader h2:focus{padding-left:0;box-shadow:none}.calendar-day{min-height:68px}}
+    @media(max-width:850px){.inbox-layout.has-conversation .reader{padding:20px 18px}.reader h2:focus{padding-left:0;box-shadow:none}.calendar-day{min-height:68px}.tasks-hero{grid-template-columns:minmax(0,1fr);gap:18px;padding-top:10px}.rings-wrap{width:200px;height:200px}}
     @media(max-width:360px){nav{display:grid;grid-template-columns:minmax(0,1fr) max-content minmax(0,1fr);gap:2px 6px;overflow:visible}nav button{text-align:center;font-size:12px;min-height:40px}.toolbar{flex-direction:column}.toolbar input,.toolbar .custom-select{width:100%}.calendar-day .day-task{display:none}.calendar-day{min-height:54px}.day-count{top:auto;bottom:5px;right:5px}.calendar-controls{gap:4px}.calendar-controls h2{font-size:16px}.calendar-controls .quiet{padding-inline:8px}}
   `;
   shadow.append(style);
@@ -220,7 +234,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     })();
   }
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
-  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
+  const progressWrap = el('div', {class: 'tasks-hero-wrap'});
+  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, progressWrap, list);
   const pageContent = el('div', {class: 'page-content'});
   const courseWorkspace = globalThis.CanvasCourseWorkspace?.create({request, assignments: () => state.assignments, taskRow,
     navigate: (url, opts) => {
@@ -372,9 +387,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     sidebarIndicator.style.borderRadius = length > 0 ? `1.5px / ${(1.5 / length).toFixed(4)}px` : '0';
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
-  const pageHeading = el('h1', {class: 'page-heading'});
   const main = el('main', {tabindex: '-1'},
-    pageHeading, toolbar, tabs, notice, taskPanel, pageContent);
+    toolbar, tabs, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('a', {class: 'brand', href: pagePaths.tasks, 'aria-label': 'Canvas', onclick: event => {
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -661,8 +675,6 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     return 'Coming up';
   }
   function render() {
-    pageHeading.hidden = page === 'course';
-    pageHeading.textContent = pageTitles[page] || 'Canvas';
     main.setAttribute('aria-label', {tasks: 'Tasks', announcements: 'Announcements', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
     document.title = page === 'course' ? (courseWorkspace?.title() || 'Course') : (pageTitles[page] || 'Canvas Local');
     for (const button of navigation.querySelectorAll('[data-page]')) {
@@ -694,6 +706,9 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     if (page === 'announcements') {renderAnnouncements(); return;}
     if (page === 'calendar') {renderCalendar(); return;}
     const items = filteredItems();
+    progressWrap.replaceChildren();
+    const hero = tasksProgress();
+    if (hero) progressWrap.append(hero);
     list.replaceChildren();
     if (!items.length) {
       const title = query || course ? 'No matching tasks' : view === 'completed' ? 'No completed tasks yet' : state.assignments.length ? 'You’re all caught up' : 'No assignments cached';
@@ -707,6 +722,76 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
       list.append(el('h2', {class: 'group-title'}, group + ' · ' + members.length));
       for (const item of members) list.append(taskRow(item));
     }
+  }
+  // Concentric per-class progress rings for the Tasks page, inspired by
+  // BetterCampus. Each ring is one class in the current search/course focus;
+  // rings fill as tasks are completed. Totals ignore the To do/Completed tab
+  // so progress stays visible while working through the list.
+  const RING_COLORS = ['#6aa9d6', '#7cc79a', '#b9b9c4', '#a991d6', '#e0a878', '#6fc2c2', '#d68f9e', '#9ab87c', '#8fa8d6', '#d6c26a'];
+  const RING_MAX = 8;
+  function tasksProgress() {
+    const base = state.assignments.filter(a => (!course || a.course === course) && (a.title + ' ' + a.course).toLowerCase().includes(query.toLowerCase()));
+    if (!base.length) return null;
+    const groups = new Map();
+    for (const item of base) {
+      const entry = groups.get(item.course) || {name: item.course, total: 0, done: 0};
+      entry.total++;
+      if (item.completed) entry.done++;
+      groups.set(item.course, entry);
+    }
+    const sorted = [...groups.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    const shown = sorted.slice(0, RING_MAX);
+    const hidden = sorted.length - shown.length;
+    const done = base.filter(a => a.completed).length;
+    const percent = Math.round(done / base.length * 100);
+    const size = 220, center = size / 2, step = 12, stroke = 6;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', `Overall progress: ${done} of ${base.length} tasks completed`);
+    shown.forEach((group, index) => {
+      const radius = center - stroke / 2 - index * step;
+      if (radius <= 0) return;
+      const color = RING_COLORS[index % RING_COLORS.length];
+      const track = document.createElementNS(svgNS, 'circle');
+      track.setAttribute('cx', String(center)); track.setAttribute('cy', String(center)); track.setAttribute('r', String(radius));
+      track.setAttribute('fill', 'none'); track.setAttribute('stroke', color); track.setAttribute('stroke-opacity', '0.22'); track.setAttribute('stroke-width', String(stroke));
+      svg.append(track);
+      const fraction = group.total ? group.done / group.total : 0;
+      const arc = document.createElementNS(svgNS, 'circle');
+      arc.setAttribute('cx', String(center)); arc.setAttribute('cy', String(center)); arc.setAttribute('r', String(radius));
+      arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', color); arc.setAttribute('stroke-width', String(stroke)); arc.setAttribute('stroke-linecap', 'round');
+      arc.setAttribute('pathLength', '100'); arc.setAttribute('stroke-dasharray', '100'); arc.setAttribute('stroke-dashoffset', String(100 - fraction * 100));
+      arc.setAttribute('transform', `rotate(-90 ${center} ${center})`);
+      const label = document.createElementNS(svgNS, 'title');
+      label.textContent = `${group.name}: ${group.done} of ${group.total} completed`;
+      arc.append(label);
+      svg.append(arc);
+    });
+    const rings = el('div', {class: 'rings-wrap'}, svg,
+      el('div', {class: 'rings-center', 'aria-hidden': 'true'}, el('strong', {}, percent + '%'), el('span', {}, `${done}/${base.length}`)));
+    const legend = el('div', {class: 'rings-legend', role: 'list', 'aria-label': 'Progress by class'},
+      el('p', {class: 'rings-title'}, 'Progress by class'));
+    for (const group of shown) {
+      const color = RING_COLORS[shown.indexOf(group) % RING_COLORS.length];
+      const dot = el('span', {class: 'rings-dot', 'aria-hidden': 'true'});
+      dot.style.backgroundColor = color;
+      const active = course === group.name;
+      const button = el('button', {type: 'button', 'aria-pressed': String(active), 'aria-label': `${group.name}, ${group.done} of ${group.total} completed${active ? '. Showing only this class. Activate to show all classes.' : '. Activate to show only this class.'}`},
+        dot, el('span', {class: 'rings-course'}, group.name), el('span', {class: 'rings-count'}, `${group.done}/${group.total}`));
+      button.addEventListener('click', () => {
+        const target = active ? '' : group.name;
+        course = target;
+        renderCoursesFilter(); render();
+        const buttons = [...progressWrap.querySelectorAll('.rings-legend button')];
+        const back = buttons.find(node => node.getAttribute('aria-label')?.startsWith(group.name + ',')) || buttons[0];
+        (back || toolbar.querySelector('input'))?.focus({preventScroll: true});
+      });
+      legend.append(button);
+    }
+    if (hidden > 0) legend.append(el('p', {class: 'meta'}, `+ ${hidden} more ${hidden === 1 ? 'class' : 'classes'}`));
+    return el('div', {class: 'tasks-hero'}, rings, legend);
   }
   function filteredItems() {
     return state.assignments.filter(a => a.completed === (view === 'completed') && (!course || a.course === course) && (a.title + ' ' + a.course).toLowerCase().includes(query.toLowerCase())).sort((a, b) => {

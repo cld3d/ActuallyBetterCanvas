@@ -536,7 +536,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       await page.setViewportSize({width: 390, height: 844});
       for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks', 'Announcements']) {
         await page.getByRole('button', {name, exact: true}).click();
-        assert.equal(await page.getByRole('heading', {name, exact: true, level: 1}).isVisible(), true, `${name} has a clear page heading`);
+        assert.equal(await page.locator('#canvas-local-root h1').count(), 0, `${name} shows no page title`);
         assert.equal(await page.getByRole('main', {name, exact: true}).count(), 1, 'page identity remains accessible');
         assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
         assert.equal(await page.locator('#canvas-local-root').evaluate(node => [...node.shadowRoot.querySelectorAll('.threads,.reader')].every(element => getComputedStyle(element).scrollbarWidth === 'thin')), true, `${name} retains nested scroll affordances`);

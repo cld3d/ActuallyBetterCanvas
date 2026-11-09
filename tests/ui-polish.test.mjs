@@ -110,3 +110,45 @@ test('secondary text clears WCAG normal-text contrast on every theme surface', {
     }
   } finally {await browser.close();}
 });
+
+test('tasks page shows per-class progress rings that fill with completion', {skip: !executablePath && 'Chromium unavailable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({viewport: {width: 1366, height: 900}, reducedMotion: 'reduce'});
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html; charset=utf-8', body: '<p>Canvas</p>'}));
+    await page.goto('https://canvas.test/dashboard');
+    await page.evaluate(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      const due = new Date().toISOString();
+      window.testState = {assignments: [
+        {uid: 'a1', title: 'Essay one', course: 'English', courseId: '1', effectiveDue: due, completed: true, url: 'https://canvas.test/1'},
+        {uid: 'a2', title: 'Essay two', course: 'English', courseId: '1', effectiveDue: due, completed: false, url: 'https://canvas.test/2'},
+        {uid: 'b1', title: 'Lab one', course: 'Chemistry', courseId: '2', effectiveDue: due, completed: false, url: 'https://canvas.test/3'},
+        {uid: 'b2', title: 'Lab two', course: 'Chemistry', courseId: '2', effectiveDue: due, completed: false, url: 'https://canvas.test/4'}
+      ]};
+      window.chrome = {storage: {local: {get: async () => ({origin: 'https://canvas.test'})}}, runtime: {sendMessage: async message => {
+        if (message.action === 'update') {
+          const item = window.testState.assignments.find(a => a.uid === message.uid);
+          item.completed = message.patch.completion; item.completionOverride = message.patch.completion;
+        }
+        return {ok: true, state: structuredClone(window.testState)};
+      }}};
+    });
+    await page.addScriptTag({content});
+    await page.locator('.tasks-hero').waitFor();
+    assert.equal(await page.locator('#canvas-local-root h1').count(), 0, 'tasks page shows no title');
+    assert.equal(await page.locator('.rings-wrap svg circle').count(), 4, 'one track and one arc per class');
+    assert.equal(await page.locator('.rings-center strong').innerText(), '25%');
+    assert.equal(await page.locator('.rings-center span').innerText(), '1/4');
+    assert.match(await page.locator('.rings-legend button').nth(0).innerText(), /Chemistry\s+0\/2/s);
+    assert.match(await page.locator('.rings-legend button').nth(1).innerText(), /English\s+1\/2/s);
+    await page.getByRole('button', {name: /Chemistry, 0 of 2/}).click();
+    assert.equal(await page.locator('.rings-center strong').innerText(), '0%');
+    assert.equal(await page.locator('.row').count(), 2, 'legend filters the task list to that class');
+    await page.getByRole('button', {name: /Chemistry, 0 of 2.*Showing only/}).click();
+    assert.equal(await page.locator('.rings-center strong').innerText(), '25%');
+    await page.setViewportSize({width: 390, height: 844});
+    assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, 'rings fit mobile widths');
+  } finally {await browser.close();}
+});
