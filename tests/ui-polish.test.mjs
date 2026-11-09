@@ -145,7 +145,11 @@ test('tasks page shows per-class progress rings that fill with completion', {ski
     const firstTask = await page.locator('.row').first().boundingBox();
     const ring = await page.locator('.rings-wrap').boundingBox();
     const tabs = await page.getByRole('tablist').boundingBox();
-    assert.ok(ring.x >= firstTask.x + firstTask.width, 'ring sits to the right of the task list');
+    const filters = await page.locator('.toolbar').boundingBox();
+    assert.ok(ring.x >= filters.x + filters.width, 'ring occupies a compact inset beside the controls');
+    assert.ok(ring.y + ring.height <= firstTask.y, 'the inset leaves the full task row unobstructed');
+    assert.ok(firstTask.width > filters.width, 'tasks reclaim the full width below the header instead of retaining an empty side rail');
+    assert.ok(ring.y < tabs.y, 'progress is integrated with the upper controls, not a separate rail below them');
     assert.ok(firstTask.y - (tabs.y + tabs.height) < 100, 'tasks begin directly below the controls');
     await page.getByRole('checkbox', {name: 'Complete Essay two', exact: true}).click();
     await page.waitForFunction(() => document.querySelector('#canvas-local-root').shadowRoot.querySelector('.rings-center strong').textContent === '50%');
@@ -158,5 +162,64 @@ test('tasks page shows per-class progress rings that fill with completion', {ski
     const lastTask = await page.locator('.row').last().boundingBox();
     const mobileRing = await page.locator('.rings-wrap').boundingBox();
     assert.ok(mobileRing.y >= lastTask.y + lastTask.height, 'mobile ring follows the list rather than pushing tasks down');
+    await page.getByRole('button', {name: 'Calendar', exact: true}).click();
+    assert.equal(await page.locator('.task-progress').isVisible(), false, 'progress does not leak onto other pages');
+  } finally {await browser.close();}
+});
+
+test('dense progress rings leave a clear center and follow the selected theme', {skip: !executablePath && 'Chromium unavailable'}, async () => {
+  const browser = await chromium.launch({executablePath, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage']});
+  try {
+    const page = await browser.newPage({viewport: {width: 1366, height: 900}, reducedMotion: 'reduce'});
+    await page.route('https://canvas.test/**', route => route.fulfill({contentType: 'text/html; charset=utf-8', body: '<p>Canvas</p>'}));
+    await page.goto('https://canvas.test/dashboard');
+    await page.evaluate(() => {
+      const attach = Element.prototype.attachShadow;
+      Element.prototype.attachShadow = function(options) {return attach.call(this, {...options, mode: 'open'});};
+      window.testState = {assignments: Array.from({length: 353}, (_, i) => ({uid: String(i), title: 'Assignment ' + i, course: 'Class ' + i % 8, courseId: String(i % 8), effectiveDue: new Date().toISOString(), completed: i < 249, url: 'https://canvas.test/assignments/' + i}))};
+      window.chrome = {runtime: {sendMessage: async () => ({ok: true, state: structuredClone(window.testState)})}};
+    });
+    await page.addScriptTag({content});
+    await page.locator('.rings-wrap').waitFor();
+    assert.equal(await page.locator('.rings-center strong').innerText(), '71%');
+    assert.equal(await page.locator('.rings-center span').innerText(), '249/353');
+    assert.equal(await page.locator('.rings-wrap circle').count(), 16);
+    const centerIsClear = () => page.locator('.rings-wrap').evaluate(wrap => {
+      const box = wrap.getBoundingClientRect();
+      const radius = Math.min(...[...wrap.querySelectorAll('circle')].map(node => Number(node.getAttribute('r')) - Number(node.getAttribute('stroke-width')) / 2)) * box.width / 240;
+      return [...wrap.querySelectorAll('.rings-center strong,.rings-center span')].every(node => {
+        const text = node.getBoundingClientRect();
+        return [text.left, text.right].every(x => [text.top, text.bottom].every(y => Math.hypot(x - box.x - box.width / 2, y - box.y - box.height / 2) < radius - 3));
+      });
+    });
+    let previousShade = '';
+    for (const scheme of ['light', 'dark']) {
+      await page.emulateMedia({colorScheme: scheme});
+      for (const theme of ['Graphite', 'Lagoon', 'Crimson']) {
+        await page.getByRole('button', {name: /Color theme:/}).click();
+        await page.getByRole('option', {name: 'Theme: ' + theme, exact: true}).click();
+        const shades = await page.locator('.rings-wrap circle:nth-of-type(even)').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).stroke));
+        assert.equal(new Set(shades).size, 8, 'each class uses a distinct shade from the theme');
+        assert.notEqual(shades[0], previousShade, 'changing the theme updates the ring without reloading');
+        previousShade = shades[0];
+        assert.match(await page.locator('.rings-wrap circle').first().getAttribute('stroke'), /var\(--accent\) 100%/);
+        for (const width of [1366, 1100, 850, 390, 320]) {
+          await page.setViewportSize({width, height: 900});
+          assert.equal(await centerIsClear(), true, `${theme} ${scheme} at ${width}px: both labels fit inside the inner ring`);
+          assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false);
+        }
+      }
+    }
+    await page.evaluate(() => {for (const item of window.testState.assignments) item.completed = true;});
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    await page.getByRole('tab', {name: 'Completed', exact: true}).click();
+    assert.equal(await page.locator('.rings-center strong').innerText(), '100%');
+    assert.equal(await page.locator('.rings-center span').innerText(), '353/353');
+    assert.equal(await page.locator('.rings-wrap circle[stroke-dashoffset="0"]').count(), 8, 'every class completes its ring');
+    assert.equal(await centerIsClear(), true, '100% and the three-digit totals retain center clearance');
+    await page.evaluate(() => {for (const item of window.testState.assignments) item.completed = false;});
+    await page.getByRole('button', {name: 'Sync now', exact: true}).click();
+    await page.getByRole('tab', {name: 'To do', exact: true}).click();
+    assert.equal(await page.locator('.rings-wrap circle[stroke-dashoffset][visibility="hidden"]').count(), 8, 'zero-progress arcs leave no rounded-cap dots');
   } finally {await browser.close();}
 });

@@ -104,16 +104,20 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     .calendar-layout{min-width:0}.reader h2:focus{outline:2px solid var(--accent);outline-offset:4px}
     @media(min-width:1250px){.calendar-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:28px;align-items:start}.calendar-layout .agenda{margin:0}.calendar-layout .calendar-day{min-height:90px;padding:8px}.calendar-layout .agenda .row{grid-template-columns:22px minmax(0,1fr) auto;gap:10px}.calendar-layout .agenda .deadline{grid-column:2;grid-row:2;text-align:left}.calendar-layout .agenda .edit{grid-column:3;grid-row:1}}
     /* Shared finishing rules: stable reading alignment and unmistakable keyboard cues. */
-    #task-panel{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:32px;align-items:start}
-    #task-panel:has(.task-progress:empty){grid-template-columns:minmax(0,1fr)}
-    #task-panel>div:first-child{min-width:0}
-    .task-progress{position:sticky;top:24px;padding-top:26px}
-    .rings-wrap{position:relative;width:200px;height:200px;flex:none;margin:auto}
+    #task-panel,#task-panel>div{min-width:0}
+    main.tasks-layout{display:grid;grid-template-columns:minmax(0,1fr) 188px;column-gap:32px;align-items:start}
+    .tasks-layout>.toolbar{grid-column:1;grid-row:1}
+    .tasks-layout>.tabs{grid-column:1;grid-row:2}
+    .tasks-layout>.notice{grid-column:1;grid-row:3}
+    .tasks-layout>#task-panel{grid-column:1 / -1;grid-row:4}
+    .task-progress{padding:0 0 0 28px;border-left:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+    .tasks-layout>.task-progress{grid-column:2;grid-row:1 / 4;align-self:center}
+    .rings-wrap{position:relative;width:160px;height:160px;margin:auto}
     .rings-wrap svg{display:block;width:100%;height:100%}
-    .rings-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
-    .rings-center strong{font-size:34px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
-    .rings-center span{font-size:13px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
-    @media(max-width:1100px){#task-panel{display:block}.task-progress{position:static;padding-top:28px}.rings-wrap{width:160px;height:160px}.rings-center strong{font-size:28px}}
+    .rings-center{position:absolute;inset:26%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;gap:5px}
+    .rings-center strong{font-size:26px;font-weight:650;letter-spacing:-.045em;font-variant-numeric:tabular-nums;line-height:1.1}
+    .rings-center span{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.5}
+    @media(max-width:1100px){main.tasks-layout{display:block}.tasks-layout>.task-progress{margin-top:28px;padding:24px 0 0;border-left:0;border-top:1px solid var(--line)}}
     .row{align-items:start}.row .check{margin-top:3px}.row .deadline{padding-top:3px}.row .edit{margin-top:-6px}
     dialog h2,.announcement-title,.reader h2{overflow-wrap:anywhere}.course-card h2 a{color:inherit;text-decoration:none}.course-card h2 a:hover{text-decoration:underline;text-underline-offset:4px}
     .course-card progress{height:7px}.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 12px;text-align:center}.loading-state p{margin:0}
@@ -230,7 +234,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
   }
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
   const progressWrap = el('div', {class: 'task-progress'});
-  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list, progressWrap);
+  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list);
   const pageContent = el('div', {class: 'page-content'});
   const courseWorkspace = globalThis.CanvasCourseWorkspace?.create({request, assignments: () => state.assignments, taskRow,
     navigate: (url, opts) => {
@@ -383,7 +387,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
   const main = el('main', {tabindex: '-1'},
-    toolbar, tabs, notice, taskPanel, pageContent);
+    toolbar, tabs, notice, taskPanel, progressWrap, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('a', {class: 'brand', href: pagePaths.tasks, 'aria-label': 'Canvas', onclick: event => {
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -670,6 +674,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     return 'Coming up';
   }
   function render() {
+    main.classList.remove('tasks-layout');
+    progressWrap.hidden = page !== 'tasks';
     main.setAttribute('aria-label', {tasks: 'Tasks', announcements: 'Announcements', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
     document.title = page === 'course' ? (courseWorkspace?.title() || 'Course') : (pageTitles[page] || 'Canvas Local');
     for (const button of navigation.querySelectorAll('[data-page]')) {
@@ -704,6 +710,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     progressWrap.replaceChildren();
     const rings = tasksProgress();
     if (rings) progressWrap.append(rings);
+    progressWrap.hidden = !rings;
+    main.classList.toggle('tasks-layout', Boolean(rings));
     list.replaceChildren();
     if (!items.length) {
       const title = query || course ? 'No matching tasks' : view === 'completed' ? 'No completed tasks yet' : state.assignments.length ? 'You’re all caught up' : 'No assignments cached';
@@ -722,7 +730,6 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
   // BetterCampus. Each ring is one class in the current search/course focus;
   // rings fill as tasks are completed. Totals ignore the To do/Completed tab
   // so progress stays visible while working through the list.
-  const RING_COLORS = ['#6aa9d6', '#7cc79a', '#b9b9c4', '#a991d6', '#e0a878', '#6fc2c2', '#d68f9e', '#9ab87c', '#8fa8d6', '#d6c26a'];
   const RING_MAX = 8;
   function tasksProgress() {
     const base = state.assignments.filter(a => (!course || a.course === course) && (a.title + ' ' + a.course).toLowerCase().includes(query.toLowerCase()));
@@ -738,25 +745,30 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const shown = sorted.slice(0, RING_MAX);
     const done = base.filter(a => a.completed).length;
     const percent = Math.round(done / base.length * 100);
-    const size = 220, center = size / 2, step = 12, stroke = 6;
+    // Reserve the central 136-unit diameter for text, regardless of class count.
+    // Extra rings get a finer stroke/spacing instead of shrinking the text well.
+    const size = 240, center = size / 2, outerRadius = 116, innerRadius = 68;
+    const step = shown.length > 1 ? (outerRadius - innerRadius) / (shown.length - 1) : 0;
+    const stroke = shown.length > 1 ? Math.min(7, step * .65) : 7;
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label', `Overall progress: ${done} of ${base.length} tasks completed`);
     shown.forEach((group, index) => {
-      const radius = center - stroke / 2 - index * step;
-      if (radius <= 0) return;
-      const color = RING_COLORS[index % RING_COLORS.length];
+      const radius = outerRadius - index * step;
+      const shade = 100 - (shown.length > 1 ? index / (shown.length - 1) * 30 : 0);
+      const color = `color-mix(in srgb, var(--accent) ${shade}%, var(--bg))`;
       const track = document.createElementNS(svgNS, 'circle');
       track.setAttribute('cx', String(center)); track.setAttribute('cy', String(center)); track.setAttribute('r', String(radius));
-      track.setAttribute('fill', 'none'); track.setAttribute('stroke', color); track.setAttribute('stroke-opacity', '0.22'); track.setAttribute('stroke-width', String(stroke));
+      track.setAttribute('fill', 'none'); track.setAttribute('stroke', color); track.setAttribute('stroke-opacity', '0.16'); track.setAttribute('stroke-width', String(stroke));
       svg.append(track);
       const fraction = group.total ? group.done / group.total : 0;
       const arc = document.createElementNS(svgNS, 'circle');
       arc.setAttribute('cx', String(center)); arc.setAttribute('cy', String(center)); arc.setAttribute('r', String(radius));
       arc.setAttribute('fill', 'none'); arc.setAttribute('stroke', color); arc.setAttribute('stroke-width', String(stroke)); arc.setAttribute('stroke-linecap', 'round');
       arc.setAttribute('pathLength', '100'); arc.setAttribute('stroke-dasharray', '100'); arc.setAttribute('stroke-dashoffset', String(100 - fraction * 100));
+      if (!fraction) arc.setAttribute('visibility', 'hidden');
       arc.setAttribute('transform', `rotate(-90 ${center} ${center})`);
       const label = document.createElementNS(svgNS, 'title');
       label.textContent = `${group.name}: ${group.done} of ${group.total} completed`;
