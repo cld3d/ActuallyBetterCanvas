@@ -403,6 +403,7 @@ test('workspace edits, completion overrides, source navigation, mobile and dark 
     await page.getByRole('button', {name: 'Follow Canvas deadline', exact: true}).click();
     await page.getByRole('button', {name: 'Save changes'}).click();
     await page.getByRole('dialog', {name: /Essay/}).waitFor({state: 'detached'});
+    assert.equal(await page.getByRole('button', {name: /^Edit /}).evaluate(node => node.getRootNode().activeElement === node), true, 'saving restores keyboard position to the recreated task');
     assert.equal(await page.locator('.deadline small').count(), 0, 'Canvas deadlines show their date without a redundant tag');
     await page.emulateMedia({colorScheme: 'dark', reducedMotion: 'reduce'});
     await page.waitForFunction(() => getComputedStyle(document.querySelector('#canvas-local-root')).getPropertyValue('--bg').trim() === '#101013', undefined, {timeout: 5000});
@@ -535,10 +536,10 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       await page.setViewportSize({width: 390, height: 844});
       for (const name of ['Courses', 'Calendar', 'Inbox', 'Tasks', 'Announcements']) {
         await page.getByRole('button', {name, exact: true}).click();
-        assert.equal(await page.locator('#canvas-local-root h1, #canvas-local-root .intro').count(), 0, `${name} has no redundant page title or subtitle`);
+        assert.equal(await page.getByRole('heading', {name, exact: true, level: 1}).isVisible(), true, `${name} has a clear page heading`);
         assert.equal(await page.getByRole('main', {name, exact: true}).count(), 1, 'page identity remains accessible');
         assert.equal(await page.locator('.workspace').evaluate(node => node.scrollWidth > node.clientWidth), false, `${name} must fit mobile in ${colorScheme}`);
-        assert.equal(await page.locator('#canvas-local-root').evaluate(node => [...node.shadowRoot.querySelectorAll('.workspace,.select-options,.threads,textarea')].every(element => getComputedStyle(element).scrollbarWidth === 'none')), true, `${name} hides workspace and nested scrollbars`);
+        assert.equal(await page.locator('#canvas-local-root').evaluate(node => [...node.shadowRoot.querySelectorAll('.threads,.reader')].every(element => getComputedStyle(element).scrollbarWidth === 'thin')), true, `${name} retains nested scroll affordances`);
         if (name === 'Calendar') {
           assert.equal(await page.locator('.workspace').evaluate(node => {
             node.scrollTop = 0;
@@ -553,11 +554,7 @@ test('custom navigation, task tabs, course listbox, calendar deadlines and read-
       }
       assert.equal(await page.locator('.tab-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables underline sliding');
       assert.equal(await page.locator('.sidebar-indicator').evaluate(node => getComputedStyle(node).transitionDuration), '0s', 'reduced motion disables sidebar sliding');
-      assert.equal(await page.locator('nav').evaluate(node => {
-        const selected = node.querySelector('[aria-current="page"]');
-        const line = new DOMMatrix(getComputedStyle(node.querySelector('.sidebar-indicator')).transform);
-        return line.m41 === selected.offsetLeft && line.m42 === selected.offsetTop + 12;
-      }), true, 'the sidebar rule follows the selected item after mobile resizing');
+      assert.equal(await page.locator('nav').evaluate(node => getComputedStyle(node.querySelector('[aria-current="page"]')).boxShadow !== 'none'), true, 'mobile navigation uses a contained selection underline');
     }
     for (const [path, title] of [['courses', 'Courses'], ['calendar', 'Calendar'], ['conversations', 'Inbox']]) {
       await page.goto('https://canvas.test/' + path);

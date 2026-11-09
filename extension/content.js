@@ -96,6 +96,29 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     .tooltip-bubble{position:fixed;z-index:10002;max-width:200px;padding:6px 10px;border-radius:calc(var(--radius,8px) - 1px);background:var(--ink);color:var(--bg);font-size:12px;font-weight:550;line-height:1.4;text-align:center;box-shadow:0 6px 18px #00000030;box-shadow:0 6px 18px color-mix(in srgb, var(--ink) 20%, transparent);pointer-events:none;opacity:0;transition:opacity .15s ease-out}
     .tooltip-bubble.show{opacity:1}
     @media(max-width:560px){nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}nav button{white-space:nowrap;font-size:11px;padding:10px 2px}nav .nav-badge{min-width:16px;margin-left:4px}}
+    @media(max-width:850px){.theme-options{left:auto;right:-132px;bottom:auto;top:calc(100% + 8px);max-width:calc(100vw - 36px)}}
+    @media(max-width:850px){nav button{border-radius:0}}
+    .thread.unread strong:before{width:8px;height:8px;top:.45em}.confirm-controls{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
+    aside{background:var(--surface)}nav button:hover:not(:disabled){opacity:1}
+    .thread[aria-pressed=true]{background:var(--tint);box-shadow:inset 3px 0 var(--accent)}
+    .calendar-layout{min-width:0}.reader h2:focus{outline:2px solid var(--accent);outline-offset:4px}
+    @media(min-width:1250px){.calendar-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:28px;align-items:start}.calendar-layout .agenda{margin:0}.calendar-layout .calendar-day{min-height:90px;padding:8px}.calendar-layout .agenda .row{grid-template-columns:22px minmax(0,1fr) auto;gap:10px}.calendar-layout .agenda .deadline{grid-column:2;grid-row:2;text-align:left}.calendar-layout .agenda .edit{grid-column:3;grid-row:1}}
+    /* Shared finishing rules: stable reading alignment and unmistakable keyboard cues. */
+    .page-heading{font-size:26px;line-height:1.2;letter-spacing:-.035em;font-weight:650;margin:0 0 26px}
+    .row{align-items:start}.row .check{margin-top:3px}.row .deadline{padding-top:3px}.row .edit{margin-top:-6px}
+    dialog h2,.announcement-title,.reader h2{overflow-wrap:anywhere}.course-card h2 a{color:inherit;text-decoration:none}.course-card h2 a:hover{text-decoration:underline;text-underline-offset:4px}
+    .course-card progress{height:7px}.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 12px;text-align:center}.loading-state p{margin:0}
+    .empty h2{margin:0 0 8px}.empty p{margin:0}.agenda{margin-top:28px}.inbox-back{display:none}
+    select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}nav button:focus-visible,.tabs button:focus-visible{box-shadow:inset 0 -3px var(--accent);text-decoration:underline;text-underline-offset:5px}
+    .threads,.reader,.course-rich pre,.course-rich table{scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+    .threads::-webkit-scrollbar,.reader::-webkit-scrollbar,nav::-webkit-scrollbar{display:block;width:6px;height:4px}.threads::-webkit-scrollbar-thumb,.reader::-webkit-scrollbar-thumb,nav::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px}
+    @media(prefers-reduced-motion:reduce){.nebula-particle{display:none}.nebula-loader{border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;width:24px!important;height:24px!important}}
+    @media(max-width:850px){aside{position:relative;padding:12px 18px;gap:8px}.brand{min-height:44px}.sidebar-bottom{position:absolute;top:12px;right:18px;width:176px;margin:0;gap:0}.sidebar-bottom .quiet.icon-button{width:44px;height:44px}nav{display:flex;overflow-x:auto;gap:16px;scrollbar-width:thin}nav button{flex:none;min-height:44px;padding:8px 0;font-size:13px}.sidebar-indicator{display:none}nav button.selected{box-shadow:inset 0 -2px var(--accent)}main{padding:24px 18px}.page-heading{font-size:24px;margin-bottom:22px}.inbox-layout .reader{order:0;max-height:none}.inbox-layout:not(.has-conversation) .reader{display:none}.inbox-layout.has-conversation .threads{display:none}.inbox-layout.has-conversation .reader{display:block;padding:20px 0}.inbox-back{display:inline-block;margin-bottom:20px}.calendar-day .day-task{display:block;font-size:10px;line-height:1.4;margin-top:6px}.calendar-day .day-task~.day-task{display:none}.calendar-day{min-height:86px}.calendar-controls .quiet{min-height:44px}.reader h2:focus{box-shadow:inset 3px 0 var(--accent);padding-left:12px}}
+    /* Final responsive refinements intentionally follow the base mobile rules. */
+    input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.course-card progress{height:8px}progress::-webkit-progress-bar{background:var(--line-strong)}
+    .course-card h2 a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--line-strong)}
+    @media(max-width:850px){.inbox-layout.has-conversation .reader{padding:20px 18px}.reader h2:focus{padding-left:0;box-shadow:none}.calendar-day{min-height:68px}}
+    @media(max-width:360px){nav{display:grid;grid-template-columns:minmax(0,1fr) max-content minmax(0,1fr);gap:2px 6px;overflow:visible}nav button{text-align:center;font-size:12px;min-height:40px}.toolbar{flex-direction:column}.toolbar input,.toolbar .custom-select{width:100%}.calendar-day .day-task{display:none}.calendar-day{min-height:54px}.day-count{top:auto;bottom:5px;right:5px}.calendar-controls{gap:4px}.calendar-controls h2{font-size:16px}.calendar-controls .quiet{padding-inline:8px}}
   `;
   shadow.append(style);
   function el(tag, attrs = {}, ...children) {
@@ -172,8 +195,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const syncNow = el('button', {class: 'quiet primary', type: 'button', onclick: async event => {
       event.target.disabled = true; status.textContent = 'Syncing…';
       try {
-        await refresh(true);
-        status.textContent = `${state.assignments.length} assignments cached.` + (state.lastSync ? ' Last synced ' + new Date(state.lastSync).toLocaleString() + '.' : ' Not synced yet.');
+        const result = await refresh(true);
+        status.textContent = (result?.error ? 'Sync failed: ' + result.error + ' ' : '') + `${state.assignments.length} assignments cached.` + (state.lastSync ? ' Last successful sync ' + new Date(state.lastSync).toLocaleString() + '.' : ' No successful sync yet.');
       } catch (error) {status.textContent = friendlyError(error);}
       finally {event.target.disabled = false;}
     }}, 'Sync now');
@@ -284,6 +307,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const scheme = resolvedScheme();
     const vars = themeFamily()[scheme];
     for (const key of themeVars) host.style.setProperty(key, vars[key]);
+    // Secondary copy also appears on selected/tinted surfaces, not only the base.
+    host.style.setProperty('--muted', `color-mix(in srgb, ${vars['--muted']} 85%, ${vars['--ink']})`);
     host.style.setProperty('--radius', family.radius || '8px');
     host.style.setProperty('color-scheme', scheme);
     const label = `${themeFamily().label} · ${themeModeLabel()}`;
@@ -313,7 +338,9 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
   for (const candidate of themeFamilies) {
     const darkDot = el('span', {class: 'dot', 'aria-hidden': 'true'});
     darkDot.style.background = dotBackground(candidate.dark);
-    const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, darkDot);
+    const lightDot = el('span', {class: 'dot', 'aria-hidden': 'true'});
+    lightDot.style.background = dotBackground(candidate.light);
+    const dots = el('span', {class: 'dots', 'aria-hidden': 'true'}, lightDot, darkDot);
     const option = el('button', {class: 'theme-card', role: 'option', 'aria-selected': 'false', 'aria-label': 'Theme: ' + candidate.label, onclick: () => {applyTheme(candidate.id, themeMode); toggleThemePicker(false); themeButton.focus();}}, dots, el('span', {}, candidate.label));
     option.style.borderRadius = candidate.radius || '10px';
     familyButtons.set(candidate.id, option);
@@ -345,8 +372,9 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     sidebarIndicator.style.borderRadius = length > 0 ? `1.5px / ${(1.5 / length).toFixed(4)}px` : '0';
   }
   new ResizeObserver(positionSidebarIndicator).observe(navigation);
+  const pageHeading = el('h1', {class: 'page-heading'});
   const main = el('main', {tabindex: '-1'},
-    toolbar, tabs, notice, taskPanel, pageContent);
+    pageHeading, toolbar, tabs, notice, taskPanel, pageContent);
   const workspace = el('section', {class: 'workspace', hidden: '', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Canvas Local workspace'},
     el('aside', {}, el('a', {class: 'brand', href: pagePaths.tasks, 'aria-label': 'Canvas', onclick: event => {
       if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -443,7 +471,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const loader = el('div', {class: 'nebula-loader', role: 'status', 'aria-label': label});
     loader.style.setProperty('--uib-size', size + 'px');
     for (let i = 0; i < 13; i++) loader.append(el('div', {class: 'nebula-particle', 'aria-hidden': 'true'}));
-    return loader;
+    return el('div', {class: 'loading-state'}, loader, el('p', {class: 'meta', 'aria-hidden': 'true'}, label + '…'));
   }
   async function request(message) {
     if (['list', 'sync', 'update'].includes(message.action)) {
@@ -602,11 +630,11 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     refreshAnnouncementsBadge();
   }
   async function refresh(force = false) {
-    if (loading) return;
+    if (loading) return {error: 'A sync is already in progress.'};
     loading = true; syncButton.disabled = true; syncButton.classList.add('busy');
     if (!state.assignments.length) list.replaceChildren(el('div', {class: 'empty'}, nebulaLoader(56, 'Reading the local assignment feed')));
-    try { ingest(await request({action: force ? 'sync' : 'list'})); }
-    catch (error) { notice.textContent = friendlyError(error); render(); }
+    try { const reply = await request({action: force ? 'sync' : 'list'}); ingest(reply); return {error: reply.lastError || reply.state.syncError ? friendlyError(reply.lastError || reply.state.syncError) : ''}; }
+    catch (error) { notice.textContent = friendlyError(error); render(); return {error: friendlyError(error)}; }
     finally {loading = false; syncButton.disabled = false; syncButton.classList.remove('busy');}
   }
   const formatDate = value => value ? new Date(value).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'}) : 'No deadline';
@@ -633,6 +661,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     return 'Coming up';
   }
   function render() {
+    pageHeading.hidden = page === 'course';
+    pageHeading.textContent = pageTitles[page] || 'Canvas';
     main.setAttribute('aria-label', {tasks: 'Tasks', announcements: 'Announcements', courses: 'Courses', calendar: 'Calendar', inbox: 'Inbox', course: 'Course'}[page]);
     document.title = page === 'course' ? (courseWorkspace?.title() || 'Course') : (pageTitles[page] || 'Canvas Local');
     for (const button of navigation.querySelectorAll('[data-page]')) {
@@ -666,7 +696,9 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const items = filteredItems();
     list.replaceChildren();
     if (!items.length) {
-      list.append(el('div', {class: 'empty'}, state.assignments.length ? 'Nothing here. Try another filter, or enjoy the breathing room.' : 'No assignments cached yet. Connect your Canvas website from the extension icon, then sync.'));
+      const title = query || course ? 'No matching tasks' : view === 'completed' ? 'No completed tasks yet' : state.assignments.length ? 'You’re all caught up' : 'No assignments cached';
+      const description = query || course ? 'Try another course or search term.' : state.lastSync ? 'Sync now to check Canvas for new work.' : 'Use Connection settings to check your Canvas site and sync.';
+      list.append(el('div', {class: 'empty'}, el('h2', {}, title), el('p', {}, description)));
       return;
     }
     for (const group of ['Overdue', 'Today', 'Tomorrow', 'This week', 'Coming up', 'No deadline', 'Completed']) {
@@ -725,10 +757,10 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
       const tasks = state.assignments.filter(a => entry.id && a.courseId ? String(a.courseId) === String(entry.id) : a.course === entry.name);
       const complete = tasks.filter(a => a.completed).length;
       const upcoming = tasks.filter(a => !a.completed && a.effectiveDue).sort((a, b) => new Date(a.effectiveDue) - new Date(b.effectiveDue))[0];
-      grid.append(el('article', {class: 'course-card'}, el('div', {class: 'course-code'}, entry.course_code || 'Course'), el('h2', {}, entry.name),
+      grid.append(el('article', {class: 'course-card'}, el('div', {class: 'course-code'}, entry.course_code || 'Course'), el('h2', {}, entry.id ? el('a', {href: '/courses/' + encodeURIComponent(entry.id)}, entry.name) : entry.name),
         el('p', {class: 'meta'}, `${tasks.length - complete} to do · ${complete} completed`),
-        el('progress', {max: String(tasks.length || 1), value: String(complete), 'aria-label': entry.name + ' task completion'}),
-        el('p', {class: 'next-task'}, upcoming ? 'Next deadline: ' + formatDate(upcoming.effectiveDue) : 'No upcoming deadlines'),
+        el('progress', {max: String(tasks.length || 1), value: String(complete), 'aria-label': entry.name + ' task completion', 'aria-valuetext': `${complete} of ${tasks.length} tasks completed`}),
+        el('p', {class: 'next-task'}, upcoming ? (new Date(upcoming.effectiveDue) < new Date() ? 'Overdue: ' : 'Next deadline: ') + formatDate(upcoming.effectiveDue) : 'No upcoming deadlines'),
         el('div', {class: 'actions'},
           entry.id ? el('a', {class: 'quiet primary course-link', href: '/courses/' + encodeURIComponent(entry.id)}, 'Open course') : null,
           el('button', {class: 'quiet', onclick: () => {course = entry.name; query = ''; search.value = ''; view = 'open'; navigate('tasks');}}, 'View tasks'))));
@@ -761,9 +793,19 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const sunday = new Date(2026, 10, 1);
     for (let i = 0; i < 7; i++) grid.append(el('div', {class: 'weekday'}, new Date(2026, 10, sunday.getDate() + i).toLocaleDateString(undefined, {weekday: 'short'})));
     const start = new Date(month.getFullYear(), month.getMonth(), 1 - month.getDay());
+    const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 41);
+    const focusDay = selectedDay >= start && selectedDay <= end ? dayKey(selectedDay) : dayKey(new Date(month.getFullYear(), month.getMonth(), 1));
     for (let i = 0; i < 42; i++) {
       const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), key = dayKey(date), tasks = days.get(key) || [];
       grid.append(el('button', {class: 'calendar-day' + (date.getMonth() !== month.getMonth() ? ' outside' : '') + (key === dayKey(new Date()) ? ' today' : ''),
+        tabindex: key === focusDay ? '0' : '-1',
+        onkeydown: event => {
+          const offsets = {ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, Home: -date.getDay(), End: 6 - date.getDay()};
+          if (!(event.key in offsets)) return;
+          event.preventDefault(); selectedDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + offsets[event.key]);
+          month = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1); renderCalendar();
+          pageContent.querySelector(`[data-date="${dayKey(selectedDay)}"]`)?.focus();
+        },
         'aria-pressed': String(key === dayKey(selectedDay)), 'aria-label': date.toLocaleDateString(undefined, {dateStyle: 'full'}) + `, ${tasks.length} tasks`,
         onclick: event => {selectedDay = date; renderCalendar(); pageContent.querySelector(`[data-date="${key}"]`)?.focus();}, 'data-date': key},
         el('span', {}, String(date.getDate())), tasks.length ? el('span', {class: 'day-count'}, String(tasks.length)) : null,
@@ -773,35 +815,42 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     const selected = days.get(dayKey(selectedDay)) || [];
     if (selected.length) agenda.append(...selected.map(item => taskRow(item)));
     else agenda.append(el('p', {class: 'meta'}, 'No matching tasks due this day.'));
-    pageContent.append(controls, agenda, grid);
+    pageContent.append(controls, el('div', {class: 'calendar-layout'}, grid, agenda));
   }
   async function readConversation(id) {
     const version = ++conversationVersion;
+    remoteError = '';
     selectedConversation = null; conversationLoading = true; renderInbox();
+    pageContent.querySelector(`[data-thread="${id}"]`)?.focus({preventScroll: true});
     try {
       const reply = await request({action: 'conversation', id});
       if (version !== conversationVersion) return;
       selectedConversation = reply.conversation;
     } catch (error) {if (version === conversationVersion) remoteError = friendlyError(error);}
-    finally {if (version === conversationVersion) {conversationLoading = false; if (page === 'inbox') {renderInbox(); motion(pageContent.querySelector('.reader'), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}]);}}}
+    finally {if (version === conversationVersion) {conversationLoading = false; if (page === 'inbox') {renderInbox(); pageContent.querySelector(selectedConversation ? '.reader h2' : `[data-thread="${id}"]`)?.focus({preventScroll: true}); motion(pageContent.querySelector('.reader'), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'translateY(0)'}]);}}}
   }
+  let inboxScroll = 0;
   function renderInbox() {
+    const previousThreads = pageContent.querySelector('.threads');
+    if (previousThreads?.clientHeight) inboxScroll = previousThreads.scrollTop;
     pageContent.replaceChildren(); remoteStatus();
     if (!conversations?.length) {
+      if (remoteLoading) pageContent.append(nebulaLoader(56, 'Loading conversations'));
       if (conversations && !remoteError) pageContent.append(el('div', {class: 'empty'}, 'Your inbox is empty.'));
       return;
     }
     const threads = el('div', {class: 'threads'});
     for (const thread of conversations || []) {
-      threads.append(el('button', {class: 'thread' + (thread.workflow_state === 'unread' ? ' unread' : ''), 'aria-pressed': String(selectedConversation?.id === thread.id), onclick: () => readConversation(thread.id)},
+      threads.append(el('button', {class: 'thread' + (thread.workflow_state === 'unread' ? ' unread' : ''), 'data-thread': String(thread.id), 'aria-pressed': String(selectedConversation?.id === thread.id), onclick: () => readConversation(thread.id)},
         el('span', {class: 'meta'}, thread.context_name || (thread.participants || []).map(p => p.name).join(', ')),
         el('strong', {}, thread.subject || 'No subject'), el('span', {class: 'preview'}, thread.last_message || ''),
         el('span', {class: 'meta'}, thread.last_message_at ? formatDate(thread.last_message_at) : '')));
     }
     const reader = el('section', {class: 'reader', 'aria-label': 'Conversation', 'aria-live': 'polite'});
-    if (conversationLoading) reader.append(el('div', {class: 'skeleton', role: 'status', 'aria-label': 'Loading conversation'}, el('div', {}), el('div', {})));
+    if (conversationLoading) reader.append(el('button', {class: 'quiet inbox-back', onclick: () => {conversationVersion++; conversationLoading = false; selectedConversation = null; renderInbox(); pageContent.querySelector('.thread')?.focus({preventScroll: true});}}, 'Back to conversations'), nebulaLoader(32, 'Loading conversation'));
     else if (selectedConversation) {
-      reader.append(el('h2', {}, selectedConversation.subject || 'No subject'));
+      const id = selectedConversation.id;
+      reader.append(el('button', {class: 'quiet inbox-back', onclick: () => {selectedConversation = null; renderInbox(); pageContent.querySelector(`[data-thread="${id}"]`)?.focus({preventScroll: true});}}, 'Back to conversations'), el('h2', {tabindex: '-1'}, selectedConversation.subject || 'No subject'));
       const participants = new Map((selectedConversation.participants || []).map(p => [p.id, p.name]));
       const messages = [...(selectedConversation.messages || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       for (const message of messages) reader.append(el('article', {class: 'message'}, el('strong', {}, participants.get(message.author_id) || 'Canvas user'),
@@ -809,11 +858,13 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
         ...(message.attachments || []).map(file => el('p', {class: 'meta'}, 'Attachment: ' + (file.display_name || file.filename || 'File')))));
       reader.append(el('p', {class: 'meta'}, 'Replies and attachments are available in Original Canvas.'));
     } else reader.append(el('div', {class: 'empty'}, 'Choose a conversation to read.'));
-    pageContent.append(el('div', {class: 'inbox-layout'}, threads, reader));
+    pageContent.append(el('div', {class: 'inbox-layout' + (selectedConversation || conversationLoading ? ' has-conversation' : '')}, threads, reader));
+    threads.scrollTop = inboxScroll;
   }
   function renderAnnouncements() {
     pageContent.replaceChildren(); remoteStatus();
     if (!announcements?.length) {
+      if (remoteLoading) pageContent.append(nebulaLoader(56, 'Loading announcements'));
       if (announcements && !remoteError) pageContent.append(el('div', {class: 'empty'}, 'No announcements.'));
       return;
     }
@@ -825,7 +876,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     for (const item of items) {
       const open = expandedAnnouncement != null && String(expandedAnnouncement) === String(item.id);
       const card = el('article', {class: 'announcement' + (isAnnouncementUnread(item) ? ' unread' : '')},
-        el('button', {class: 'announcement-title', 'aria-expanded': String(open), onclick: () => {if (!open && isAnnouncementUnread(item)) {readAnnouncementIds.add(String(item.id)); saveReadAnnouncements();} expandedAnnouncement = open ? null : item.id; render();}},
+        el('button', {class: 'announcement-title', 'data-announcement': String(item.id), 'aria-expanded': String(open), onclick: () => {if (!open && isAnnouncementUnread(item)) {readAnnouncementIds.add(String(item.id)); saveReadAnnouncements();} expandedAnnouncement = open ? null : item.id; render(); pageContent.querySelector(`[data-announcement="${item.id}"]`)?.focus({preventScroll: true});}},
           item.title || 'Untitled announcement'),
         el('div', {class: 'meta'}, [announcementCourse(item), item.posted_at ? formatDate(item.posted_at) : ''].filter(Boolean).join(' · ')));
       if (open) {
@@ -870,7 +921,11 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
       } catch (err) {error.textContent = friendlyError(err); save.disabled = false;}
     });
     dialog.append(form); shadow.append(dialog);
-    dialog.addEventListener('close', () => dialog.remove());
+    dialog.addEventListener('close', () => {
+      dialog.remove();
+      const row = [...shadow.querySelectorAll('.row')].find(node => node.dataset.uid === item.uid);
+      (row?.querySelector('.edit') || main).focus({preventScroll: true});
+    });
     dialog.showModal();
   }
   // Local cache refresh, not a network poll. Background alarms own Canvas fetching.

@@ -191,10 +191,9 @@ test('course loading, denial, stale requests and mobile/dark layout remain safe'
     const bodyBox = await page.locator('.course-body').boundingBox();
     assert.equal(Math.round(orbitBox.width), 96, 'the orbit renders big');
     assert.ok(Math.abs((orbitBox.x + orbitBox.width / 2) - (bodyBox.x + bodyBox.width / 2)) < 4, 'the orbit sits mid-page, sidebar excluded');
-    const viewportHeight = await page.evaluate(() => window.innerHeight);
-    assert.ok(Math.abs((orbitBox.y + orbitBox.height / 2) - viewportHeight / 2) < viewportHeight * 0.2, 'the orbit sits mid-page top to bottom');
+    assert.ok((await page.locator('.course-loading').boundingBox()).height < 400, 'loading does not reserve another viewport');
     assert.equal(await page.locator('.nebula-loader[aria-label="Loading course content"]').count(), 1);
-    assert.equal(await page.getByText('Loading course content').count(), 0, 'no text spinner alongside the orbit');
+    assert.equal(await page.locator('.course-loading .loading-state p').isVisible(), true, 'visible loading explanation remains with reduced motion');
     assert.equal(await page.getByRole('heading', {name: 'Week one', exact: true}).count(), 0, 'old course content is not shown under a new URL');
     await page.getByRole('button', {name: 'Tasks', exact: true}).click();
     await page.evaluate(() => {window.delayCourse = false; window.finishCourse({ok: true, course: {name: 'Stale course'}, tabs: [], view: 'pages', items: []});});
@@ -319,14 +318,21 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     await page.getByLabel('Submission text').fill('Hello <world> & class');
     await page.getByRole('button', {name: 'Submit text entry', exact: true}).click();
     assert.equal(await page.evaluate(() => window.submissions.length), 0, 'first click only arms the button');
-    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('button', {name: 'Cancel', exact: true}).click();
+    assert.equal(await page.getByRole('button', {name: 'Submit text entry', exact: true}).isVisible(), true, 'confirmation can be cancelled');
+    await page.getByRole('button', {name: 'Submit text entry', exact: true}).click();
+    await page.getByLabel('Submission text').fill('Revised draft');
+    assert.equal(await page.getByRole('button', {name: 'Confirm submit text entry', exact: true}).count(), 0, 'changing work invalidates prior confirmation');
+    await page.getByLabel('Submission text').fill('Hello <world> & class');
+    await page.getByRole('button', {name: 'Submit text entry', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirm submit text entry', exact: true}).click();
     await page.waitForFunction(() => window.submissions.length === 1);
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_text_entry', body: '<p>Hello &lt;world&gt; &amp; class</p>'}]);
     await page.goto('https://canvas.test/courses/34/assignments/14');
     await page.getByRole('heading', {name: 'Report', exact: true}).waitFor();
     await page.getByLabel('Choose files to submit').setInputFiles({name: 'essay.pdf', mimeType: 'application/pdf', buffer: Buffer.from('hello')});
     await page.getByRole('button', {name: 'Submit files', exact: true}).click();
-    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirm submit files', exact: true}).click();
     await page.waitForFunction(() => window.submissions.length === 1);
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_upload', file_ids: ['77']}]);
     assert.deepEqual(await page.evaluate(() => window.uploads), [{uploadUrl: 'https://uploads.test/put', uploadParams: {key: 'abc'}, name: 'essay.pdf', type: 'application/pdf', bytes: 'hello'}], 'file bytes upload through the extension worker, not the CSP-restricted page');
@@ -334,7 +340,7 @@ test('text, file and URL submissions send work to Canvas and tools launch in a n
     await page.getByRole('heading', {name: 'Link', exact: true}).waitFor();
     await page.getByLabel('Website URL to submit').fill('example.com/work');
     await page.getByRole('button', {name: 'Submit URL', exact: true}).click();
-    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirm submit url', exact: true}).click();
     await page.waitForFunction(() => window.submissions.length === 1);
     assert.deepEqual(await page.evaluate(() => window.submissions), [{submission_type: 'online_url', url: 'example.com/work'}], 'scheme normalization happens in the API layer, covered by unit tests');
     await page.goto('https://canvas.test/courses/34/assignments/15');
@@ -425,7 +431,7 @@ test('quiz taking starts an attempt, saves answers, and submits with confirm', {
     await page.getByText('Answers saved', {exact: false}).waitFor();
     assert.deepEqual(await page.evaluate(() => window.quizCalls.filter(call => call.action === 'quizAnswer').map(call => call.take.answers)), [[{id: 101, answer: 5}, {id: 102, answer: 'Because arithmetic.'}]]);
     await page.getByRole('button', {name: 'Submit quiz', exact: true}).click();
-    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirm submit quiz', exact: true}).click();
     await page.getByRole('heading', {name: 'Attempt submitted', exact: true}).waitFor();
     assert.equal(await page.getByText('Score: 8', {exact: true}).count(), 1);
     assert.ok(await page.evaluate(() => window.quizCalls.some(call => call.action === 'quizComplete')));
@@ -461,7 +467,7 @@ test('quiz assignments redirect to the quiz, attempts use grade fractions, in-pr
     await page.getByText('Answers saved', {exact: false}).waitFor();
     assert.equal(await page.evaluate(() => window.quizCalls.find(call => call.action === 'quizAnswer').take.qsId), '42', 'resumed session answers the in-progress submission');
     await page.getByRole('button', {name: 'Submit quiz', exact: true}).click();
-    await page.getByRole('button', {name: 'Click again to confirm', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirm submit quiz', exact: true}).click();
     await page.getByRole('heading', {name: 'Attempt submitted', exact: true}).waitFor();
     assert.deepEqual(errors, []);
   } finally {await browser.close();}

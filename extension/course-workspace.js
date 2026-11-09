@@ -63,7 +63,10 @@
   }
   const css = `
     .course-workspace{min-width:0}.course-heading{display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:26px}.course-heading h1{font-size:clamp(25px,3vw,36px);margin:5px 0 0}.course-heading .quiet{margin-top:4px}.course-nav{display:flex;flex-wrap:wrap;gap:4px 20px;margin:0 0 32px;padding:0;border-bottom:1px solid var(--line)}.course-nav a{padding:6px 0 15px;position:relative;text-decoration:none;color:var(--muted);font-size:13px}.course-nav a[aria-current=page]{color:var(--accent);font-weight:650;text-decoration:none}.course-nav a[aria-current=page]:after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);border-radius:2px}.course-nav a:hover{color:var(--accent)}.course-body{min-width:0}.course-body h2{font-size:23px;font-weight:600;letter-spacing:-.025em;margin:0 0 20px}.course-rich{max-width:78ch;overflow-wrap:anywhere;line-height:1.7}.course-rich h1{font-size:30px;line-height:1.25}.course-rich h2{font-size:23px;margin-top:30px}.course-rich h3{font-size:19px}.course-rich img{display:block;max-width:100%;height:auto;margin:18px 0}.course-rich table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}.course-rich td,.course-rich th{border:1px solid var(--line);padding:8px 12px;text-align:left}.course-rich pre{overflow:auto;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius,8px)}.course-rich blockquote{border-left:2px solid var(--accent);margin-left:0;padding-left:20px;color:var(--muted)}.course-rich a{color:var(--accent);text-underline-offset:3px}.course-record{padding:18px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 62%, transparent);overflow-wrap:anywhere}.course-record h3{font-size:16px;font-weight:600;margin:0 0 5px}.course-record h3 a{text-decoration:none}.course-record h3 a:hover{text-decoration:underline;text-underline-offset:4px}.course-record p{margin:5px 0}.course-module{margin:0 0 30px}.course-module h3{font-size:18px;margin:0 0 8px}.course-module .course-record{padding:13px 0}.course-meta{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--muted);font-size:13px;margin:12px 0 22px}.course-original-note{color:var(--muted);font-size:13px;margin:24px 0}.course-rubric{border-top:1px solid var(--line);padding-top:24px;margin-top:30px}.course-reply{padding:18px 0;border-top:1px solid color-mix(in srgb, var(--line) 62%, transparent)}.course-replies{margin-left:20px;padding-left:16px;border-left:2px solid color-mix(in srgb, var(--accent) 35%, transparent)}.course-replies .course-reply:first-child{border-top:0;padding-top:6px}.course-fallback{padding:24px 0}.course-loading{display:flex;justify-content:center;align-items:center;min-height:calc(100dvh - 60px);padding:24px 0}.nebula-loader{--uib-size:56px;--uib-color:var(--accent,#ff6b00);--uib-speed:1.8s;position:relative;display:inline-flex;align-items:center;justify-content:center;width:var(--uib-size);height:var(--uib-size);flex:none}.nebula-particle{position:absolute;top:0;left:0;display:flex;align-items:center;justify-content:center;height:100%;width:100%}.nebula-particle:nth-child(1){--uib-delay:0;transform:rotate(8deg)}.nebula-particle:nth-child(2){--uib-delay:-0.4;transform:rotate(36deg)}.nebula-particle:nth-child(3){--uib-delay:-0.9;transform:rotate(72deg)}.nebula-particle:nth-child(4){--uib-delay:-0.5;transform:rotate(90deg)}.nebula-particle:nth-child(5){--uib-delay:-0.3;transform:rotate(144deg)}.nebula-particle:nth-child(6){--uib-delay:-0.2;transform:rotate(180deg)}.nebula-particle:nth-child(7){--uib-delay:-0.6;transform:rotate(216deg)}.nebula-particle:nth-child(8){--uib-delay:-0.7;transform:rotate(252deg)}.nebula-particle:nth-child(9){--uib-delay:-0.1;transform:rotate(300deg)}.nebula-particle:nth-child(10){--uib-delay:-0.8;transform:rotate(324deg)}.nebula-particle:nth-child(11){--uib-delay:-1.2;transform:rotate(335deg)}.nebula-particle:nth-child(12){--uib-delay:-0.5;transform:rotate(290deg)}.nebula-particle:nth-child(13){--uib-delay:-0.2;transform:rotate(240deg)}.nebula-particle::before{content:'';position:absolute;height:17.5%;width:17.5%;border-radius:50%;background-color:var(--uib-color);flex-shrink:0;--uib-d:calc(var(--uib-delay)*var(--uib-speed));animation:nebula-orbit var(--uib-speed) linear var(--uib-d) infinite}@keyframes nebula-orbit{0%{transform:translate(calc(var(--uib-size)*0.5)) scale(0.74);opacity:.65}25%{transform:translate(0) scale(0.47);opacity:.3}50%{transform:translate(calc(var(--uib-size)*-0.5)) scale(0.74);opacity:.65}75%{transform:translate(0) scale(1);opacity:1}100%{transform:translate(calc(var(--uib-size)*0.5)) scale(0.74);opacity:.65}}@media (prefers-reduced-motion:reduce){.nebula-particle::before{animation:none}}.course-grade{font-variant-numeric:tabular-nums}.course-grade-fraction{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}.course-record-grade{display:flex;justify-content:space-between;align-items:baseline;gap:16px}.course-record-grade h3{margin:0;min-width:0}.course-record-main{min-width:0;overflow-wrap:anywhere}.course-quiz-question{padding:18px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-quiz-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-take{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-quiz-timer{font-variant-numeric:tabular-nums;font-weight:650;color:var(--accent)}.course-take-option{display:flex;gap:10px;align-items:flex-start;padding:8px 0}.course-take-blank{display:grid;gap:6px;margin:10px 0;max-width:46ch}.course-take-input input[type=text],.course-take-input textarea,.course-take-input select,.course-take-blank input,.course-take-blank select{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--radius,8px);padding:10px 12px;font:inherit;max-width:46ch}.course-take-input textarea{width:100%;min-height:120px}.course-take-question{padding:16px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.course-take-question h4{font-size:15px;font-weight:600;margin:0 0 8px}.course-answer{margin:12px 0 0;padding:10px 14px;background:var(--surface);border-radius:var(--radius,8px)}.course-answer-label{font-size:12px;color:var(--muted);margin:0 0 4px}.course-file-image{display:block;max-width:100%;height:auto;margin:18px 0;border-radius:var(--radius,8px)}.course-file-text{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:60vh;padding:16px;background:var(--surface);border-radius:var(--radius,8px);font-size:13px;line-height:1.6}.course-quiz-frame{display:block;width:100%;min-height:75vh;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);margin:8px 0 4px}.course-submit{margin-top:26px;border-top:1px solid var(--line);padding-top:6px}.course-submit h4{font-size:15px;font-weight:600;margin:22px 0 10px}.course-submit-text{width:100%;min-height:160px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--radius,8px);padding:12px;font:inherit;margin-bottom:12px}.course-submit-url{width:100%;max-width:46ch;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--radius,8px);padding:10px 12px;margin-bottom:12px}.course-submit input[type=file]{margin-bottom:12px}.course-file-list{font-size:13px;color:var(--muted);margin:0 0 12px;overflow-wrap:anywhere}.course-file-list:empty{display:none}.course-status{margin:12px 0 0;font-size:13px;color:var(--muted)}.course-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:20px 0}.course-workspace button:focus-visible,.course-workspace a:focus-visible{outline:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent)}.course-heading a{white-space:normal}.course-rich math{max-width:100%;overflow:auto}
-    @media(max-width:850px){.course-heading{flex-direction:column;gap:12px}.course-nav{gap:4px 16px}.course-heading h1{font-size:26px}.course-meta{gap:8px 16px}.course-replies{margin-left:12px}}
+    .course-workspace select:focus-visible,.course-workspace input:focus-visible,.course-workspace textarea:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.course-workspace button:focus-visible,.course-workspace a:focus-visible{box-shadow:0 0 0 2px var(--accent)}.course-take-option{min-height:44px;box-sizing:border-box}.course-take-input[role=group]{min-width:0}.course-workspace .course-loading{min-height:240px;height:auto}.course-heading h1{overflow-wrap:anywhere}.course-nav a:focus-visible{box-shadow:inset 0 -3px var(--accent)}
+    @media(max-width:850px){.course-heading{flex-direction:column;gap:12px;margin-bottom:20px}.course-nav{flex-wrap:nowrap;gap:20px;overflow-x:auto;scrollbar-width:thin;margin-bottom:24px}.course-nav a{white-space:nowrap;min-height:44px;box-sizing:border-box;padding:10px 0}.course-heading h1{font-size:26px}.course-meta{gap:8px 16px}.course-replies{margin-left:12px}}
+    .course-nav::-webkit-scrollbar{display:block;height:4px}.course-nav::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:2px}
+    .course-workspace .quiet{white-space:normal;max-width:100%;overflow-wrap:anywhere}.course-actions>*{min-width:0;max-width:100%}
   `;
 
   function create({request, navigate, original, assignments, taskRow}) {
@@ -75,7 +78,7 @@
       const message = String(reason?.message || reason || '').trim();
       if (!/failed to fetch/i.test(message)) return message;
       const prefix = message.replace(/failed to fetch/gi, '').replace(/[:\-.\u2013\u2014\s]+$/g, '').trim();
-      if (!prefix) return "Couldn't reach Canvas just now. Showing saved work.";
+      if (!prefix) return "Couldn't reach Canvas just now. Try again when your connection returns.";
       return prefix + ": couldn't reach Canvas just now.";
     }
     let scoreTimer = null, stopScoreFocus = null;
@@ -240,16 +243,27 @@
     }
     function confirmButton(label, action, onError) {
       const button = element('button', {class: 'quiet primary'}, label);
+      const cancel = element('button', {class: 'quiet', type: 'button', hidden: ''}, 'Cancel');
+      const controls = element('span', {class: 'confirm-controls'}, button, cancel);
       let armed = false, busy = false;
+      const reset = () => {armed = false; button.textContent = label; cancel.hidden = true;};
+      cancel.addEventListener('click', () => {reset(); button.focus();});
+      // A changed answer or attachment requires a fresh confirmation.
+      const changed = () => {if (!busy && armed) reset();};
+      queueMicrotask(() => {
+        const section = controls.closest('section');
+        section?.addEventListener('input', changed);
+        section?.addEventListener('change', changed);
+      });
       button.addEventListener('click', async () => {
         if (busy) return;
-        if (!armed) {armed = true; button.textContent = 'Click again to confirm'; return;}
-        busy = true; button.disabled = true;
+        if (!armed) {armed = true; button.textContent = 'Confirm ' + label.toLowerCase(); cancel.hidden = false; return;}
+        busy = true; button.disabled = true; cancel.hidden = true;
         try {await action();}
         catch (reason) {try {onError(reason);} catch {}}
-        finally {busy = false; button.disabled = false; armed = false; button.textContent = label;}
+        finally {busy = false; button.disabled = false; reset();}
       });
-      return button;
+      return controls;
     }
     // Thirteen particles orbiting a center, ported from the FRC 7790 site loader.
     // Size the orbit per call site; particles pick up the workspace accent color.
@@ -257,7 +271,7 @@
       const loader = element('div', {class: 'nebula-loader', role: 'status', 'aria-label': label});
       loader.style.setProperty('--uib-size', size + 'px');
       for (let i = 0; i < 13; i++) loader.append(element('div', {class: 'nebula-particle', 'aria-hidden': 'true'}));
-      return loader;
+      return element('div', {class: 'loading-state'}, loader, element('p', {class: 'meta', 'aria-hidden': 'true'}, label + '…'));
     }
     function submitStatus(section) {
       const status = element('p', {class: 'course-status', role: 'status'});
@@ -532,6 +546,9 @@
       const type = question.question_type;
       const answers = question.answers || [];
       const box = element('div', {class: 'course-take-input'});
+      if (['multiple_choice_question', 'true_false_question', 'multiple_answers_question'].includes(type)) {
+        box.setAttribute('role', 'group'); box.setAttribute('aria-labelledby', 'take-question-' + record.id);
+      }
       const current = take.values[record.id];
       if (type === 'multiple_choice_question' || type === 'true_false_question') {
         for (const answer of answers) {
@@ -748,7 +765,7 @@
           takeAnyway.addEventListener('click', openInCanvas);
           section.append(element('div', {class: 'course-actions'}, takeAnyway, link(quizHref, 'Open this quiz in a new window')));
         } else {
-          section.append(element('p', {class: 'course-original-note'}, 'Quiz attempts always run in Canvas itself; use ', link(quizHref, 'Open this quiz in Canvas'), ' if an attempt will not start here.'));
+          section.append(element('p', {class: 'course-original-note'}, 'Supported quizzes can be taken here. Answers save to Canvas when you choose Save answers; submitting requires confirmation. Use ', link(quizHref, 'Open this quiz in Canvas'), ' if an attempt will not start here.'));
         }
         return;
       }
@@ -759,7 +776,7 @@
       for (const entry of take.questions) {
         const question = entry.quiz_question || {};
         number++;
-        const article = element('article', {class: 'course-take-question'}, element('h4', {}, (question.question_name || 'Question ' + number) + (question.points_possible != null ? ' · ' + question.points_possible + ' points' : '')));
+        const article = element('article', {class: 'course-take-question'}, element('h4', {id: 'take-question-' + entry.id}, (question.question_name || 'Question ' + number) + (question.points_possible != null ? ' · ' + question.points_possible + ' points' : '')));
         if (question.question_text) article.append(rich(question.question_text));
         const input = takeInput(question, entry);
         if (input) {article.append(input); answerable++;}
@@ -886,6 +903,11 @@
           nav.append(anchor);
         }
         root.append(nav);
+      }
+      const selectedLink = root.querySelector('.course-nav [aria-current="page"]');
+      if (selectedLink) {
+        const nav = selectedLink.parentElement;
+        nav.scrollLeft = Math.max(0, selectedLink.offsetLeft - nav.offsetLeft - (nav.clientWidth - selectedLink.offsetWidth) / 2);
       }
       const body = element('div', {class: 'course-body', 'aria-busy': String(loading)}); root.append(body);
       if (error) {
