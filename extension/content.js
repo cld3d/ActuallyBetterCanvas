@@ -104,21 +104,16 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     .calendar-layout{min-width:0}.reader h2:focus{outline:2px solid var(--accent);outline-offset:4px}
     @media(min-width:1250px){.calendar-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:28px;align-items:start}.calendar-layout .agenda{margin:0}.calendar-layout .calendar-day{min-height:90px;padding:8px}.calendar-layout .agenda .row{grid-template-columns:22px minmax(0,1fr) auto;gap:10px}.calendar-layout .agenda .deadline{grid-column:2;grid-row:2;text-align:left}.calendar-layout .agenda .edit{grid-column:3;grid-row:1}}
     /* Shared finishing rules: stable reading alignment and unmistakable keyboard cues. */
-    .tasks-hero{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;align-items:center;margin:0 0 8px;padding:22px 4px 26px;border-bottom:1px solid color-mix(in srgb, var(--line) 62%, transparent);margin-bottom:24px}
-    .rings-wrap{position:relative;width:220px;height:220px;flex:none;margin:auto}
+    #task-panel{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:32px;align-items:start}
+    #task-panel:has(.task-progress:empty){grid-template-columns:minmax(0,1fr)}
+    #task-panel>div:first-child{min-width:0}
+    .task-progress{position:sticky;top:24px;padding-top:26px}
+    .rings-wrap{position:relative;width:200px;height:200px;flex:none;margin:auto}
     .rings-wrap svg{display:block;width:100%;height:100%}
     .rings-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
     .rings-center strong{font-size:34px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1}
     .rings-center span{font-size:13px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
-    .rings-legend{display:grid;gap:2px;min-width:0;align-content:center}
-    .rings-title{font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
-    .rings-legend button{display:flex;align-items:center;gap:10px;background:none;border:0;padding:7px 8px;border-radius:8px;color:var(--ink);text-align:left;min-width:0}
-    .rings-legend button:hover{background:var(--state-hover)}
-    .rings-legend button[aria-pressed=true]{background:var(--state-focus)}
-    .rings-legend button:focus-visible{box-shadow:inset 0 0 0 2px var(--accent);text-decoration:underline;text-underline-offset:4px}
-    .rings-dot{width:12px;height:12px;border-radius:50%;flex:none}
-    .rings-course{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550;font-size:13px}
-    .rings-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none}
+    @media(max-width:1100px){#task-panel{display:block}.task-progress{position:static;padding-top:28px}.rings-wrap{width:160px;height:160px}.rings-center strong{font-size:28px}}
     .row{align-items:start}.row .check{margin-top:3px}.row .deadline{padding-top:3px}.row .edit{margin-top:-6px}
     dialog h2,.announcement-title,.reader h2{overflow-wrap:anywhere}.course-card h2 a{color:inherit;text-decoration:none}.course-card h2 a:hover{text-decoration:underline;text-underline-offset:4px}
     .course-card progress{height:7px}.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:36px 12px;text-align:center}.loading-state p{margin:0}
@@ -131,7 +126,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     /* Final responsive refinements intentionally follow the base mobile rules. */
     input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}.course-card progress{height:8px}progress::-webkit-progress-bar{background:var(--line-strong)}
     .course-card h2 a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-color:var(--line-strong)}
-    @media(max-width:850px){.inbox-layout.has-conversation .reader{padding:20px 18px}.reader h2:focus{padding-left:0;box-shadow:none}.calendar-day{min-height:68px}.tasks-hero{grid-template-columns:minmax(0,1fr);gap:18px;padding-top:10px}.rings-wrap{width:200px;height:200px}}
+    @media(max-width:850px){.inbox-layout.has-conversation .reader{padding:20px 18px}.reader h2:focus{padding-left:0;box-shadow:none}.calendar-day{min-height:68px}}
     @media(max-width:360px){nav{display:grid;grid-template-columns:minmax(0,1fr) max-content minmax(0,1fr);gap:2px 6px;overflow:visible}nav button{text-align:center;font-size:12px;min-height:40px}.toolbar{flex-direction:column}.toolbar input,.toolbar .custom-select{width:100%}.calendar-day .day-task{display:none}.calendar-day{min-height:54px}.day-count{top:auto;bottom:5px;right:5px}.calendar-controls{gap:4px}.calendar-controls h2{font-size:16px}.calendar-controls .quiet{padding-inline:8px}}
   `;
   shadow.append(style);
@@ -234,8 +229,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     })();
   }
   const toolbar = el('div', {class: 'toolbar'}, search, courseSelect);
-  const progressWrap = el('div', {class: 'tasks-hero-wrap'});
-  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, progressWrap, list);
+  const progressWrap = el('div', {class: 'task-progress'});
+  const taskPanel = el('section', {id: 'task-panel', role: 'tabpanel'}, list, progressWrap);
   const pageContent = el('div', {class: 'page-content'});
   const courseWorkspace = globalThis.CanvasCourseWorkspace?.create({request, assignments: () => state.assignments, taskRow,
     navigate: (url, opts) => {
@@ -707,8 +702,8 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     if (page === 'calendar') {renderCalendar(); return;}
     const items = filteredItems();
     progressWrap.replaceChildren();
-    const hero = tasksProgress();
-    if (hero) progressWrap.append(hero);
+    const rings = tasksProgress();
+    if (rings) progressWrap.append(rings);
     list.replaceChildren();
     if (!items.length) {
       const title = query || course ? 'No matching tasks' : view === 'completed' ? 'No completed tasks yet' : state.assignments.length ? 'You’re all caught up' : 'No assignments cached';
@@ -741,7 +736,6 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     }
     const sorted = [...groups.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
     const shown = sorted.slice(0, RING_MAX);
-    const hidden = sorted.length - shown.length;
     const done = base.filter(a => a.completed).length;
     const percent = Math.round(done / base.length * 100);
     const size = 220, center = size / 2, step = 12, stroke = 6;
@@ -771,27 +765,7 @@ nav button.selected:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb, 
     });
     const rings = el('div', {class: 'rings-wrap'}, svg,
       el('div', {class: 'rings-center', 'aria-hidden': 'true'}, el('strong', {}, percent + '%'), el('span', {}, `${done}/${base.length}`)));
-    const legend = el('div', {class: 'rings-legend', role: 'list', 'aria-label': 'Progress by class'},
-      el('p', {class: 'rings-title'}, 'Progress by class'));
-    for (const group of shown) {
-      const color = RING_COLORS[shown.indexOf(group) % RING_COLORS.length];
-      const dot = el('span', {class: 'rings-dot', 'aria-hidden': 'true'});
-      dot.style.backgroundColor = color;
-      const active = course === group.name;
-      const button = el('button', {type: 'button', 'aria-pressed': String(active), 'aria-label': `${group.name}, ${group.done} of ${group.total} completed${active ? '. Showing only this class. Activate to show all classes.' : '. Activate to show only this class.'}`},
-        dot, el('span', {class: 'rings-course'}, group.name), el('span', {class: 'rings-count'}, `${group.done}/${group.total}`));
-      button.addEventListener('click', () => {
-        const target = active ? '' : group.name;
-        course = target;
-        renderCoursesFilter(); render();
-        const buttons = [...progressWrap.querySelectorAll('.rings-legend button')];
-        const back = buttons.find(node => node.getAttribute('aria-label')?.startsWith(group.name + ',')) || buttons[0];
-        (back || toolbar.querySelector('input'))?.focus({preventScroll: true});
-      });
-      legend.append(button);
-    }
-    if (hidden > 0) legend.append(el('p', {class: 'meta'}, `+ ${hidden} more ${hidden === 1 ? 'class' : 'classes'}`));
-    return el('div', {class: 'tasks-hero'}, rings, legend);
+    return rings;
   }
   function filteredItems() {
     return state.assignments.filter(a => a.completed === (view === 'completed') && (!course || a.course === course) && (a.title + ' ' + a.course).toLowerCase().includes(query.toLowerCase())).sort((a, b) => {
